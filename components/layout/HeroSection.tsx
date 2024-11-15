@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 const HeroSection: FC = () => (
   <motion.div
@@ -50,7 +51,7 @@ const HeroSection: FC = () => (
         >
           <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
           <span className="relative flex items-center justify-center">
-            Get Started
+            <Link href={"/register"}>Get Started</Link>
             <ArrowRight className="ml-2 h-5 w-5" />
           </span>
         </motion.button>
