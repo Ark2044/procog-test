@@ -36,72 +36,79 @@ const Profile = () => {
     }
   };
 
-  if (loading) return <p>Loading your profile...</p>;
-  if (error) return <p>Error loading profile: {error.message}</p>;
+  if (loading)
+    return <p className="text-white text-center">Loading your profile...</p>;
+  if (error)
+    return (
+      <p className="text-red-500 text-center">
+        Error loading profile: {error.message}
+      </p>
+    );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-4">Your Profile</h1>
-      {updateError && <p className="text-red-500">{updateError}</p>}
-      <form
-        className="bg-white shadow-md rounded-lg p-6"
-        onSubmit={handleUpdate}
-      >
-        <div className="mb-4">
-          <label
-            className="flex items-center text-gray-700" // Using flex for labels
-            htmlFor="name"
-          >
-            <FaUser className="mr-2" /> Name
-          </label>
-          <input
-            className="mt-1 block w-full border rounded-md p-2"
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="flex items-center text-gray-700" // Using flex for labels
-            htmlFor="email"
-          >
-            <FaEnvelope className="mr-2" /> Email
-          </label>
-          <input
-            className="mt-1 block w-full border rounded-md p-2"
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label
-            className="flex items-center text-gray-700" // Using flex for labels
-            htmlFor="reputation"
-          >
-            <FaStar className="mr-2" /> Reputation
-          </label>
-          <input
-            className="mt-1 block w-full border rounded-md p-2 bg-gray-100 cursor-not-allowed"
-            type="number"
-            id="reputation"
-            value={reputation}
-            readOnly
-          />
-        </div>
+    <div className="min-h-screen bg-black text-white flex justify-center items-center pt-16">
+      <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold mb-6 text-center">Your Profile</h1>
+        {updateError && (
+          <p className="text-red-500 text-center">{updateError}</p>
+        )}
+        <form className="space-y-6" onSubmit={handleUpdate}>
+          <div>
+            <label
+              className="flex items-center text-gray-300 mb-2"
+              htmlFor="name"
+            >
+              <FaUser className="mr-2" /> Name
+            </label>
+            <input
+              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label
+              className="flex items-center text-gray-300 mb-2"
+              htmlFor="email"
+            >
+              <FaEnvelope className="mr-2" /> Email
+            </label>
+            <input
+              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label
+              className="flex items-center text-gray-300 mb-2"
+              htmlFor="reputation"
+            >
+              <FaStar className="mr-2" /> Reputation
+            </label>
+            <input
+              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-400 cursor-not-allowed"
+              type="number"
+              id="reputation"
+              value={reputation}
+              readOnly
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-        >
-          Update Profile
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
+            Update Profile
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

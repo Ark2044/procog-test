@@ -88,14 +88,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-8"
+      className="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-md mb-8 border border-gray-700"
     >
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Create Risk</h2>
+      <h2 className="text-2xl font-bold text-white mb-4">Create Risk</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <div className="mb-4">
         <label
           htmlFor="title"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Title:
         </label>
@@ -105,13 +105,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter risk title"
         />
       </div>
       <div className="mb-4">
         <label
           htmlFor="content"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Content:
         </label>
@@ -120,13 +121,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter risk content"
         />
       </div>
       <div className="mb-4">
         <label
           htmlFor="tags"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Tags:
         </label>
@@ -137,13 +139,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           onChange={(e) =>
             setTags(e.target.value.split(",").map((tag) => tag.trim()))
           }
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter tags separated by commas"
         />
       </div>
       <div className="mb-4">
         <label
           htmlFor="file"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Attachment (optional):
         </label>
@@ -151,13 +154,13 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           type="file"
           id="file"
           onChange={handleFileChange}
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <div className="mb-4">
         <label
           htmlFor="impact"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Impact:
         </label>
@@ -167,7 +170,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           onChange={(e) =>
             setImpact(e.target.value as "low" | "medium" | "high")
           }
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="low">Low</option>
           <option value="medium">Medium</option>
@@ -177,7 +180,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       <div className="mb-4">
         <label
           htmlFor="probability"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Probability (0-5):
         </label>
@@ -190,12 +193,12 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           onChange={(e) => setProbability(Number(e.target.value))}
           className="w-full"
         />
-        <p className="text-gray-600">Probability: {probability * 20}%</p>
+        <p className="text-gray-400">Probability: {probability * 20}%</p>
       </div>
       <div className="mb-4">
         <label
           htmlFor="action"
-          className="block text-gray-700 font-semibold mb-2"
+          className="block text-gray-300 font-semibold mb-2"
         >
           Action:
         </label>
@@ -207,7 +210,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               e.target.value as "mitigate" | "accept" | "transfer" | "avoid"
             )
           }
-          className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="mitigate">Mitigate</option>
           <option value="accept">Accept</option>
@@ -219,7 +222,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         <div className="mb-4">
           <label
             htmlFor="mitigation"
-            className="block text-gray-700 font-semibold mb-2"
+            className="block text-gray-300 font-semibold mb-2"
           >
             How to Mitigate the Risk:
           </label>
@@ -227,13 +230,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             id="mitigation"
             value={mitigation}
             onChange={(e) => setMitigation(e.target.value)}
-            className="border border-gray-300 p-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter mitigation strategies"
           />
         </div>
       )}
       <button
         type="submit"
-        className={`mt-4 w-full bg-blue-500 text-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+        className={`mt-4 w-full bg-blue-600 text-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-700 ${
           loading ? "opacity-50 cursor-not-allowed" : ""
         }`}
         disabled={loading}

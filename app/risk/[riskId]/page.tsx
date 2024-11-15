@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { databases, storage } from "@/models/client/config"; // Adjust the import based on your project structure
-import Image from "next/image"; // Using Next.js Image component
-import { useParams } from "next/navigation"; // Import useParams
+import { databases, storage } from "@/models/client/config";
+import Image from "next/image";
+import { useParams } from "next/navigation";
 import { db, riskCollection } from "@/models/name";
 
 interface Risk {
@@ -26,7 +26,7 @@ interface Attachment {
 }
 
 const RiskDetail = () => {
-  const { riskId } = useParams(); // Use useParams to get riskId
+  const { riskId } = useParams();
   const [risk, setRisk] = useState<Risk | null>(null);
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -58,7 +58,6 @@ const RiskDetail = () => {
 
           setRisk(mappedRisk);
 
-          // Fetch the attachment if it exists
           if (response.attachmentId) {
             const attachmentResponse = await storage.getFile(
               db,
@@ -91,79 +90,103 @@ const RiskDetail = () => {
   }, [riskId]);
 
   if (loading) {
-    return <div className="text-center text-lg">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-lg text-gray-300">
+        Loading...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-500 text-center">{error}</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-red-500 text-center">
+        {error}
+      </div>
+    );
   }
 
   if (!risk) {
-    return <div className="text-center">No risk details found.</div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-center text-gray-300">
+        No risk details found.
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">{risk.title}</h1>
-      <p className="text-gray-700 mb-2">{risk.content}</p>
-      <div className="space-y-2 mb-4">
-        <p className="font-semibold">
-          Author ID: <span className="font-normal">{risk.authorId}</span>
-        </p>
-        <p className="font-semibold">
-          Impact: <span className="font-normal">{risk.impact}</span>
-        </p>
-        <p className="font-semibold">
-          Probability: <span className="font-normal">{risk.probability}</span>
-        </p>
-        <p className="font-semibold">
-          Action: <span className="font-normal">{risk.action}</span>
-        </p>
-        <p className="font-semibold">
-          Mitigation: <span className="font-normal">{risk.mitigation}</span>
-        </p>
-        <p className="font-semibold">
-          Tags: <span className="font-normal">{risk.tags.join(", ")}</span>
-        </p>
-        <p className="font-semibold">
-          Created:{" "}
-          <span className="font-normal">
-            {new Date(risk.created).toLocaleString()}
-          </span>
-        </p>
-        <p className="font-semibold">
-          Updated:{" "}
-          <span className="font-normal">
-            {new Date(risk.updated).toLocaleString()}
-          </span>
-        </p>
-      </div>
-
-      {attachment && (
-        <div className="mt-4">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-            Attachment
-          </h2>
-          {attachment.type.startsWith("image/") ? (
-            <Image
-              src={attachment.url}
-              alt="Attachment"
-              width={500}
-              height={300}
-              className="rounded-md shadow-lg"
-            />
-          ) : (
-            <a
-              href={attachment.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              View Attachment
-            </a>
-          )}
+    <div className="min-h-screen bg-black text-white pt-20">
+      <div className="max-w-3xl mx-auto p-6 bg-gray-800 rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-white mb-4">{risk.title}</h1>
+        <p className="text-gray-300 mb-2">{risk.content}</p>
+        <div className="space-y-2 mb-4">
+          <p className="font-semibold text-gray-200">
+            Author ID:{" "}
+            <span className="font-normal text-gray-400">{risk.authorId}</span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Impact:{" "}
+            <span className="font-normal text-gray-400">{risk.impact}</span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Probability:{" "}
+            <span className="font-normal text-gray-400">
+              {risk.probability}
+            </span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Action:{" "}
+            <span className="font-normal text-gray-400">{risk.action}</span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Mitigation:{" "}
+            <span className="font-normal text-gray-400">{risk.mitigation}</span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Tags:{" "}
+            <span className="font-normal text-gray-400">
+              {risk.tags.join(", ")}
+            </span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Created:{" "}
+            <span className="font-normal text-gray-400">
+              {new Date(risk.created).toLocaleString()}
+            </span>
+          </p>
+          <p className="font-semibold text-gray-200">
+            Updated:{" "}
+            <span className="font-normal text-gray-400">
+              {new Date(risk.updated).toLocaleString()}
+            </span>
+          </p>
         </div>
-      )}
+
+        {attachment && (
+          <div className="mt-4">
+            <h2 className="text-2xl font-semibold text-white mb-2">
+              Attachment
+            </h2>
+            {attachment.type.startsWith("image/") ? (
+              <Image
+                src={attachment.url}
+                alt="Attachment"
+                width={500}
+                height={300}
+                className="rounded-md shadow-lg"
+              />
+            ) : (
+              <a
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+              >
+                View Attachment
+              </a>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

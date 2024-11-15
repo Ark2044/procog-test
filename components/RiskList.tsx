@@ -98,7 +98,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 p-4 text-red-800">
+      <div className="rounded-lg bg-red-600 p-4 text-white">
         <p className="font-medium">Error</p>
         <p className="text-sm">{error}</p>
       </div>
@@ -113,24 +113,38 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           onValueChange={(value) => setViewMode(value as "my" | "all")}
           className="w-full sm:w-auto"
         >
-          <TabsList className="grid w-full grid-cols-2 sm:w-[240px]">
-            <TabsTrigger value="my">My Risks</TabsTrigger>
-            <TabsTrigger value="all">All Risks</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:w-[240px] bg-black">
+            <TabsTrigger value="my" className="text-white">
+              My Risks
+            </TabsTrigger>
+            <TabsTrigger value="all" className="text-white">
+              All Risks
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         <div className="flex gap-2">
           <Select value={filterImpact} onValueChange={setFilterImpact}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] bg-gray-700 text-white">
               <SelectValue placeholder="Impact Level" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-gray-800">
               <SelectGroup>
-                <SelectLabel>Filter by Impact</SelectLabel>
-                <SelectItem value="all">All Impacts</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
+                <SelectLabel className="text-white">
+                  Filter by Impact
+                </SelectLabel>
+                <SelectItem value="all" className="text-white">
+                  All Impacts
+                </SelectItem>
+                <SelectItem value="high" className="text-white">
+                  High
+                </SelectItem>
+                <SelectItem value="medium" className="text-white">
+                  Medium
+                </SelectItem>
+                <SelectItem value="low" className="text-white">
+                  Low
+                </SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -139,14 +153,18 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             value={sortBy}
             onValueChange={(value) => setSortBy(value as "created" | "impact")}
           >
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] bg-gray-700 text-white">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-gray-800">
               <SelectGroup>
-                <SelectLabel>Sort by</SelectLabel>
-                <SelectItem value="created">Date Created</SelectItem>
-                <SelectItem value="impact">Impact Level</SelectItem>
+                <SelectLabel className="text-white">Sort by</SelectLabel>
+                <SelectItem value="created" className="text-white">
+                  Date Created
+                </SelectItem>
+                <SelectItem value="impact" className="text-white">
+                  Impact Level
+                </SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -160,8 +178,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
       ) : (
         <div className="grid gap-4">
           {filteredAndSortedRisks().length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center">
-              <p className="text-gray-500">No risks found</p>
+            <div className="rounded-lg border border-dashed p-8 text-center bg-gray-700">
+              <p className="text-gray-300">No risks found</p>
             </div>
           ) : (
             filteredAndSortedRisks().map((risk) => (

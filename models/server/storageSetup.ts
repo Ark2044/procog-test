@@ -5,7 +5,7 @@ import { storage } from "./config";
 export default async function getOrCreateStorage() {
     try {
         await storage.getBucket(riskAttachmentBucket);
-        console.log("Storage Connected");
+        console.log("Storage Connection Successfull");
     } catch {
         try {
             await storage.createBucket(

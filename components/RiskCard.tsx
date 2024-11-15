@@ -20,13 +20,13 @@ interface RiskCardProps {
 const getImpactColor = (impact: "low" | "medium" | "high") => {
   switch (impact) {
     case "low":
-      return "bg-green-100 text-green-800";
+      return "bg-green-600 text-white"; // Changed to match the dark theme
     case "medium":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-600 text-white"; // Changed to match the dark theme
     case "high":
-      return "bg-red-100 text-red-800";
+      return "bg-red-600 text-white"; // Changed to match the dark theme
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-600 text-white"; // Changed to match the dark theme
   }
 };
 
@@ -35,26 +35,26 @@ const getActionColor = (
 ) => {
   switch (action) {
     case "mitigate":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-600 text-white"; // Changed to match the dark theme
     case "accept":
-      return "bg-green-100 text-green-800";
+      return "bg-green-600 text-white"; // Changed to match the dark theme
     case "transfer":
-      return "bg-purple-100 text-purple-800";
+      return "bg-purple-600 text-white"; // Changed to match the dark theme
     case "avoid":
-      return "bg-red-100 text-red-800";
+      return "bg-red-600 text-white"; // Changed to match the dark theme
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-600 text-white"; // Changed to match the dark theme
   }
 };
 
 // Function to get color for probability based on a numerical range (0-5)
 const getProbabilityColor = (probability: number) => {
   if (probability >= 4) {
-    return "bg-red-100 text-red-800"; // High probability
+    return "bg-red-600 text-white"; // High probability
   } else if (probability >= 2) {
-    return "bg-yellow-100 text-yellow-800"; // Medium probability
+    return "bg-yellow-600 text-white"; // Medium probability
   }
-  return "bg-green-100 text-green-800"; // Low probability
+  return "bg-green-600 text-white"; // Low probability
 };
 
 const RiskCard: React.FC<RiskCardProps> = ({
@@ -71,10 +71,12 @@ const RiskCard: React.FC<RiskCardProps> = ({
   updated,
 }) => {
   return (
-    <Card className="w-full hover:shadow-lg transition-shadow duration-200">
+    <Card className="w-full bg-gray-800 hover:shadow-lg transition-shadow duration-200 border border-gray-700">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-white">
+            {title}
+          </CardTitle>
           <div className="flex gap-2">
             <Badge variant="outline" className={getImpactColor(impact)}>
               {impact} impact
@@ -92,13 +94,13 @@ const RiskCard: React.FC<RiskCardProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-600 mb-4">{content}</p>
+        <p className="text-gray-300 mb-4">{content}</p>
 
         {action === "mitigate" &&
           mitigation && ( // Display mitigation if action is mitigate
             <div className="mb-4">
-              <strong>Mitigation Strategy:</strong>
-              <p className="text-gray-600">{mitigation}</p>
+              <strong className="text-white">Mitigation Strategy:</strong>
+              <p className="text-gray-300">{mitigation}</p>
             </div>
           )}
 
@@ -112,27 +114,31 @@ const RiskCard: React.FC<RiskCardProps> = ({
 
         <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-1">
-            <User className="w-4 h-4" />
-            <span>{authorId}</span>
+            <User className="w-4 h-4 text-gray -500" />
+            <span className="text-gray-300">{authorId}</span>
           </div>
 
           <div className="flex items-center gap-1">
             {attachmentId && (
               <>
-                <Paperclip className="w-4 h-4" />
-                <span>Attachment</span>
+                <Paperclip className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-300">Attachment</span>
               </>
             )}
           </div>
 
           <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>Created: {new Date(created).toLocaleDateString()}</span>
+            <Clock className="w-4 h-4 text-gray-500" />
+            <span className="text-gray-300">
+              Created: {new Date(created).toLocaleDateString()}
+            </span>
           </div>
 
           <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>Updated: {new Date(updated).toLocaleDateString()}</span>
+            <Clock className="w-4 h-4 text-gray-500" />
+            <span className="text-gray-300">
+              Updated: {new Date(updated).toLocaleDateString()}
+            </span>
           </div>
         </div>
       </CardContent>

@@ -9,7 +9,7 @@ import { databases } from "./config";
 export default async function getOrCreateDB() {
     try {
         await databases.get(db)
-        console.log("Database connection")
+        console.log("Database connection successfull")
     } catch {
         try {
             await databases.create(db, db)
