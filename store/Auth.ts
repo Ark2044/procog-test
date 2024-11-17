@@ -119,16 +119,22 @@ export const useAuthStore = create<IAuthStore>()(
       },
 
       async logout() {
-        set({ loading: true });
+        set({ loading: true, error: null });
         try {
-          await account.deleteSessions();
+          console.log("Attempting to log out...");
+          await account.deleteSessions(); // Delete all sessions
+          console.log("Successfully logged out on the server.");
           set({ session: null, jwt: null, user: null });
+          console.log("State cleared.");
         } catch (error) {
+          console.error("Error during logout:", error);
           set({ error: error instanceof AppwriteException ? error : null });
         } finally {
           set({ loading: false });
+          console.log("Logout process finished.");
         }
       },
+      
 
       async updateUserProfile(prefs: UserPrefs) {
         set({ loading: true, error: null });
