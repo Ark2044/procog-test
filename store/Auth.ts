@@ -1,5 +1,3 @@
-'use client'
-import React from "react";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { persist } from "zustand/middleware";
@@ -61,15 +59,14 @@ export const useAuthStore = create<IAuthStore>()(
         set({ loading: true, error: null });
         try {
           const session = await account.getSession("current");
-          const user = await account.get<UserPrefs>();
-          set({ session, user });
+          set({ session });
         } catch (error) {
-          set({
-            session: null,
-            user: null,
-            jwt: null,
-            error: error instanceof AppwriteException ? error : null,
-          });
+          if (error instanceof AppwriteException && error.code === 401) {
+            // Session has expired or user is not authenticated
+            set({ session: null, user: null, jwt: null });
+            // Optionally, redirect to login or show a message
+          }
+          set({ error: error instanceof AppwriteException ? error : null });
         } finally {
           set({ loading: false });
         }
@@ -81,7 +78,7 @@ export const useAuthStore = create<IAuthStore>()(
           const session = await account.createEmailPasswordSession(email, password);
           const [user, { jwt }] = await Promise.all([
             account.get<UserPrefs>(),
-            account.createJWT(),
+            account.createJWT()
           ]);
 
           if (!user.prefs?.reputation) {
@@ -94,7 +91,7 @@ export const useAuthStore = create<IAuthStore>()(
           set({ error: error instanceof AppwriteException ? error : null });
           return {
             success: false,
-            error: error instanceof AppwriteException ? error : null,
+            error: error instanceof AppwriteException ? error : null
           };
         } finally {
           set({ loading: false });
@@ -110,7 +107,7 @@ export const useAuthStore = create<IAuthStore>()(
           set({ error: error instanceof AppwriteException ? error : null });
           return {
             success: false,
-            error: error instanceof AppwriteException ? error : null,
+            error: error instanceof AppwriteException ? error : null
           };
         } finally {
           set({ loading: false });
@@ -122,6 +119,7 @@ export const useAuthStore = create<IAuthStore>()(
         try {
           await account.deleteSessions();
           set({ session: null, jwt: null, user: null });
+          // Optionally redirect to login page
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
         } finally {
@@ -132,9 +130,13 @@ export const useAuthStore = create<IAuthStore>()(
       async updateUserProfile(prefs: UserPrefs) {
         set({ loading: true, error: null });
         try {
+          // Call your API to update user preferences
           await account.updatePrefs<UserPrefs>(prefs);
+
+          // Optionally fetch the updated user info after updating
           const user = await account.get<UserPrefs>();
           set({ user }); // Update the user state with the new preferences
+
           return { success: true };
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
@@ -154,31 +156,7 @@ export const useAuthStore = create<IAuthStore>()(
         return (state, error) => {
           if (!error) state?.setHydrated();
         };
-      },
+      }
     }
   )
 );
-
-// React to Storage Changes and Ensure Proper Hydration
-if (typeof window !== "undefined") {
-  window.addEventListener("storage", (event) => {
-    if (event.key === "auth") {
-      useAuthStore.getState().verifySession();
-    }
-  });
-}
-
-// Ensure the state is not stuck in loading after hydration
-const useHydrationCheck = () => {
-  const hydrated = useAuthStore((state) => state.hydrated);
-  const verifySession = useAuthStore((state) => state.verifySession);
-
-  React.useEffect(() => {
-    if (!hydrated) return;
-    verifySession().catch(() => {
-      // Gracefully handle session verification errors
-    });
-  }, [hydrated, verifySession]);
-};
-
-export default useHydrationCheck;
