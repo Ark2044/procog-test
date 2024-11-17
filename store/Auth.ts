@@ -34,7 +34,6 @@ interface IAuthStore {
     error?: AppwriteException | null;
   }>;
   logout(): Promise<void>;
-
   updateUserProfile: (prefs: UserPrefs) => Promise<{
     success: boolean;
     error?: AppwriteException | null;
@@ -58,9 +57,19 @@ export const useAuthStore = create<IAuthStore>()(
       async verifySession() {
         set({ loading: true, error: null });
         try {
-          const session = await account.getSession("current");
-          set({ session });
+          const session = await account.getSession("current"); // Check the current session
+          const [user, { jwt }] = await Promise.all([
+            account.get<UserPrefs>(), // Fetch user details
+            account.createJWT() // Fetch JWT
+          ]);
+          set({ session, user, jwt });
         } catch (error) {
+          if (error instanceof AppwriteException) {
+            console.warn("Session expired or invalid. Logging out.");
+            await account.deleteSessions(); // Clear expired sessions on Appwrite
+            set({ session: null, jwt: null, user: null }); // Reset local state
+            alert("Your session has expired. Please log in again."); // Notify user
+          }
           set({ error: error instanceof AppwriteException ? error : null });
         } finally {
           set({ loading: false });
@@ -124,13 +133,9 @@ export const useAuthStore = create<IAuthStore>()(
       async updateUserProfile(prefs: UserPrefs) {
         set({ loading: true, error: null });
         try {
-          // Call your API to update user preferences
           await account.updatePrefs<UserPrefs>(prefs);
-
-          // Optionally fetch the updated user info after updating
-          const user = await account.get<UserPrefs>();
-          set({ user }); // Update the user state with the new preferences
-
+          const user = await account.get<UserPrefs>(); // Optionally fetch updated user data
+          set({ user });
           return { success: true };
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
@@ -147,8 +152,11 @@ export const useAuthStore = create<IAuthStore>()(
     {
       name: "auth",
       onRehydrateStorage() {
-        return (state, error) => {
-          if (!error) state?.setHydrated();
+        return async (state, error) => {
+          if (!error && state) {
+            await state.verifySession(); // Verify session after rehydration
+            state.setHydrated(); // Mark the store as hydrated
+          }
         };
       }
     }
