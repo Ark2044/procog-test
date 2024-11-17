@@ -1,3 +1,5 @@
+'use client'
+import React from "react";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { persist } from "zustand/middleware";
@@ -157,16 +159,26 @@ export const useAuthStore = create<IAuthStore>()(
   )
 );
 
-// React to Storage Changes and Periodically Verify Session
+// React to Storage Changes and Ensure Proper Hydration
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (event) => {
     if (event.key === "auth") {
       useAuthStore.getState().verifySession();
     }
   });
-
-  // Periodic Session Validation (Every 5 minutes)
-  setInterval(() => {
-    useAuthStore.getState().verifySession();
-  }, 5 * 60 * 1000);
 }
+
+// Ensure the state is not stuck in loading after hydration
+const useHydrationCheck = () => {
+  const hydrated = useAuthStore((state) => state.hydrated);
+  const verifySession = useAuthStore((state) => state.verifySession);
+
+  React.useEffect(() => {
+    if (!hydrated) return;
+    verifySession().catch(() => {
+      // Gracefully handle session verification errors
+    });
+  }, [hydrated, verifySession]);
+};
+
+export default useHydrationCheck;
