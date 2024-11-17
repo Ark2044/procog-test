@@ -34,6 +34,7 @@ interface IAuthStore {
     error?: AppwriteException | null;
   }>;
   logout(): Promise<void>;
+
   updateUserProfile: (prefs: UserPrefs) => Promise<{
     success: boolean;
     error?: AppwriteException | null;
@@ -57,20 +58,16 @@ export const useAuthStore = create<IAuthStore>()(
       async verifySession() {
         set({ loading: true, error: null });
         try {
-          const session = await account.getSession("current"); // Check the current session
-          const [user, { jwt }] = await Promise.all([
-            account.get<UserPrefs>(), // Fetch user details
-            account.createJWT() // Fetch JWT
-          ]);
-          set({ session, user, jwt });
+          const session = await account.getSession("current");
+          const user = await account.get<UserPrefs>();
+          set({ session, user });
         } catch (error) {
-          if (error instanceof AppwriteException) {
-            console.warn("Session expired or invalid. Logging out.");
-            await account.deleteSessions(); // Clear expired sessions on Appwrite
-            set({ session: null, jwt: null, user: null }); // Reset local state
-            alert("Your session has expired. Please log in again."); // Notify user
-          }
-          set({ error: error instanceof AppwriteException ? error : null });
+          set({
+            session: null,
+            user: null,
+            jwt: null,
+            error: error instanceof AppwriteException ? error : null,
+          });
         } finally {
           set({ loading: false });
         }
@@ -82,7 +79,7 @@ export const useAuthStore = create<IAuthStore>()(
           const session = await account.createEmailPasswordSession(email, password);
           const [user, { jwt }] = await Promise.all([
             account.get<UserPrefs>(),
-            account.createJWT()
+            account.createJWT(),
           ]);
 
           if (!user.prefs?.reputation) {
@@ -95,7 +92,7 @@ export const useAuthStore = create<IAuthStore>()(
           set({ error: error instanceof AppwriteException ? error : null });
           return {
             success: false,
-            error: error instanceof AppwriteException ? error : null
+            error: error instanceof AppwriteException ? error : null,
           };
         } finally {
           set({ loading: false });
@@ -111,7 +108,7 @@ export const useAuthStore = create<IAuthStore>()(
           set({ error: error instanceof AppwriteException ? error : null });
           return {
             success: false,
-            error: error instanceof AppwriteException ? error : null
+            error: error instanceof AppwriteException ? error : null,
           };
         } finally {
           set({ loading: false });
@@ -119,29 +116,23 @@ export const useAuthStore = create<IAuthStore>()(
       },
 
       async logout() {
-        set({ loading: true, error: null });
+        set({ loading: true });
         try {
-          console.log("Attempting to log out...");
-          await account.deleteSessions(); // Delete all sessions
-          console.log("Successfully logged out on the server.");
+          await account.deleteSessions();
           set({ session: null, jwt: null, user: null });
-          console.log("State cleared.");
         } catch (error) {
-          console.error("Error during logout:", error);
           set({ error: error instanceof AppwriteException ? error : null });
         } finally {
           set({ loading: false });
-          console.log("Logout process finished.");
         }
       },
-      
 
       async updateUserProfile(prefs: UserPrefs) {
         set({ loading: true, error: null });
         try {
           await account.updatePrefs<UserPrefs>(prefs);
-          const user = await account.get<UserPrefs>(); // Optionally fetch updated user data
-          set({ user });
+          const user = await account.get<UserPrefs>();
+          set({ user }); // Update the user state with the new preferences
           return { success: true };
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
@@ -158,13 +149,24 @@ export const useAuthStore = create<IAuthStore>()(
     {
       name: "auth",
       onRehydrateStorage() {
-        return async (state, error) => {
-          if (!error && state) {
-            await state.verifySession(); // Verify session after rehydration
-            state.setHydrated(); // Mark the store as hydrated
-          }
+        return (state, error) => {
+          if (!error) state?.setHydrated();
         };
-      }
+      },
     }
   )
 );
+
+// React to Storage Changes and Periodically Verify Session
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key === "auth") {
+      useAuthStore.getState().verifySession();
+    }
+  });
+
+  // Periodic Session Validation (Every 5 minutes)
+  setInterval(() => {
+    useAuthStore.getState().verifySession();
+  }, 5 * 60 * 1000);
+}
