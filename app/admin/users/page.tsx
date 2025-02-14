@@ -27,8 +27,11 @@ const AdminUsersPage = () => {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Redirect if not logged in or not admin
   useEffect(() => {
-    if (user && user.prefs?.role !== "admin") {
+    if (!user) {
+      router.push("/login");
+    } else if (user.prefs?.role !== "admin") {
       router.push("/");
     }
   }, [user, router]);
@@ -57,7 +60,7 @@ const AdminUsersPage = () => {
     if (searchQuery) {
       const lowercasedQuery = searchQuery.toLowerCase();
       const filtered = users.filter(
-        user =>
+        (user) =>
           user.name.toLowerCase().includes(lowercasedQuery) ||
           user.email.toLowerCase().includes(lowercasedQuery) ||
           user.prefs.department.toLowerCase().includes(lowercasedQuery) ||
@@ -69,7 +72,11 @@ const AdminUsersPage = () => {
     }
   }, [searchQuery, users]);
 
-  const handleUpdate = async (userId: string, field: "role" | "department", value: string) => {
+  const handleUpdate = async (
+    userId: string,
+    field: "role" | "department",
+    value: string
+  ) => {
     try {
       setUpdatingUser(userId);
       const response = await fetch("/api/admin/updateUser", {
@@ -86,11 +93,9 @@ const AdminUsersPage = () => {
       }
 
       // Update local state to avoid refetching
-      setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.$id === userId
-            ? { ...u, prefs: { ...u.prefs, [field]: value } }
-            : u
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.$id === userId ? { ...u, prefs: { ...u.prefs, [field]: value } } : u
         )
       );
     } catch (err) {
@@ -145,7 +150,7 @@ const AdminUsersPage = () => {
               disabled={refreshing}
               className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 flex items-center transition-colors disabled:opacity-50"
             >
-              <FaSync className={`mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              <FaSync className={`mr-2 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
             </button>
           </div>
