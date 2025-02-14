@@ -1,16 +1,16 @@
 import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  AlertTriangle, 
-  Upload, 
-  X, 
-  CheckCircle, 
-  Info, 
-  Tag, 
-  FileText, 
-  TrendingUp 
+import {
+  AlertTriangle,
+  Upload,
+  X,
+  CheckCircle,
+  Info,
+  Tag,
+  FileText,
+  TrendingUp,
 } from "lucide-react";
-import { databases, account, storage } from "@/models/client/config";
+import { databases, storage } from "@/models/client/config";
 import { riskCollection, db, riskAttachmentBucket } from "@/models/name";
 import { useAuthStore } from "@/store/Auth";
 
@@ -37,16 +37,18 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const [isConfidential, setIsConfidential] = useState(false);
   const [authorizedViewers, setAuthorizedViewers] = useState<string[]>([]);
   const { user } = useAuthStore();
-  const [availableUsers, setAvailableUsers] = useState<Array<{ $id: string; name: string }>>([]);
+  const [availableUsers, setAvailableUsers] = useState<
+    Array<{ $id: string; name: string }>
+  >([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/api/admin/listUsers');
+        const response = await fetch("/api/admin/listUsers");
         const data = await response.json();
         setAvailableUsers(data.users);
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        console.error("Failed to fetch users:", error);
       }
     };
 
@@ -72,8 +74,12 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     setError(null);
 
     try {
-      // Get the current user ID and department
-      const user = await account.get();
+      // Use the user from the auth store instead of fetching it again
+      if (!user) {
+        setError("User is not logged in");
+        setLoading(false);
+        return;
+      }
       const authorId = user.$id;
       const department = user.prefs?.department || "general";
 
@@ -95,7 +101,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         tags,
         attachmentId,
         impact,
-        probability: probability,
+        probability,
         action,
         mitigation: action === "mitigate" ? mitigation : "",
         department,
@@ -168,10 +174,10 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             className="absolute top-16 right-6 bg-gray-700 text-white p-4 rounded-lg shadow-lg z-10 w-64"
           >
             <p className="text-sm">
-              Create a comprehensive risk entry with detailed information, 
+              Create a comprehensive risk entry with detailed information,
               impact assessment, and mitigation strategies.
             </p>
-            <button 
+            <button
               type="button"
               onClick={() => setShowTooltip(false)}
               className="absolute top-2 right-2 text-gray-400 hover:text-white"
@@ -234,7 +240,11 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               maxLength={500}
               rows={4}
             />
-            <p className={`text-sm mt-1 ${remainingChars < 50 ? 'text-red-500' : 'text-gray-400'}`}>
+            <p
+              className={`text-sm mt-1 ${
+                remainingChars < 50 ? "text-red-500" : "text-gray-400"
+              }`}
+            >
               {remainingChars} characters remaining
             </p>
           </div>
@@ -388,11 +398,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white"
                 value={authorizedViewers}
                 onChange={(e) => {
-                  const selected = Array.from(e.target.selectedOptions, option => option.value);
+                  const selected = Array.from(
+                    e.target.selectedOptions,
+                    (option) => option.value
+                  );
                   setAuthorizedViewers(selected);
                 }}
               >
-                {availableUsers.map(user => (
+                {availableUsers.map((user) => (
                   <option key={user.$id} value={user.$id}>
                     {user.name}
                   </option>
@@ -419,4 +432,4 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   );
 };
 
-export default CreateRisk;
+export default CreateRisk;

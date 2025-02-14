@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState} from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/Auth";
@@ -87,66 +87,75 @@ const Dashboard = () => {
     }
   }, [session, loading, router, user, userIdString]);
 
-  const fetchRisks = async (showRefreshIndicator = false) => {
-    if (showRefreshIndicator) setIsRefreshing(true);
-    setFetchError(null);
-    try {
-      const response = await databases.listDocuments(db, riskCollection);
-      const fetchedRisks: Risk[] = response.documents.map((doc) => ({
-        $id: doc.$id,
-        title: doc.title,
-        content: doc.content,
-        authorId: doc.authorId,
-        tags: doc.tags || [],
-        attachmentId: doc.attachmentId,
-        impact: doc.impact,
-        probability: doc.probability,
-        action: doc.action,
-        department: doc.department,
-        created: doc.created,
-        updated: doc.updated,
-      }));
+  // Wrap fetchRisks in useCallback to keep it referentially stable
+  const fetchRisks = useCallback(
+    async (showRefreshIndicator = false) => {
+      if (showRefreshIndicator) setIsRefreshing(true);
+      setFetchError(null);
+      try {
+        const response = await databases.listDocuments(db, riskCollection);
+        const fetchedRisks: Risk[] = response.documents.map((doc) => ({
+          $id: doc.$id,
+          title: doc.title,
+          content: doc.content,
+          authorId: doc.authorId,
+          tags: doc.tags || [],
+          attachmentId: doc.attachmentId,
+          impact: doc.impact,
+          probability: doc.probability,
+          action: doc.action,
+          department: doc.department,
+          created: doc.created,
+          updated: doc.updated,
+          // Include missing properties with default values:
+          isConfidential: doc.isConfidential ?? false,
+          authorizedViewers: doc.authorizedViewers ?? [],
+        }));
 
-      let risksToSet = fetchedRisks;
-      if (user && user.prefs?.role !== "admin") {
-        risksToSet = fetchedRisks.filter(risk => risk.department === user.prefs.department);
+        let risksToSet = fetchedRisks;
+        if (user && user.prefs?.role !== "admin") {
+          risksToSet = fetchedRisks.filter(
+            (risk) => risk.department === user.prefs.department
+          );
+        }
+        setRisks(risksToSet);
+
+        const impactCounts = fetchedRisks.reduce(
+          (acc: ImpactCount, risk) => {
+            acc[risk.impact as keyof ImpactCount] =
+              (acc[risk.impact as keyof ImpactCount] || 0) + 1;
+            return acc;
+          },
+          { low: 0, medium: 0, high: 0 }
+        );
+        setImpactCount(impactCounts);
+
+        const actionCounts = fetchedRisks.reduce(
+          (acc: ActionCount, risk) => {
+            acc[risk.action as keyof ActionCount] =
+              (acc[risk.action as keyof ActionCount] || 0) + 1;
+            return acc;
+          },
+          { mitigate: 0, accept: 0, transfer: 0, avoid: 0 }
+        );
+        setActionCount(actionCounts);
+      } catch (err) {
+        setFetchError("Failed to fetch risks");
+        console.error(err);
+      } finally {
+        if (showRefreshIndicator) {
+          setTimeout(() => setIsRefreshing(false), 1000);
+        }
       }
-      setRisks(risksToSet);
-
-      const impactCounts = fetchedRisks.reduce(
-        (acc: ImpactCount, risk) => {
-          acc[risk.impact as keyof ImpactCount] =
-            (acc[risk.impact as keyof ImpactCount] || 0) + 1;
-          return acc;
-        },
-        { low: 0, medium: 0, high: 0 }
-      );
-      setImpactCount(impactCounts);
-
-      const actionCounts = fetchedRisks.reduce(
-        (acc: ActionCount, risk) => {
-          acc[risk.action as keyof ActionCount] =
-            (acc[risk.action as keyof ActionCount] || 0) + 1;
-          return acc;
-        },
-        { mitigate: 0, accept: 0, transfer: 0, avoid: 0 }
-      );
-      setActionCount(actionCounts);
-    } catch (err) {
-      setFetchError("Failed to fetch risks");
-      console.error(err);
-    } finally {
-      if (showRefreshIndicator) {
-        setTimeout(() => setIsRefreshing(false), 1000);
-      }
-    }
-  };
+    },
+    [user]
+  );
 
   useEffect(() => {
     if (session) {
       fetchRisks();
     }
-  }, [session]);
+  }, [session, fetchRisks]);
 
   const handleRiskCreated = () => {
     setShowCreateRisk(false);
@@ -166,7 +175,9 @@ const Dashboard = () => {
       >
         <div className="text-center">
           <LucideAlertTriangle className="mx-auto mb-4 text-red-500 w-16 h-16" />
-          <p className="text-red-500 text-xl">{error?.message || fetchError}</p>
+          <p className="text-red-500 text-xl">
+            {error?.message || fetchError}
+          </p>
           <button
             onClick={() => verifySession()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -202,7 +213,9 @@ const Dashboard = () => {
           </div>
           <button
             onClick={() => fetchRisks(true)}
-            className={`text-gray-400 hover:text-white ${isRefreshing ? "animate-spin" : ""}`}
+            className={`text-gray-400 hover:text-white ${
+              isRefreshing ? "animate-spin" : ""
+            }`}
           >
             <LucideRefreshCw />
           </button>
@@ -256,7 +269,9 @@ const Dashboard = () => {
 
       <div className="flex-1 p-6 bg-gray-900">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-white">Risk Dashboard</h2>
+          <h2 className="text-2xl font-semibold text-white">
+            Risk Dashboard
+          </h2>
           <button
             onClick={() => setShowCreateRisk((prev) => !prev)}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -274,7 +289,9 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {Object.entries(actionCount).map(([action, count]) => {
             const iconMap = {
-              mitigate: <LucideCheckCircle className="mr-3 text-green-400" />,
+              mitigate: (
+                <LucideCheckCircle className="mr-3 text-green-400" />
+              ),
               accept: <LucideHandHeart className="mr-3 text-yellow-400" />,
               transfer: <LucideShare2 className="mr-3 text-blue-400" />,
               avoid: <LucideXCircle className="mr-3 text-red-400" />,

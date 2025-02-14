@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import Link from "next/link"; // Import Link for navigation
+import Link from "next/link";
 import { useAuthStore } from "@/store/Auth";
 
 interface Risk {
@@ -28,7 +28,7 @@ interface Risk {
   impact: "low" | "medium" | "high";
   probability: number;
   action: "mitigate" | "accept" | "transfer" | "avoid";
-  mitigation?: string; // Add mitigation strategy to Risk interface
+  mitigation?: string;
   created: string;
   updated: string;
   isConfidential?: boolean;
@@ -48,7 +48,9 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [sortBy, setSortBy] = useState<"created" | "impact">("created");
   const [filterImpact, setFilterImpact] = useState<string>("all");
 
-  const { user } = useAuthStore(); // Retrieve user's details
+  const { user } = useAuthStore();
+  // Use the provided userId prop; fallback to the authenticated user's id
+  const currentUserId = userId || user?.$id;
 
   const fetchRisks = useCallback(async () => {
     setLoading(true);
@@ -64,7 +66,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         impact: doc.impact,
         probability: doc.probability,
         action: doc.action,
-        mitigation: doc.mitigation, // Fetch mitigation strategy
+        mitigation: doc.mitigation,
         created: doc.created,
         updated: doc.updated,
         isConfidential: doc.isConfidential,
@@ -86,17 +88,20 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   }, [fetchRisks]);
 
   const filteredAndSortedRisks = () => {
+    // Filter by the currentUserId if viewMode is "my"
     let filtered =
-      viewMode === "my" && user
-        ? risks.filter((risk) => risk.authorId === user.$id)
+      viewMode === "my" && currentUserId
+        ? risks.filter((risk) => risk.authorId === currentUserId)
         : risks;
 
+    // If the user is not an admin, further filter risks based on department and confidentiality
     if (user && user.prefs?.role !== "admin") {
-      filtered = filtered.filter((risk) => 
-        risk.department === user.prefs.department && 
-        (!risk.isConfidential || 
-          risk.authorizedViewers.includes(user.$id) || 
-          risk.authorId === user.$id)
+      filtered = filtered.filter(
+        (risk) =>
+          risk.department === user.prefs.department &&
+          (!risk.isConfidential ||
+            (risk.authorizedViewers?.includes(user.$id) ||
+              risk.authorId === user.$id))
       );
     }
 
@@ -211,7 +216,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                   impact={risk.impact}
                   probability={risk.probability}
                   action={risk.action}
-                  mitigation={risk.mitigation} // Pass mitigation strategy to RiskCard
+                  mitigation={risk.mitigation}
                   created={risk.created}
                   updated={risk.updated}
                 />
