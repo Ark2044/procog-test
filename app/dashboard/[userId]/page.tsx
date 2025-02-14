@@ -74,10 +74,18 @@ const Dashboard = () => {
   }, [session, verifySession]);
 
   useEffect(() => {
-    if (!loading && !session) {
-      router.push("/login");
+    if (!loading) {
+      if (!session) {
+        router.push("/login");
+      } else if (user) {
+        if (user.prefs?.role === "admin") {
+          router.push("/admin/users");
+        } else if (userIdString !== user.$id) {
+          router.push(`/dashboard/${user.$id}`);
+        }
+      }
     }
-  }, [session, loading, router]);
+  }, [session, loading, router, user, userIdString]);
 
   const fetchRisks = async (showRefreshIndicator = false) => {
     if (showRefreshIndicator) setIsRefreshing(true);
@@ -94,10 +102,16 @@ const Dashboard = () => {
         impact: doc.impact,
         probability: doc.probability,
         action: doc.action,
+        department: doc.department,
         created: doc.created,
         updated: doc.updated,
       }));
-      setRisks(fetchedRisks);
+
+      let risksToSet = fetchedRisks;
+      if (user && user.prefs?.role !== "admin") {
+        risksToSet = fetchedRisks.filter(risk => risk.department === user.prefs.department);
+      }
+      setRisks(risksToSet);
 
       const impactCounts = fetchedRisks.reduce(
         (acc: ImpactCount, risk) => {
@@ -172,7 +186,6 @@ const Dashboard = () => {
       animate={{ opacity: 1 }}
       className="flex flex-col lg:flex-row min-h-screen bg-gray-900 text-white pt-16"
     >
-      {/* Sidebar */}
       <div className="w-full lg:w-64 bg-gray-800 border-r border-gray-700">
         <div className="p-6 border-b border-gray-700 flex justify-between items-center">
           <div>
@@ -183,18 +196,18 @@ const Dashboard = () => {
               </p>
             </div>
             <p className="text-xs text-gray-400">ID: {userIdString}</p>
+            <p className="text-xs text-gray-400">
+              Department: {user?.prefs?.department}
+            </p>
           </div>
           <button
             onClick={() => fetchRisks(true)}
-            className={`text-gray-400 hover:text-white ${
-              isRefreshing ? "animate-spin" : ""
-            }`}
+            className={`text-gray-400 hover:text-white ${isRefreshing ? "animate-spin" : ""}`}
           >
             <LucideRefreshCw />
           </button>
         </div>
 
-        {/* Dashboard Stats */}
         <div className="p-6 space-y-6">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -241,7 +254,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-6 bg-gray-900">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-white">Risk Dashboard</h2>

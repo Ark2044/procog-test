@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import Link from "next/link"; // Import Link for navigation
+import { useAuthStore } from "@/store/Auth";
 
 interface Risk {
   $id: string;
@@ -30,6 +31,9 @@ interface Risk {
   mitigation?: string; // Add mitigation strategy to Risk interface
   created: string;
   updated: string;
+  isConfidential?: boolean;
+  authorizedViewers?: string[];
+  department?: string;
 }
 
 interface RiskListProps {
@@ -43,6 +47,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [viewMode, setViewMode] = useState<"my" | "all">("my");
   const [sortBy, setSortBy] = useState<"created" | "impact">("created");
   const [filterImpact, setFilterImpact] = useState<string>("all");
+
+  const { user } = useAuthStore(); // Retrieve user's details
 
   const fetchRisks = useCallback(async () => {
     setLoading(true);
@@ -61,6 +67,9 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         mitigation: doc.mitigation, // Fetch mitigation strategy
         created: doc.created,
         updated: doc.updated,
+        isConfidential: doc.isConfidential,
+        authorizedViewers: doc.authorizedViewers,
+        department: doc.department,
       }));
 
       setRisks(risksData);
@@ -78,9 +87,18 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
   const filteredAndSortedRisks = () => {
     let filtered =
-      viewMode === "my" && userId
-        ? risks.filter((risk) => risk.authorId === userId)
+      viewMode === "my" && user
+        ? risks.filter((risk) => risk.authorId === user.$id)
         : risks;
+
+    if (user && user.prefs?.role !== "admin") {
+      filtered = filtered.filter((risk) => 
+        risk.department === user.prefs.department && 
+        (!risk.isConfidential || 
+          risk.authorizedViewers.includes(user.$id) || 
+          risk.authorId === user.$id)
+      );
+    }
 
     if (filterImpact !== "all") {
       filtered = filtered.filter((risk) => risk.impact === filterImpact);

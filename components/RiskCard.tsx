@@ -2,6 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Paperclip, Clock, User } from "lucide-react";
+import { FaLock } from "react-icons/fa";
 
 interface RiskCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface RiskCardProps {
   mitigation?: string; // Add mitigation strategy prop
   created: string;
   updated: string;
+  isConfidential?: boolean;
 }
 
 const getImpactColor = (impact: "low" | "medium" | "high") => {
@@ -69,13 +71,17 @@ const RiskCard: React.FC<RiskCardProps> = ({
   mitigation, // Include mitigation in props
   created,
   updated,
+  isConfidential,
 }) => {
   return (
     <Card className="w-full bg-gray-800 hover:shadow-lg transition-shadow duration-200 border border-gray-700">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold text-white">
+          <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
             {title}
+            {isConfidential && (
+              <FaLock className="text-red-500" title="Confidential Risk" />
+            )}
           </CardTitle>
           <div className="flex gap-2">
             <Badge variant="outline" className={getImpactColor(impact)}>

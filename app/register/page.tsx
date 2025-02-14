@@ -14,7 +14,11 @@ export default function Register() {
 
   useEffect(() => {
     if (user) {
-      router.push(`/dashboard/${user.$id}`);
+      if (user.prefs?.role === "admin") {
+        router.push("/admin/users");
+      } else {
+        router.push(`/dashboard/${user.$id}`);
+      }
     }
   }, [user, router]);
 

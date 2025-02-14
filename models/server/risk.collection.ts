@@ -25,15 +25,17 @@ export default async function createRiskCollection() {
             databases.createStringAttribute(db, riskCollection, "tags", 1000, true, undefined, true, true),
             databases.createStringAttribute(db, riskCollection, "attachmentId", 100, false),
             databases.createEnumAttribute(db, riskCollection, "impact", impactEnumValues, true),
-            databases.createIntegerAttribute(db, riskCollection, "probability", true, 0, 5, 1),
+            databases.createIntegerAttribute(db, riskCollection, "probability", true, 0, 5),
             databases.createEnumAttribute(db, riskCollection, "action", actionEnumValues, true),
             databases.createStringAttribute(db, riskCollection, "mitigation", 1000, false),
             databases.createDatetimeAttribute(db, riskCollection, "created", true),
             databases.createDatetimeAttribute(db, riskCollection, "updated", true),
+            databases.createBooleanAttribute(db, riskCollection, "isConfidential", true),
+            databases.createStringAttribute(db, riskCollection, "authorizedViewers", 1000, true, undefined, true, true),
         ]);
         console.log("Risk Attributes created");
 
-        // Create indexes for full-text search on title and content, and key indexes for dates
+        // Create indexes
         await Promise.all([
             databases.createIndex(db, riskCollection, 'title', IndexType.Fulltext, ['title']),
             databases.createIndex(db, riskCollection, 'content', IndexType.Fulltext, ['content']),
@@ -43,6 +45,8 @@ export default async function createRiskCollection() {
             databases.createIndex(db, riskCollection, 'mitigation', IndexType.Key, ['mitigation']),
             databases.createIndex(db, riskCollection, 'created', IndexType.Key, ['created']),
             databases.createIndex(db, riskCollection, 'updated', IndexType.Key, ['updated']),
+            databases.createIndex(db, riskCollection, 'isConfidential', IndexType.Key, ['isConfidential']),
+            databases.createIndex(db, riskCollection, 'authorizedViewers', IndexType.Key, ['authorizedViewers']),
         ]);
         console.log("Indexes created");
     } catch (error) {

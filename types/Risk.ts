@@ -6,8 +6,11 @@ export interface Risk {
     tags: string[];
     attachmentId?: string;
     impact: "low" | "medium" | "high";
-    probability: string; // Adjust if this should be a different type
+    probability: string;
     action: "mitigate" | "accept" | "transfer" | "avoid";
-    created: string; // ISO date string
-    updated: string; // ISO date string
+    department: string;
+    isConfidential: boolean;
+    authorizedViewers: string[];
+    created: string;
+    updated: string;
 }

@@ -13,9 +13,13 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to dashboard if user is already logged in
+    // Redirect based on user role
     if (user) {
-      router.push(`/dashboard/${user.$id}`);
+      if (user.prefs?.role === "admin") {
+        router.push("/admin/users");
+      } else {
+        router.push(`/dashboard/${user.$id}`);
+      }
     }
   }, [user, router]);
 
@@ -40,18 +44,21 @@ export default function Login() {
         setError(loginResponse.error?.message || "Login failed");
       } else {
         const currentUser = useAuthStore.getState().user;
-        router.push(`/dashboard/${currentUser?.$id}`);
+        // Redirect based on role after successful login
+        if (currentUser?.prefs?.role === "admin") {
+          router.push("/admin/users");
+        } else {
+          router.push(`/dashboard/${currentUser?.$id}`);
+        }
       }
     } catch (error) {
-      // Catching the error
       setError("An unexpected error occurred");
-      console.error(error); // Log the error for debugging
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Loading state component
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen text-white bg-black">

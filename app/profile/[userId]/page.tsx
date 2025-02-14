@@ -1,16 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/Auth"; // Adjust this path if necessary
+import { useAuthStore } from "@/store/Auth";
 import { useRouter } from "next/navigation";
-import { FaUser, FaEnvelope, FaStar } from "react-icons/fa"; // Import Font Awesome icons
+import { FaUser, FaEnvelope, FaStar, FaBuilding, FaUserTag } from "react-icons/fa";
 
 const Profile = () => {
   const router = useRouter();
-  const { user, loading, error, updateUserProfile, verifySession } =
-    useAuthStore();
+  const { user, loading, error, updateUserProfile, verifySession } = useAuthStore();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [reputation] = useState(user?.prefs?.reputation || 0); // Make reputation read-only
+  const [reputation] = useState(user?.prefs?.reputation || 0);
+  const [role] = useState(user?.prefs?.role || "user");
+  const [department] = useState(user?.prefs?.department || "general");
   const [updateError, setUpdateError] = useState("");
 
   useEffect(() => {
@@ -27,11 +28,15 @@ const Profile = () => {
     e.preventDefault();
     setUpdateError("");
 
-    const result = await updateUserProfile({ reputation });
+    const result = await updateUserProfile({
+      reputation,
+      role,
+      department
+    });
+    
     if (!result.success) {
       setUpdateError(result.error?.message || "Failed to update profile");
     } else {
-      // Handle a successful update (e.g., show a success message)
       alert("Profile updated successfully!");
     }
   };
@@ -97,6 +102,36 @@ const Profile = () => {
               type="number"
               id="reputation"
               value={reputation}
+              readOnly
+            />
+          </div>
+          <div>
+            <label
+              className="flex items-center text-gray-300 mb-2"
+              htmlFor="role"
+            >
+              <FaUserTag className="mr-2" /> Role
+            </label>
+            <input
+              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-400 cursor-not-allowed"
+              type="text"
+              id="role"
+              value={role}
+              readOnly
+            />
+          </div>
+          <div>
+            <label
+              className="flex items-center text-gray-300 mb-2"
+              htmlFor="department"
+            >
+              <FaBuilding className="mr-2" /> Department
+            </label>
+            <input
+              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-400 cursor-not-allowed"
+              type="text"
+              id="department"
+              value={department}
               readOnly
             />
           </div>

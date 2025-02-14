@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   AlertTriangle, 
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { databases, account, storage } from "@/models/client/config";
 import { riskCollection, db, riskAttachmentBucket } from "@/models/name";
+import { useAuthStore } from "@/store/Auth";
 
 const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   onRiskCreated,
@@ -33,6 +34,26 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const [error, setError] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [remainingChars, setRemainingChars] = useState(500);
+  const [isConfidential, setIsConfidential] = useState(false);
+  const [authorizedViewers, setAuthorizedViewers] = useState<string[]>([]);
+  const { user } = useAuthStore();
+  const [availableUsers, setAvailableUsers] = useState<Array<{ $id: string; name: string }>>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/admin/listUsers');
+        const data = await response.json();
+        setAvailableUsers(data.users);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      }
+    };
+
+    if (isConfidential) {
+      fetchUsers();
+    }
+  }, [isConfidential]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -51,9 +72,10 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     setError(null);
 
     try {
-      // Get the current user ID
+      // Get the current user ID and department
       const user = await account.get();
       const authorId = user.$id;
+      const department = user.prefs?.department || "general";
 
       // Upload file if provided
       if (file) {
@@ -76,11 +98,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         probability: probability,
         action,
         mitigation: action === "mitigate" ? mitigation : "",
+        department,
+        isConfidential,
+        authorizedViewers: isConfidential ? authorizedViewers : [],
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
       });
 
-      onRiskCreated(); // Refresh the risk list
+      onRiskCreated();
 
       // Reset form fields
       setTitle("");
@@ -92,6 +117,8 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       setProbability(3);
       setAction("mitigate");
       setMitigation("");
+      setIsConfidential(false);
+      setAuthorizedViewers([]);
       setRemainingChars(500);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -110,8 +137,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     if (probability <= 3) return "text-yellow-500";
     return "text-red-500";
   };
-
-  // Removed unused getImpactColor function to address ESLint warning
 
   return (
     <motion.div
@@ -339,6 +364,45 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               />
             </div>
           )}
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="confidential"
+              checked={isConfidential}
+              onChange={(e) => setIsConfidential(e.target.checked)}
+              className="rounded border-gray-600 bg-gray-700 text-blue-500"
+            />
+            <label htmlFor="confidential" className="text-gray-300">
+              Mark as Confidential
+            </label>
+          </div>
+
+          {isConfidential && (
+            <div>
+              <label className="text-gray-300 font-semibold mb-2">
+                Authorized Viewers
+              </label>
+              <select
+                multiple
+                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white"
+                value={authorizedViewers}
+                onChange={(e) => {
+                  const selected = Array.from(e.target.selectedOptions, option => option.value);
+                  setAuthorizedViewers(selected);
+                }}
+              >
+                {availableUsers.map(user => (
+                  <option key={user.$id} value={user.$id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-400 mt-1">
+                Hold Ctrl/Cmd to select multiple users
+              </p>
+            </div>
+          )}
         </div>
 
         <button
@@ -355,4 +419,4 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   );
 };
 
-export default CreateRisk;
+export default CreateRisk;
