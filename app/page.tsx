@@ -27,7 +27,11 @@ const LoadingSpinner = () => (
       className="loader"
       animate={{
         rotate: 360,
-        transition: { repeat: Infinity, duration: 1, ease: "linear" },
+        transition: {
+          repeat: Infinity,
+          duration: 1,
+          ease: "linear",
+        },
       }}
       style={{
         width: "60px",
@@ -53,10 +57,9 @@ const HomePage = () => {
   const router = useRouter();
   const { session, verifySession, user } = useAuthStore();
   const [loading, setLoading] = useState(true);
-  const [sessionChecked, setSessionChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Verify session and mark session as checked when done.
+  // First, verify the session
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -65,23 +68,22 @@ const HomePage = () => {
         console.error(err);
         setError("Failed to verify session. Please try again.");
       } finally {
-        setSessionChecked(true);
         setLoading(false);
       }
     };
     checkSession();
   }, [verifySession]);
 
-  // Only trigger redirect after session has been checked.
+  // Only trigger redirect when loading is finished
   useEffect(() => {
-    if (sessionChecked) {
+    if (!loading) {
       if (!session) {
         router.push("/login");
       } else if (user) {
         router.push(`/dashboard/${user.$id}`);
       }
     }
-  }, [sessionChecked, session, user, router]);
+  }, [loading, session, user, router]);
 
   const features = useMemo(
     () => [
@@ -188,7 +190,9 @@ const HomePage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      style={{ background: "linear-gradient(to bottom, #F9FAFB, #F3F4F6)" }}
+      style={{
+        background: "linear-gradient(to bottom, #F9FAFB, #F3F4F6)",
+      }}
     >
       <HeroSection />
 
