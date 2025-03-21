@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/Auth";
 import HeroSection from "@/components/layout/HeroSection";
 import {
   BarChart3,
@@ -11,79 +10,10 @@ import {
   CheckCircle,
   Briefcase,
   Clipboard,
-  ArrowRight,
-  Globe,
 } from "lucide-react";
-
-const LoadingSpinner = () => (
-  <motion.div
-    className="flex flex-col items-center justify-center min-h-screen space-y-4"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.5 }}
-    style={{ background: "linear-gradient(135deg, #EFF6FF, #F5F3FF)" }}
-  >
-    <motion.div
-      className="loader"
-      animate={{
-        rotate: 360,
-        transition: {
-          repeat: Infinity,
-          duration: 1,
-          ease: "linear",
-        },
-      }}
-      style={{
-        width: "60px",
-        height: "60px",
-        borderRadius: "50%",
-        border: "8px solid transparent",
-        borderTopColor: "#6366F1",
-        borderBottomColor: "#8B5CF6",
-      }}
-    />
-    <motion.p
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.3 }}
-      className="text-xl font-bold text-indigo-700"
-    >
-      Preparing your experience...
-    </motion.p>
-  </motion.div>
-);
 
 const HomePage = () => {
   const router = useRouter();
-  const { session, verifySession, user } = useAuthStore();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // First, verify the session
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        await verifySession();
-      } catch (err) {
-        console.error(err);
-        setError("Failed to verify session. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkSession();
-  }, [verifySession]);
-
-  // Only trigger redirect when loading is finished
-  useEffect(() => {
-    if (!loading) {
-      if (!session) {
-        router.push("/login");
-      } else if (user) {
-        router.push(`/dashboard/${user.$id}`);
-      }
-    }
-  }, [loading, session, user, router]);
 
   const features = useMemo(
     () => [
@@ -156,33 +86,6 @@ const HomePage = () => {
     ],
     []
   );
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (error) {
-    return (
-      <motion.div
-        className="flex flex-col items-center justify-center min-h-screen text-center p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        style={{ background: "linear-gradient(135deg, #F5F3FF, #EFF6FF)" }}
-      >
-        <Globe className="w-24 h-24 mb-4 text-indigo-500" />
-        <h2 className="text-3xl font-bold mb-4 text-gray-800">
-          Oops! Something Went Wrong
-        </h2>
-        <p className="text-xl mb-6 text-purple-500">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 font-bold rounded-lg hover:from-indigo-600 hover:to-purple-600 transition flex items-center text-white focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
-        >
-          Retry <ArrowRight className="ml-2" />
-        </button>
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div
