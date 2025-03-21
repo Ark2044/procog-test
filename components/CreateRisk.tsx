@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, ChangeEvent, FormEvent, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,6 +14,7 @@ import {
 import { databases, storage } from "@/models/client/config";
 import { riskCollection, db, riskAttachmentBucket } from "@/models/name";
 import { useAuthStore } from "@/store/Auth";
+import toast from "react-hot-toast";
 
 const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   onRiskCreated,
@@ -51,7 +53,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         console.error("Failed to fetch users:", error);
       }
     };
-
     if (isConfidential) {
       fetchUsers();
     }
@@ -68,15 +69,41 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     setRemainingChars(500 - newContent.length);
   };
 
+  const validateFields = (): boolean => {
+    // Check required fields
+    if (!title.trim() || !content.trim()) {
+      toast.error("Title and Description are required");
+      return false;
+    }
+    // Check length limits
+    if (title.trim().length > 100) {
+      toast.error("Title must be 100 characters or less");
+      return false;
+    }
+    if (content.trim().length > 500) {
+      toast.error("Description must be 500 characters or less");
+      return false;
+    }
+    // If action is mitigate, require mitigation strategy
+    if (action === "mitigate" && !mitigation.trim()) {
+      toast.error("Please provide mitigation strategies");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+    // Validate form fields before submission
+    if (!validateFields()) {
+      return;
+    }
+    setLoading(true);
 
     try {
-      // Use the user from the auth store instead of fetching it again
       if (!user) {
-        setError("User is not logged in");
+        toast.error("User is not logged in");
         setLoading(false);
         return;
       }
@@ -111,6 +138,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         updated: new Date().toISOString(),
       });
 
+      toast.success("Risk created successfully!");
       onRiskCreated();
 
       // Reset form fields
@@ -129,8 +157,10 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError("Failed to create risk: " + err.message);
+        toast.error("Failed to create risk: " + err.message);
       } else {
         setError("Failed to create risk: An unknown error occurred");
+        toast.error("Failed to create risk: An unknown error occurred");
       }
       console.error(err);
     } finally {
@@ -149,17 +179,17 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="max-w-md mx-auto bg-gray-800 p-6 rounded-lg shadow-2xl mb-8 border border-gray-700 relative"
+      className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-2xl mb-8 border border-gray-200 relative"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <AlertTriangle className="mr-3 text-yellow-500" />
-          <h2 className="text-2xl font-bold text-white">Create Risk</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Create Risk</h2>
         </div>
         <button
           type="button"
           onClick={() => setShowTooltip(!showTooltip)}
-          className="text-gray-400 hover:text-white transition"
+          className="text-gray-500 hover:text-gray-800 transition"
         >
           <Info />
         </button>
@@ -171,7 +201,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute top-16 right-6 bg-gray-700 text-white p-4 rounded-lg shadow-lg z-10 w-64"
+            className="absolute top-16 right-6 bg-white text-gray-800 p-4 rounded-lg shadow-lg z-10 w-64 border border-gray-200"
           >
             <p className="text-sm">
               Create a comprehensive risk entry with detailed information,
@@ -180,7 +210,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             <button
               type="button"
               onClick={() => setShowTooltip(false)}
-              className="absolute top-2 right-2 text-gray-400 hover:text-white"
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
             >
               <X size={16} />
             </button>
@@ -207,7 +237,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="title"
-              className="text-gray-300 font-semibold mb-2 inline-flex items-center"
+              className="text-gray-800 font-semibold mb-2 inline-flex items-center"
             >
               <FileText className="mr-2 text-gray-500" /> Title
             </label>
@@ -217,7 +247,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter risk title"
               maxLength={100}
             />
@@ -226,7 +256,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="content"
-              className="text-gray-300 font-semibold mb-2 inline-flex items-center"
+              className="text-gray-800 font-semibold mb-2 inline-flex items-center"
             >
               <FileText className="mr-2 text-gray-500" /> Description
             </label>
@@ -235,14 +265,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               value={content}
               onChange={handleContentChange}
               required
-              className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter risk description"
               maxLength={500}
               rows={4}
             />
             <p
               className={`text-sm mt-1 ${
-                remainingChars < 50 ? "text-red-500" : "text-gray-400"
+                remainingChars < 50 ? "text-red-500" : "text-gray-500"
               }`}
             >
               {remainingChars} characters remaining
@@ -252,7 +282,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="tags"
-              className="text-gray-300 font-semibold mb-2 inline-flex items-center"
+              className="text-gray-800 font-semibold mb-2 inline-flex items-center"
             >
               <Tag className="mr-2 text-gray-500" /> Tags
             </label>
@@ -263,7 +293,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               onChange={(e) =>
                 setTags(e.target.value.split(",").map((tag) => tag.trim()))
               }
-              className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter tags separated by commas"
             />
           </div>
@@ -271,7 +301,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="file"
-              className="text-gray-300 font-semibold mb-2 inline-flex items-center"
+              className="text-gray-800 font-semibold mb-2 inline-flex items-center"
             >
               <Upload className="mr-2 text-gray-500" /> Attachment (optional)
             </label>
@@ -280,12 +310,12 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 type="file"
                 id="file"
                 onChange={handleFileChange}
-                className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {file && <CheckCircle className="ml-2 text-green-500" />}
             </div>
             {file && (
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 mt-1">
                 Selected: {file.name}
               </p>
             )}
@@ -294,7 +324,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="impact"
-              className="text-gray-300 font-semibold mb-2"
+              className="text-gray-800 font-semibold mb-2"
             >
               <TrendingUp className="mr-2 text-gray-500" /> Impact
             </label>
@@ -304,7 +334,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               onChange={(e) =>
                 setImpact(e.target.value as "low" | "medium" | "high")
               }
-              className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="low">Low</option>
               <option value="medium">Medium</option>
@@ -315,7 +345,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="probability"
-              className="text-gray-300 font-semibold mb-2"
+              className="text-gray-800 font-semibold mb-2"
             >
               Probability (0-5)
             </label>
@@ -328,7 +358,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               onChange={(e) => setProbability(Number(e.target.value))}
               className="w-full"
             />
-            <p className={`text-gray-400 ${getProbabilityColor()}`}>
+            <p className={`text-sm ${getProbabilityColor()}`}>
               Probability: {probability * 20}%
             </p>
           </div>
@@ -336,7 +366,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <div>
             <label
               htmlFor="action"
-              className="text-gray-300 font-semibold mb-2"
+              className="text-gray-800 font-semibold mb-2"
             >
               Action
             </label>
@@ -348,7 +378,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                   e.target.value as "mitigate" | "accept" | "transfer" | "avoid"
                 )
               }
-              className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="mitigate">Mitigate</option>
               <option value="accept">Accept</option>
@@ -361,7 +391,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             <div>
               <label
                 htmlFor="mitigation"
-                className="text-gray-300 font-semibold mb-2"
+                className="text-gray-800 font-semibold mb-2"
               >
                 How to Mitigate the Risk
               </label>
@@ -369,7 +399,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 id="mitigation"
                 value={mitigation}
                 onChange={(e) => setMitigation(e.target.value)}
-                className="border border-gray-600 p-2 w-full rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter mitigation strategies"
               />
             </div>
@@ -381,21 +411,21 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               id="confidential"
               checked={isConfidential}
               onChange={(e) => setIsConfidential(e.target.checked)}
-              className="rounded border-gray-600 bg-gray-700 text-blue-500"
+              className="rounded border-gray-300 bg-white text-blue-500"
             />
-            <label htmlFor="confidential" className="text-gray-300">
+            <label htmlFor="confidential" className="text-gray-800">
               Mark as Confidential
             </label>
           </div>
 
           {isConfidential && (
             <div>
-              <label className="text-gray-300 font-semibold mb-2">
+              <label className="text-gray-800 font-semibold mb-2">
                 Authorized Viewers
               </label>
               <select
                 multiple
-                className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white"
+                className="w-full bg-white border border-gray-300 rounded-md p-2 text-gray-800"
                 value={authorizedViewers}
                 onChange={(e) => {
                   const selected = Array.from(
@@ -411,7 +441,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                   </option>
                 ))}
               </select>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm text-gray-500 mt-1">
                 Hold Ctrl/Cmd to select multiple users
               </p>
             </div>

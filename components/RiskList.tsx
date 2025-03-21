@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, useCallback } from "react";
 import { databases } from "@/models/client/config";
 import { riskCollection, db } from "@/models/name";
@@ -100,8 +99,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         (risk) =>
           risk.department === user.prefs.department &&
           (!risk.isConfidential ||
-            (risk.authorizedViewers?.includes(user.$id) ||
-              risk.authorId === user.$id))
+            risk.authorizedViewers?.includes(user.$id) ||
+            risk.authorId === user.$id)
       );
     }
 
@@ -121,7 +120,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-600 p-4 text-white">
+      <div className="rounded-lg bg-red-100 p-4 text-gray-800 border border-red-200">
         <p className="font-medium">Error</p>
         <p className="text-sm">{error}</p>
       </div>
@@ -134,13 +133,13 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         <Tabs
           defaultValue={viewMode}
           onValueChange={(value) => setViewMode(value as "my" | "all")}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto "
         >
-          <TabsList className="grid w-full grid-cols-2 sm:w-[240px] bg-black">
-            <TabsTrigger value="my" className="text-white">
+          <TabsList className="grid w-full grid-cols-2 sm:w-[240px] border border-gray-200 rounded">
+            <TabsTrigger value="my" className="text-gray-800 ">
               My Risks
             </TabsTrigger>
-            <TabsTrigger value="all" className="text-white">
+            <TabsTrigger value="all" className="text-gray-800">
               All Risks
             </TabsTrigger>
           </TabsList>
@@ -148,26 +147,16 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
         <div className="flex gap-2">
           <Select value={filterImpact} onValueChange={setFilterImpact}>
-            <SelectTrigger className="w-[140px] bg-gray-700 text-white">
+            <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
               <SelectValue placeholder="Impact Level" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800">
+            <SelectContent className="bg-white text-gray-800 border border-gray-200">
               <SelectGroup>
-                <SelectLabel className="text-white">
-                  Filter by Impact
-                </SelectLabel>
-                <SelectItem value="all" className="text-white">
-                  All Impacts
-                </SelectItem>
-                <SelectItem value="high" className="text-white">
-                  High
-                </SelectItem>
-                <SelectItem value="medium" className="text-white">
-                  Medium
-                </SelectItem>
-                <SelectItem value="low" className="text-white">
-                  Low
-                </SelectItem>
+                <SelectLabel>Filter by Impact</SelectLabel>
+                <SelectItem value="all">All Impacts</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -176,18 +165,14 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             value={sortBy}
             onValueChange={(value) => setSortBy(value as "created" | "impact")}
           >
-            <SelectTrigger className="w-[140px] bg-gray-700 text-white">
+            <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-800">
+            <SelectContent className="bg-white text-gray-800 border border-gray-200">
               <SelectGroup>
-                <SelectLabel className="text-white">Sort by</SelectLabel>
-                <SelectItem value="created" className="text-white">
-                  Date Created
-                </SelectItem>
-                <SelectItem value="impact" className="text-white">
-                  Impact Level
-                </SelectItem>
+                <SelectLabel>Sort by</SelectLabel>
+                <SelectItem value="created">Date Created</SelectItem>
+                <SelectItem value="impact">Impact Level</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -201,8 +186,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
       ) : (
         <div className="grid gap-4">
           {filteredAndSortedRisks().length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center bg-gray-700">
-              <p className="text-gray-300">No risks found</p>
+            <div className="rounded-lg border border-dashed p-8 text-center bg-gray-100">
+              <p className="text-gray-600">No risks found</p>
             </div>
           ) : (
             filteredAndSortedRisks().map((risk) => (

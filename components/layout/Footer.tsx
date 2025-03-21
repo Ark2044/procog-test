@@ -2,15 +2,13 @@ import { FaFacebookF, FaTwitter, FaLinkedinIn } from "react-icons/fa";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-gray-300 py-16">
+    <footer className="bg-gradient-to-b from-indigo-50 to-purple-50 text-gray-700 py-16 border-t border-indigo-100">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
           {/* Brand Section */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-extrabold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
-              Procog
-            </h3>
-            <p className="text-sm text-gray-400 leading-relaxed max-w-sm mx-auto md:mx-0">
+            <h3 className="text-2xl font-extrabold text-indigo-600">Procog</h3>
+            <p className="text-sm text-gray-500 leading-relaxed max-w-sm mx-auto md:mx-0">
               Empowering risk management collaboration through innovative
               solutions and data-driven insights.
             </p>
@@ -22,7 +20,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-400 hover:text-white hover:bg-gray-800/50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
+                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
                 >
                   About
                 </a>
@@ -30,7 +28,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-400 hover:text-white hover:bg-gray-800/50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
+                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
                 >
                   Contact
                 </a>
@@ -38,7 +36,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-400 hover:text-white hover:bg-gray-800/50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
+                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
                 >
                   Privacy Policy
                 </a>
@@ -51,21 +49,21 @@ export default function Footer() {
             <div className="flex space-x-4">
               <a
                 href="#"
-                className="bg-gray-800/50 p-3 rounded-lg hover:bg-blue-600 hover:text-white transform hover:-translate-y-1 transition-all duration-300"
+                className="bg-white p-3 rounded-lg shadow-sm border border-indigo-100 transform transition hover:bg-indigo-600 hover:text-white hover:-translate-y-1 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
                 aria-label="Facebook"
               >
                 <FaFacebookF size={20} />
               </a>
               <a
                 href="#"
-                className="bg-gray-800/50 p-3 rounded-lg hover:bg-blue-600 hover:text-white transform hover:-translate-y-1 transition-all duration-300"
+                className="bg-white p-3 rounded-lg shadow-sm border border-indigo-100 transform transition hover:bg-indigo-600 hover:text-white hover:-translate-y-1 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
                 aria-label="Twitter"
               >
                 <FaTwitter size={20} />
               </a>
               <a
                 href="#"
-                className="bg-gray-800/50 p-3 rounded-lg hover:bg-blue-600 hover:text-white transform hover:-translate-y-1 transition-all duration-300"
+                className="bg-white p-3 rounded-lg shadow-sm border border-indigo-100 transform transition hover:bg-indigo-600 hover:text-white hover:-translate-y-1 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
                 aria-label="LinkedIn"
               >
                 <FaLinkedinIn size={20} />
@@ -78,12 +76,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-12 pt-8 border-t border-gray-800/50 text-sm text-center">
+        <div className="mt-12 pt-8 border-t border-indigo-100 text-sm text-center">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-500">
-              &copy; 2024 Procog. All rights reserved.
+              &copy; 2025 Procog. All rights reserved.
             </p>
-            <div className="text-gray-600 text-xs">
+            <div className="text-indigo-400 text-xs">
               Made with ❤️ for better risk management
             </div>
           </div>

@@ -1,9 +1,15 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/Auth";
 import { useRouter } from "next/navigation";
-import { FaUserCog, FaBuilding, FaEnvelope, FaSearch, FaSync } from "react-icons/fa";
+import {
+  FaUserCog,
+  FaBuilding,
+  FaEnvelope,
+  FaSearch,
+  FaSync,
+} from "react-icons/fa";
+import toast from "react-hot-toast";
 
 interface User {
   $id: string;
@@ -44,8 +50,10 @@ const AdminUsersPage = () => {
       const data = await res.json();
       setUsers(data.users);
       setFilteredUsers(data.users);
+      toast.success("Users refreshed");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch users");
+      toast.error(err instanceof Error ? err.message : "Failed to fetch users");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -59,13 +67,16 @@ const AdminUsersPage = () => {
   useEffect(() => {
     if (searchQuery) {
       const lowercasedQuery = searchQuery.toLowerCase();
-      const filtered = users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(lowercasedQuery) ||
-          user.email.toLowerCase().includes(lowercasedQuery) ||
-          user.prefs.department.toLowerCase().includes(lowercasedQuery) ||
-          user.prefs.role.toLowerCase().includes(lowercasedQuery)
-      );
+      const filtered = users.filter((usr) => {
+        return (
+          (usr.name && usr.name.toLowerCase().includes(lowercasedQuery)) ||
+          (usr.email && usr.email.toLowerCase().includes(lowercasedQuery)) ||
+          (usr.prefs?.department &&
+            usr.prefs.department.toLowerCase().includes(lowercasedQuery)) ||
+          (usr.prefs?.role &&
+            usr.prefs.role.toLowerCase().includes(lowercasedQuery))
+        );
+      });
       setFilteredUsers(filtered);
     } else {
       setFilteredUsers(users);
@@ -98,8 +109,10 @@ const AdminUsersPage = () => {
           u.$id === userId ? { ...u, prefs: { ...u.prefs, [field]: value } } : u
         )
       );
+      toast.success("User updated successfully");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update user");
+      toast.error(err instanceof Error ? err.message : "Failed to update user");
     } finally {
       setUpdatingUser(null);
     }
@@ -107,7 +120,7 @@ const AdminUsersPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex justify-center items-center pt-16">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex justify-center items-center pt-16">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -115,7 +128,7 @@ const AdminUsersPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col justify-center items-center pt-16">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col justify-center items-center pt-16">
         <p className="text-red-500 mb-4">{error}</p>
         <button
           onClick={fetchUsers}
@@ -128,7 +141,7 @@ const AdminUsersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pt-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-600">
@@ -141,7 +154,7 @@ const AdminUsersPage = () => {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-gray-800 text-white rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                className="bg-white text-gray-800 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 border border-gray-200"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
@@ -157,29 +170,32 @@ const AdminUsersPage = () => {
         </div>
 
         {filteredUsers.length === 0 ? (
-          <div className="bg-gray-800 rounded-lg shadow p-8 text-center">
-            <p className="text-gray-400">No users found matching your search</p>
+          <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
+            <p className="text-gray-600">No users found matching your search</p>
           </div>
         ) : (
-          <div className="bg-gray-800 rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-700">
-                <thead className="bg-gray-700">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       Role
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       Department
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-gray-800 divide-y divide-gray-700">
+                <tbody className="bg-white divide-y divide-gray-200">
                   {filteredUsers.map((usr) => (
-                    <tr key={usr.$id} className="hover:bg-gray-750 transition-colors">
+                    <tr
+                      key={usr.$id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center">
@@ -188,8 +204,10 @@ const AdminUsersPage = () => {
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-white">{usr.name}</div>
-                            <div className="text-sm text-gray-400 flex items-center">
+                            <div className="text-sm font-medium text-gray-800">
+                              {usr.name}
+                            </div>
+                            <div className="text-sm text-gray-600 flex items-center">
                               <FaEnvelope className="mr-1 text-xs" />
                               {usr.email}
                             </div>
@@ -199,9 +217,11 @@ const AdminUsersPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="relative">
                           <select
-                            className="bg-gray-700 text-white rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                            className="bg-white text-gray-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
                             value={usr.prefs.role}
-                            onChange={(e) => handleUpdate(usr.$id, "role", e.target.value)}
+                            onChange={(e) =>
+                              handleUpdate(usr.$id, "role", e.target.value)
+                            }
                             disabled={updatingUser === usr.$id}
                           >
                             <option value="user">User</option>
@@ -220,9 +240,15 @@ const AdminUsersPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="relative">
                           <select
-                            className="bg-gray-700 text-white rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                            className="bg-white text-gray-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
                             value={usr.prefs.department}
-                            onChange={(e) => handleUpdate(usr.$id, "department", e.target.value)}
+                            onChange={(e) =>
+                              handleUpdate(
+                                usr.$id,
+                                "department",
+                                e.target.value
+                              )
+                            }
                             disabled={updatingUser === usr.$id}
                           >
                             <option value="general">General</option>
@@ -248,7 +274,7 @@ const AdminUsersPage = () => {
             </div>
           </div>
         )}
-        <div className="mt-4 text-sm text-gray-400">
+        <div className="mt-4 text-sm text-gray-600">
           Showing {filteredUsers.length} of {users.length} users
         </div>
       </div>

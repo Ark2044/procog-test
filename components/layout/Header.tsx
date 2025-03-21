@@ -2,16 +2,21 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/Auth";
-import { FaSignInAlt, FaUserPlus, FaUser, FaSignOutAlt } from "react-icons/fa";
+import {
+  FaSignInAlt,
+  FaUserPlus,
+  FaUser,
+  FaUserCog,
+  FaSignOutAlt,
+  FaTable,
+} from "react-icons/fa";
 
 export default function Header() {
-  const { session, logout } = useAuthStore();
+  const { session, logout, user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  const toggleMenu = () => setIsOpen(!isOpen);
 
   const handleScroll = () => {
     setIsScrolled(window.scrollY > 50);
@@ -19,9 +24,7 @@ export default function Header() {
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -30,29 +33,26 @@ export default function Header() {
         setIsOpen(false);
       }
     };
-
     window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, [isOpen]);
 
   return (
     <header
       className={`fixed w-full top-0 z-20 transition-all duration-300 ${
         isScrolled
-          ? "bg-gradient-to-b from-gray-900 to-gray-950 text-gray-300 shadow-lg" // After scroll
-          : "bg-transparent text-gray-700" // Before scroll
+          ? "bg-white shadow-md"
+          : "bg-gradient-to-r from-indigo-50 to-purple-50 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-6 py-4 lg:px-10">
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className={`text-2xl lg:text-3xl font-extrabold bg-clip-text transition duration-300 ${
+            className={`text-2xl lg:text-3xl font-extrabold transition duration-300 ${
               isScrolled
-                ? "text-white" // Text color after scroll
-                : "text-transparent bg-gradient-to-r from-blue-500 to-indigo-700 hover:from-indigo-600 hover:to-purple-800"
+                ? "text-indigo-700"
+                : "text-indigo-600 hover:text-indigo-800"
             }`}
           >
             PROCOG
@@ -60,10 +60,12 @@ export default function Header() {
 
           <button
             onClick={toggleMenu}
-            className={`lg:hidden transition-colors duration-200 focus:outline-none ${
-              isScrolled ? "text-white" : "text-gray-700 hover:text-indigo-600"
+            className={`lg:hidden transition-colors duration-200 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 ${
+              isScrolled
+                ? "text-indigo-600"
+                : "text-indigo-700 hover:text-indigo-900"
             }`}
-            aria-label="Toggle menu"
+            aria-label="Toggle navigation menu"
             aria-expanded={isOpen}
           >
             <svg
@@ -95,8 +97,8 @@ export default function Header() {
               isOpen ? "block" : "hidden"
             } transition-all duration-300 ease-in-out absolute lg:relative top-full left-0 w-full lg:w-auto ${
               isScrolled
-                ? "bg-gradient-to-b from-gray-900 to-gray-950 shadow-lg text-gray-300"
-                : "bg-white lg:bg-transparent"
+                ? "bg-white shadow-md"
+                : "bg-white/90 lg:bg-transparent"
             }`}
           >
             <ul className="flex flex-col lg:flex-row items-center lg:space-x-4 lg:space-y-0 space-y-4 py-4 lg:py-0">
@@ -105,10 +107,10 @@ export default function Header() {
                   <li>
                     <Link
                       href="/login"
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border border-indigo-600 ${
+                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
                         isScrolled
-                          ? "text-white hover:bg-indigo-800"
-                          : "text-indigo-600 hover:bg-indigo-100"
+                          ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                          : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                       }`}
                     >
                       <FaSignInAlt className="mr-2 text-lg" />
@@ -118,7 +120,7 @@ export default function Header() {
                   <li>
                     <Link
                       href="/register"
-                      className="flex items-center text-white bg-indigo-600 hover:bg-indigo-800 transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md"
+                      className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md text-white"
                     >
                       <FaUserPlus className="mr-2 text-lg" />
                       Sign Up
@@ -128,12 +130,39 @@ export default function Header() {
               ) : (
                 <>
                   <li>
+                    {user?.prefs?.role === "admin" ? (
+                      <Link
+                        href="/admin/users"
+                        className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                          isScrolled
+                            ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                            : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                        }`}
+                      >
+                        <FaUserCog className="mr-2 text-lg" />
+                        Admin
+                      </Link>
+                    ) : (
+                      <Link
+                        href={user ? `/dashboard/${user.$id}` : "#"}
+                        className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                          isScrolled
+                            ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                            : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                        }`}
+                      >
+                        <FaTable className="mr-2 text-lg" />
+                        Dashboard
+                      </Link>
+                    )}
+                  </li>
+                  <li>
                     <Link
                       href={`/profile/${session.userId}`}
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border border-indigo-600 ${
+                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
                         isScrolled
-                          ? "text-white hover:bg-indigo-800"
-                          : "text-indigo-600 hover:bg-indigo-100"
+                          ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                          : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                       }`}
                     >
                       <FaUser className="mr-2 text-lg" />
@@ -143,10 +172,10 @@ export default function Header() {
                   <li>
                     <button
                       onClick={() => logout()}
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border border-indigo-600 ${
+                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
                         isScrolled
-                          ? "text-white hover:bg-indigo-800"
-                          : "text-indigo-600 hover:bg-indigo-100"
+                          ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                          : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                       }`}
                     >
                       <FaSignOutAlt className="mr-2 text-lg" />

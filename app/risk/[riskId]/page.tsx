@@ -1,14 +1,24 @@
-'use client'
+"use client";
 import React, { useEffect, useState } from "react";
 import { databases, storage } from "@/models/client/config";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { db, riskCollection } from "@/models/name";
-import { Card, CardContent} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Calendar, Tag, User, Activity, BarChart2, Shield, ArrowUpRight, File } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  Tag,
+  User,
+  Activity,
+  BarChart2,
+  Shield,
+  ArrowUpRight,
+  File,
+} from "lucide-react";
 
 interface Risk {
   title: string;
@@ -41,8 +51,12 @@ const RiskDetail = () => {
     const fetchRisk = async () => {
       if (typeof riskId === "string") {
         try {
-          const response = await databases.getDocument(db, riskCollection, riskId);
-          
+          const response = await databases.getDocument(
+            db,
+            riskCollection,
+            riskId
+          );
+
           const mappedRisk: Risk = {
             title: response.title,
             content: response.content,
@@ -60,9 +74,15 @@ const RiskDetail = () => {
           setRisk(mappedRisk);
 
           if (response.attachmentId) {
-            const attachmentResponse = await storage.getFile(db, response.attachmentId);
-            const attachmentUrl = storage.getFileView(db, attachmentResponse.$id);
-            
+            const attachmentResponse = await storage.getFile(
+              db,
+              response.attachmentId
+            );
+            const attachmentUrl = storage.getFileView(
+              db,
+              attachmentResponse.$id
+            );
+
             const mappedAttachment: Attachment = {
               id: attachmentResponse.$id,
               type: attachmentResponse.mimeType,
@@ -85,17 +105,17 @@ const RiskDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
         <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-9 w-3/4 rounded-lg bg-gray-800" />
+          <Skeleton className="h-9 w-3/4 rounded-lg bg-gray-200" />
           <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-6 w-20 rounded-full bg-gray-800" />
+              <Skeleton key={i} className="h-6 w-20 rounded-full bg-gray-200" />
             ))}
           </div>
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-4 w-full rounded bg-gray-800" />
+              <Skeleton key={i} className="h-4 w-full rounded bg-gray-200" />
             ))}
           </div>
         </div>
@@ -105,10 +125,13 @@ const RiskDetail = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-black p-8">
-        <Alert variant="destructive" className="max-w-4xl mx-auto">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8">
+        <Alert
+          variant="destructive"
+          className="max-w-4xl mx-auto border border-red-200 bg-red-50"
+        >
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <AlertDescription className="text-gray-800">{error}</AlertDescription>
         </Alert>
       </div>
     );
@@ -116,25 +139,27 @@ const RiskDetail = () => {
 
   if (!risk) {
     return (
-      <div className="min-h-screen bg-black p-8">
-        <Alert className="max-w-4xl mx-auto">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>No risk details found.</AlertDescription>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8">
+        <Alert className="max-w-4xl mx-auto border border-gray-200 bg-white">
+          <AlertCircle className="h-4 w-4 text-gray-500" />
+          <AlertDescription className="text-gray-800">
+            No risk details found.
+          </AlertDescription>
         </Alert>
       </div>
     );
   }
 
   const getRiskLevelColor = (level: string | undefined | null) => {
-    if (!level) return 'bg-gray-400';
+    if (!level) return "bg-gray-200 text-gray-800";
     const levelStr = String(level).toLowerCase();
-    if (levelStr.includes('high')) return 'bg-red-500';
-    if (levelStr.includes('medium')) return 'bg-yellow-500';
-    return 'bg-green-400';
+    if (levelStr.includes("high")) return "bg-red-200 text-red-800";
+    if (levelStr.includes("medium")) return "bg-yellow-200 text-yellow-800";
+    return "bg-green-200 text-green-800";
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
@@ -142,47 +167,55 @@ const RiskDetail = () => {
           </h1>
           <div className="flex flex-wrap gap-2">
             {risk.tags.map((tag) => (
-              <Badge 
-                key={tag} 
-                variant="outline" 
-                className="border-gray-700 bg-gray-800/50 hover:bg-gray-800"
+              <Badge
+                key={tag}
+                variant="outline"
+                className="border-gray-300 bg-gray-100 hover:bg-gray-200"
               >
-                <Tag className="w-4 h-4 mr-2 text-gray-400" />
-                <span className="font-medium text-gray-300">{tag}</span>
+                <Tag className="w-4 h-4 mr-2 text-gray-600" />
+                <span className="font-medium text-gray-700">{tag}</span>
               </Badge>
             ))}
           </div>
         </div>
 
-        <Card className="border-gray-800 bg-gray-900/50">
+        <Card className="border-gray-200 bg-white">
           <CardContent className="p-6 space-y-6">
-            <p className="text-gray-300 leading-relaxed">{risk.content}</p>
-            
+            <p className="text-gray-700 leading-relaxed">{risk.content}</p>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                  <User className="w-5 h-5 text-blue-400" />
+                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                  <User className="w-5 h-5 text-blue-500" />
                   <div>
-                    <p className="text-xs text-gray-400">Reported by</p>
-                    <p className="text-gray-300 font-medium">{risk.authorId}</p>
+                    <p className="text-xs text-gray-500">Reported by</p>
+                    <p className="text-gray-800 font-medium">{risk.authorId}</p>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                  <Activity className="w-5 h-5 text-purple-400" />
+
+                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                  <Activity className="w-5 h-5 text-purple-500" />
                   <div>
-                    <p className="text-xs text-gray-400">Impact</p>
-                    <p className={`${getRiskLevelColor(risk.impact)} font-semibold`}>
+                    <p className="text-xs text-gray-500">Impact</p>
+                    <p
+                      className={`${getRiskLevelColor(
+                        risk.impact
+                      )} font-semibold px-2 py-1 rounded`}
+                    >
                       {risk.impact}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                  <BarChart2 className="w-5 h-5 text-green-400" />
+                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                  <BarChart2 className="w-5 h-5 text-green-500" />
                   <div>
-                    <p className="text-xs text-gray-400">Probability</p>
-                    <p className={`${getRiskLevelColor(risk.probability)} font-semibold`}>
+                    <p className="text-xs text-gray-500">Probability</p>
+                    <p
+                      className={`${getRiskLevelColor(
+                        risk.probability
+                      )} font-semibold px-2 py-1 rounded`}
+                    >
                       {risk.probability}
                     </p>
                   </div>
@@ -190,33 +223,33 @@ const RiskDetail = () => {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-yellow-400" />
+                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                  <Calendar className="w-5 h-5 text-yellow-500" />
                   <div>
-                    <p className="text-xs text-gray-400">Created</p>
-                    <p className="text-gray-300 font-medium">
-                      {new Date(risk.created).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                    <p className="text-xs text-gray-500">Created</p>
+                    <p className="text-gray-800 font-medium">
+                      {new Date(risk.created).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                  <Calendar className="w-5 h-5 text-pink-400" />
+                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                  <Calendar className="w-5 h-5 text-pink-500" />
                   <div>
-                    <p className="text-xs text-gray-400">Last Updated</p>
-                    <p className="text-gray-300 font-medium">
-                      {new Date(risk.updated).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                    <p className="text-xs text-gray-500">Last Updated</p>
+                    <p className="text-gray-800 font-medium">
+                      {new Date(risk.updated).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
@@ -226,24 +259,28 @@ const RiskDetail = () => {
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-gray-200 flex items-center gap-2">
-                  <Shield className="w-6 h-6 text-blue-400" />
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <Shield className="w-6 h-6 text-blue-500" />
                   Response Plan
                 </h3>
-                <div className="border-t border-gray-800" />
+                <div className="border-t border-gray-200" />
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-400">Immediate Action</h4>
-                  <p className="text-gray-300 bg-gray-800/50 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-500">
+                    Immediate Action
+                  </h4>
+                  <p className="text-gray-700 bg-gray-100 p-4 rounded-lg">
                     {risk.action}
                   </p>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-400">Mitigation Strategy</h4>
-                  <p className="text-gray-300 bg-gray-800/50 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-500">
+                    Mitigation Strategy
+                  </h4>
+                  <p className="text-gray-700 bg-gray-100 p-4 rounded-lg">
                     {risk.mitigation}
                   </p>
                 </div>
@@ -253,15 +290,15 @@ const RiskDetail = () => {
             {attachment && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-200 flex items-center gap-2">
-                    <File className="w-6 h-6 text-blue-400" />
+                  <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                    <File className="w-6 h-6 text-blue-500" />
                     Attachment
                   </h3>
-                  <div className="border-t border-gray-800" />
+                  <div className="border-t border-gray-200" />
                 </div>
-                
+
                 {attachment.type.startsWith("image/") ? (
-                  <div className="relative h-96 w-full rounded-xl overflow-hidden border border-gray-800">
+                  <div className="relative h-96 w-full rounded-xl overflow-hidden border border-gray-200">
                     <Image
                       src={attachment.url}
                       alt="Risk attachment"
@@ -274,14 +311,16 @@ const RiskDetail = () => {
                     href={attachment.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-3 p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                   >
-                    <File className="w-6 h-6 text-gray-400" />
+                    <File className="w-6 h-6 text-gray-600" />
                     <div>
-                      <p className="text-gray-300 font-medium">View Attachment</p>
-                      <p className="text-xs text-gray-400">{attachment.type}</p>
+                      <p className="text-gray-700 font-medium">
+                        View Attachment
+                      </p>
+                      <p className="text-xs text-gray-600">{attachment.type}</p>
                     </div>
-                    <ArrowUpRight className="w-4 h-4 ml-auto text-gray-400" />
+                    <ArrowUpRight className="w-4 h-4 ml-auto text-gray-600" />
                   </a>
                 )}
               </div>

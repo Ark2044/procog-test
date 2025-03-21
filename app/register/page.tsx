@@ -5,11 +5,12 @@ import Link from "next/link";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 import { useAuthStore } from "@/store/Auth";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 export default function Register() {
   const { createAccount, login, user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -22,139 +23,180 @@ export default function Register() {
     }
   }, [user, router]);
 
+  // Simple email regex validation function
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const firstName = formData.get("firstname");
-    const lastName = formData.get("lastname");
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const firstName = formData.get("firstname")?.toString().trim();
+    const lastName = formData.get("lastname")?.toString().trim();
+    const email = formData.get("email")?.toString().trim();
+    const password = formData.get("password")?.toString();
 
+    // Check that all fields are filled
     if (!firstName || !lastName || !email || !password) {
-      setError("Please fill out all the fields");
+      toast.error("Please fill out all the fields");
+      return;
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Validate password length (min 8 characters)
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters long");
       return;
     }
 
     setIsLoading(true);
-    setError("");
 
     const response = await createAccount(
       `${firstName} ${lastName}`,
-      email.toString(),
-      password.toString()
+      email,
+      password
     );
 
     if (response.error) {
-      setError(response.error.message);
+      toast.error(response.error.message);
+      setIsLoading(false);
     } else {
-      const loginResponse = await login(email.toString(), password.toString());
+      const loginResponse = await login(email, password);
       if (!loginResponse.success) {
-        setError(loginResponse.error?.message || "Login failed");
+        toast.error(loginResponse.error?.message || "Login failed");
+        setIsLoading(false);
       } else {
-        const user = useAuthStore.getState().user;
-        router.push(`/dashboard/${user?.$id}`);
+        toast.success("Account created successfully!");
+        const currentUser = useAuthStore.getState().user;
+        router.push(`/dashboard/${currentUser?.$id}`);
       }
     }
-    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 pt-16 sm:mt-0">
-      <div className="w-full max-w-md px-6">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700 p-8 sm:p-10 md:p-12 lg:p-16">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
-            Create your account
-          </h2>
-          {error && (
-            <p className="mt-8 text-center text-sm text-red-500">{error}</p>
-          )}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="relative">
-              <label htmlFor="firstname" className="sr-only">
-                Firstname
-              </label>
-              <div className="flex items-center border-b border-gray-700 pb-2">
-                <FaUser className="text-gray-500 mr-3" />
-                <input
-                  id="firstname"
-                  name="firstname"
-                  type="text"
-                  required
-                  className="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none"
-                  placeholder="Firstname"
-                />
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md px-6">
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 transition-transform hover:scale-105">
+            <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
+              Create your account
+            </h2>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="relative">
+                <label htmlFor="firstname" className="sr-only">
+                  Firstname
+                </label>
+                <div className="flex items-center border-b border-gray-300 pb-2">
+                  <FaUser className="text-gray-500 mr-3" />
+                  <input
+                    id="firstname"
+                    name="firstname"
+                    type="text"
+                    required
+                    disabled={isLoading}
+                    placeholder="Firstname"
+                    defaultValue={isLoading ? "John" : ""}
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="relative">
-              <label htmlFor="lastname" className="sr-only">
-                Lastname
-              </label>
-              <div className="flex items-center border-b border-gray-700 pb-2">
-                <FaUser className="text-gray-500 mr-3" />
-                <input
-                  id="lastname"
-                  name="lastname"
-                  type="text"
-                  required
-                  className="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none"
-                  placeholder="Lastname"
-                />
+              <div className="relative">
+                <label htmlFor="lastname" className="sr-only">
+                  Lastname
+                </label>
+                <div className="flex items-center border-b border-gray-300 pb-2">
+                  <FaUser className="text-gray-500 mr-3" />
+                  <input
+                    id="lastname"
+                    name="lastname"
+                    type="text"
+                    required
+                    disabled={isLoading}
+                    placeholder="Lastname"
+                    defaultValue={isLoading ? "Doe" : ""}
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="relative">
-              <label htmlFor="email-address" className="sr-only">
-                Email address
-              </label>
-              <div className="flex items-center border-b border-gray-700 pb-2">
-                <FaEnvelope className="text-gray-500 mr-3" />
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none"
-                  placeholder="Email address"
-                />
+              <div className="relative">
+                <label htmlFor="email-address" className="sr-only">
+                  Email address
+                </label>
+                <div className="flex items-center border-b border-gray-300 pb-2">
+                  <FaEnvelope className="text-gray-500 mr-3" />
+                  <input
+                    id="email-address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    disabled={isLoading}
+                    placeholder="Email address"
+                    defaultValue={isLoading ? "user@example.com" : ""}
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="relative">
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <div className="flex items-center border-b border-gray-700 pb-2">
-                <FaLock className="text-gray-500 mr-3" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none"
-                  placeholder="Password"
-                />
+              <div className="relative">
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <div className="flex items-center border-b border-gray-300 pb-2">
+                  <FaLock className="text-gray-500 mr-3" />
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    disabled={isLoading}
+                    placeholder="Password"
+                    defaultValue={isLoading ? "••••••••" : ""}
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <button
-                type="submit"
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-semibold hover:opacity-90 transition-all sm:text-lg md:text-xl lg:py-4 disabled:opacity-50"
-                disabled={isLoading}
+              <div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-semibold hover:opacity-90 transition-all sm:text-lg md:text-xl lg:py-4 disabled:opacity-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
+                >
+                  {isLoading ? (
+                    <motion.div
+                      className="w-6 h-6 border-4 border-t-4 border-gray-200 rounded-full"
+                      style={{ borderTopColor: "#ffffff" }}
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        repeat: Infinity,
+                        ease: "linear",
+                        duration: 1,
+                      }}
+                    />
+                  ) : (
+                    "Create account"
+                  )}
+                </button>
+              </div>
+            </form>
+            <div className="text-center mt-6">
+              <Link
+                href="/login"
+                className="text-blue-600 hover:text-blue-500 transition"
               >
-                Create account
-              </button>
+                Already have an account? Sign in
+              </Link>
             </div>
-          </form>
-          <div className="text-center mt-6">
-            <Link
-              href="/login"
-              className="text-blue-400 hover:text-blue-300 transition"
-            >
-              Already have an account? Sign in
-            </Link>
+            {isLoading && (
+              <div className="absolute inset-0 bg-white/50 rounded-2xl pointer-events-none" />
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

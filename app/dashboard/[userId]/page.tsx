@@ -17,6 +17,7 @@ import {
   LucideXCircle,
   LucideRefreshCw,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 type ImpactCount = {
   low: number;
@@ -32,13 +33,13 @@ type ActionCount = {
 };
 
 const DashboardSkeleton = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800">
     <div className="animate-pulse space-y-4">
-      <div className="h-12 bg-gray-700 rounded w-64"></div>
-      <div className="h-8 bg-gray-700 rounded w-48"></div>
+      <div className="h-12 bg-gray-200 rounded w-64"></div>
+      <div className="h-8 bg-gray-200 rounded w-48"></div>
       <div className="grid grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((item) => (
-          <div key={item} className="h-24 bg-gray-700 rounded"></div>
+          <div key={item} className="h-24 bg-gray-200 rounded"></div>
         ))}
       </div>
     </div>
@@ -50,11 +51,11 @@ const Dashboard = () => {
   const userIdString = Array.isArray(userId) ? userId[0] : userId;
   const router = useRouter();
   const { user, loading, error, verifySession, session } = useAuthStore();
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [showCreateRisk, setShowCreateRisk] = useState(false);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
   const [impactCount, setImpactCount] = useState<ImpactCount>({
     low: 0,
     medium: 0,
@@ -67,14 +68,23 @@ const Dashboard = () => {
     avoid: 0,
   });
 
+  // Verify session and mark session as checked when done.
   useEffect(() => {
-    if (!session) {
-      verifySession();
-    }
-  }, [session, verifySession]);
+    const checkSession = async () => {
+      try {
+        await verifySession();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setSessionChecked(true);
+      }
+    };
+    checkSession();
+  }, [verifySession]);
 
+  // Only trigger redirect after session has been checked and loading is false.
   useEffect(() => {
-    if (!loading) {
+    if (sessionChecked && !loading) {
       if (!session) {
         router.push("/login");
       } else if (user) {
@@ -85,9 +95,8 @@ const Dashboard = () => {
         }
       }
     }
-  }, [session, loading, router, user, userIdString]);
+  }, [sessionChecked, loading, session, user, router, userIdString]);
 
-  // Wrap fetchRisks in useCallback to keep it referentially stable
   const fetchRisks = useCallback(
     async (showRefreshIndicator = false) => {
       if (showRefreshIndicator) setIsRefreshing(true);
@@ -107,7 +116,6 @@ const Dashboard = () => {
           department: doc.department,
           created: doc.created,
           updated: doc.updated,
-          // Include missing properties with default values:
           isConfidential: doc.isConfidential ?? false,
           authorizedViewers: doc.authorizedViewers ?? [],
         }));
@@ -139,9 +147,14 @@ const Dashboard = () => {
           { mitigate: 0, accept: 0, transfer: 0, avoid: 0 }
         );
         setActionCount(actionCounts);
+
+        if (showRefreshIndicator) {
+          toast.success("Data refreshed!");
+        }
       } catch (err) {
         setFetchError("Failed to fetch risks");
         console.error(err);
+        toast.error("Failed to refresh data");
       } finally {
         if (showRefreshIndicator) {
           setTimeout(() => setIsRefreshing(false), 1000);
@@ -160,9 +173,10 @@ const Dashboard = () => {
   const handleRiskCreated = () => {
     setShowCreateRisk(false);
     fetchRisks();
+    toast.success("Risk created successfully!");
   };
 
-  if (loading) {
+  if (loading || !sessionChecked) {
     return <DashboardSkeleton />;
   }
 
@@ -171,13 +185,11 @@ const Dashboard = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-center min-h-screen bg-gray-900 text-white"
+        className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800"
       >
         <div className="text-center">
           <LucideAlertTriangle className="mx-auto mb-4 text-red-500 w-16 h-16" />
-          <p className="text-red-500 text-xl">
-            {error?.message || fetchError}
-          </p>
+          <p className="text-red-500 text-xl">{error?.message || fetchError}</p>
           <button
             onClick={() => verifySession()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -195,25 +207,27 @@ const Dashboard = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col lg:flex-row min-h-screen bg-gray-900 text-white pt-16"
+      className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16"
     >
-      <div className="w-full lg:w-64 bg-gray-800 border-r border-gray-700">
-        <div className="p-6 border-b border-gray-700 flex justify-between items-center">
+      {/* Sidebar */}
+      <div className="w-full lg:w-64 bg-white border-r border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div>
             <div className="flex items-center mb-2">
-              <LucideUser className="mr-2 text-blue-400 w-5 h-5" />
-              <p className="text-sm font-medium text-white">
+              <LucideUser className="mr-2 text-blue-500 w-5 h-5" />
+              <p className="text-sm font-medium text-gray-800">
                 {user?.name || "User"}
               </p>
             </div>
-            <p className="text-xs text-gray-400">ID: {userIdString}</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-500">ID: {userIdString}</p>
+            <p className="text-xs text-gray-500">
               Department: {user?.prefs?.department}
             </p>
           </div>
           <button
             onClick={() => fetchRisks(true)}
-            className={`text-gray-400 hover:text-white ${
+            disabled={isRefreshing}
+            className={`text-gray-500 hover:text-gray-800 ${
               isRefreshing ? "animate-spin" : ""
             }`}
           >
@@ -224,39 +238,39 @@ const Dashboard = () => {
         <div className="p-6 space-y-6">
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="bg-gray-700 p-4 rounded-lg shadow-md"
+            className="bg-white p-4 rounded-lg shadow border border-gray-200"
           >
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-gray-300">Total Risks</p>
-                <p className="text-2xl font-semibold text-white">
+                <p className="text-sm text-gray-500">Total Risks</p>
+                <p className="text-2xl font-semibold text-gray-800">
                   {totalRisks}
                 </p>
               </div>
-              <LucideCheckCircle className="text-green-400 w-8 h-8" />
+              <LucideCheckCircle className="text-green-500 w-8 h-8" />
             </div>
           </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.05 }}
-            className="bg-gray-700 p-4 rounded-lg shadow-md"
+            className="bg-white p-4 rounded-lg shadow border border-gray-200"
           >
-            <h3 className="text-xs font-semibold text-gray-400 uppercase flex items-center">
-              <LucideAlertTriangle className="mr-1 text-yellow-400" /> Impact
+            <h3 className="text-xs font-semibold text-gray-500 uppercase flex items-center">
+              <LucideAlertTriangle className="mr-1 text-yellow-500" /> Impact
               Distribution
             </h3>
             {["high", "medium", "low"].map((level) => (
               <div className="flex justify-between items-center" key={level}>
-                <span className="text-sm text-gray-300">
+                <span className="text-sm text-gray-600">
                   {level.charAt(0).toUpperCase() + level.slice(1)}
                 </span>
                 <span
                   className={`text-sm font-medium ${
                     level === "high"
-                      ? "text-red-400"
+                      ? "text-red-500"
                       : level === "medium"
-                      ? "text-yellow-400"
-                      : "text-green-400"
+                      ? "text-yellow-500"
+                      : "text-green-500"
                   }`}
                 >
                   {impactCount[level as keyof ImpactCount]}
@@ -267,9 +281,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-6 bg-gray-900">
+      {/* Main Content */}
+      <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 className="text-2xl font-semibold text-gray-800">
             Risk Dashboard
           </h2>
           <button
@@ -281,7 +296,7 @@ const Dashboard = () => {
         </div>
 
         {showCreateRisk && (
-          <div className="bg-gray-800 rounded-lg p-6 mb-6">
+          <div className="bg-white rounded-lg p-6 mb-6 shadow border border-gray-200">
             <CreateRisk onRiskCreated={handleRiskCreated} />
           </div>
         )}
@@ -289,26 +304,24 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {Object.entries(actionCount).map(([action, count]) => {
             const iconMap = {
-              mitigate: (
-                <LucideCheckCircle className="mr-3 text-green-400" />
-              ),
-              accept: <LucideHandHeart className="mr-3 text-yellow-400" />,
-              transfer: <LucideShare2 className="mr-3 text-blue-400" />,
-              avoid: <LucideXCircle className="mr-3 text-red-400" />,
+              mitigate: <LucideCheckCircle className="mr-3 text-green-500" />,
+              accept: <LucideHandHeart className="mr-3 text-yellow-500" />,
+              transfer: <LucideShare2 className="mr-3 text-blue-500" />,
+              avoid: <LucideXCircle className="mr-3 text-red-500" />,
             };
 
             return (
               <motion.div
                 key={action}
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center bg-gray-800 p-4 rounded-lg shadow-md"
+                className="flex items-center bg-white p-4 rounded-lg shadow border border-gray-200"
               >
                 {iconMap[action as keyof ActionCount]}
                 <div>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-sm text-gray-600">
                     {action.charAt(0).toUpperCase() + action.slice(1)}
                   </p>
-                  <p className="text-xl font-semibold text-white">{count}</p>
+                  <p className="text-xl font-semibold text-gray-800">{count}</p>
                 </div>
               </motion.div>
             );

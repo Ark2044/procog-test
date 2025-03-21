@@ -2,11 +2,19 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/Auth";
 import { useRouter } from "next/navigation";
-import { FaUser, FaEnvelope, FaStar, FaBuilding, FaUserTag } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaStar,
+  FaBuilding,
+  FaUserTag,
+} from "react-icons/fa";
+import toast from "react-hot-toast";
 
 const Profile = () => {
   const router = useRouter();
-  const { user, loading, error, updateUserProfile, verifySession } = useAuthStore();
+  const { user, loading, error, updateUserProfile, verifySession } =
+    useAuthStore();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [reputation] = useState(user?.prefs?.reputation || 0);
@@ -31,42 +39,49 @@ const Profile = () => {
     const result = await updateUserProfile({
       reputation,
       role,
-      department
+      department,
     });
-    
+
     if (!result.success) {
       setUpdateError(result.error?.message || "Failed to update profile");
+      toast.error(result.error?.message || "Failed to update profile");
     } else {
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     }
   };
 
   if (loading)
-    return <p className="text-white text-center">Loading your profile...</p>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+        <p className="text-gray-800 text-center">Loading your profile...</p>
+      </div>
+    );
   if (error)
     return (
-      <p className="text-red-500 text-center">
-        Error loading profile: {error.message}
-      </p>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+        <p className="text-red-500 text-center">
+          Error loading profile: {error.message}
+        </p>
+      </div>
     );
 
   return (
-    <div className="min-h-screen bg-black text-white flex justify-center items-center pt-16">
-      <div className="w-full max-w-md bg-gray-800 p-6 rounded-lg shadow-md">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex justify-center items-center pt-16">
+      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold mb-6 text-center">Your Profile</h1>
         {updateError && (
-          <p className="text-red-500 text-center">{updateError}</p>
+          <p className="text-red-500 text-center mb-4">{updateError}</p>
         )}
         <form className="space-y-6" onSubmit={handleUpdate}>
           <div>
             <label
-              className="flex items-center text-gray-300 mb-2"
+              className="flex items-center text-gray-700 mb-2"
               htmlFor="name"
             >
               <FaUser className="mr-2" /> Name
             </label>
             <input
-              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               type="text"
               id="name"
               value={name}
@@ -76,13 +91,13 @@ const Profile = () => {
           </div>
           <div>
             <label
-              className="flex items-center text-gray-300 mb-2"
+              className="flex items-center text-gray-700 mb-2"
               htmlFor="email"
             >
               <FaEnvelope className="mr-2" /> Email
             </label>
             <input
-              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               type="email"
               id="email"
               value={email}
@@ -92,13 +107,13 @@ const Profile = () => {
           </div>
           <div>
             <label
-              className="flex items-center text-gray-300 mb-2"
+              className="flex items-center text-gray-700 mb-2"
               htmlFor="reputation"
             >
               <FaStar className="mr-2" /> Reputation
             </label>
             <input
-              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-400 cursor-not-allowed"
+              className="block w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-gray-500 cursor-not-allowed"
               type="number"
               id="reputation"
               value={reputation}
@@ -107,13 +122,13 @@ const Profile = () => {
           </div>
           <div>
             <label
-              className="flex items-center text-gray-300 mb-2"
+              className="flex items-center text-gray-700 mb-2"
               htmlFor="role"
             >
               <FaUserTag className="mr-2" /> Role
             </label>
             <input
-              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-400 cursor-not-allowed"
+              className="block w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-gray-500 cursor-not-allowed"
               type="text"
               id="role"
               value={role}
@@ -122,13 +137,13 @@ const Profile = () => {
           </div>
           <div>
             <label
-              className="flex items-center text-gray-300 mb-2"
+              className="flex items-center text-gray-700 mb-2"
               htmlFor="department"
             >
               <FaBuilding className="mr-2" /> Department
             </label>
             <input
-              className="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-400 cursor-not-allowed"
+              className="block w-full bg-gray-100 border border-gray-300 rounded-md p-2 text-gray-500 cursor-not-allowed"
               type="text"
               id="department"
               value={department}
