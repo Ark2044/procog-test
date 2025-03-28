@@ -2,7 +2,9 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Paperclip, Clock, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { FaLock } from "react-icons/fa";
+import { Bell } from "lucide-react";
 
 interface RiskCardProps {
   title: string;
@@ -11,12 +13,14 @@ interface RiskCardProps {
   tags: string[];
   attachmentId?: string;
   impact: "low" | "medium" | "high";
-  probability: number; // Number from 0-5
+  probability: number;
   action: "mitigate" | "accept" | "transfer" | "avoid";
-  mitigation?: string; // Mitigation strategy prop
+  mitigation?: string;
   created: string;
   updated: string;
   isConfidential?: boolean;
+  onSetReminder?: () => void;
+  currentUserId?: string;
 }
 
 const getImpactColor = (impact: "low" | "medium" | "high") => {
@@ -71,7 +75,11 @@ const RiskCard: React.FC<RiskCardProps> = ({
   created,
   updated,
   isConfidential,
+  onSetReminder,
+  currentUserId,
 }) => {
+  const isRiskCreator = currentUserId === authorId;
+
   return (
     <Card className="w-full bg-white hover:shadow-lg transition-shadow duration-200 border border-gray-200">
       <CardHeader className="pb-2">
@@ -144,6 +152,21 @@ const RiskCard: React.FC<RiskCardProps> = ({
             <Clock className="w-4 h-4" />
             <span>Updated: {new Date(updated).toLocaleDateString()}</span>
           </div>
+
+          {onSetReminder && isRiskCreator && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={(e) => {
+                e.preventDefault();
+                onSetReminder();
+              }}
+            >
+              <Bell className="w-4 h-4" />
+              Set Reminder
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

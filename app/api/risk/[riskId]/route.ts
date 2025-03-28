@@ -3,11 +3,12 @@ import { databases } from '@/models/client/config';
 import { db, riskCollection } from '@/models/name';
 
 // GET handler
-export async function GET(request: NextRequest) {
-    const { riskId } = await request.json();
-
+export async function GET(
+    request: NextRequest,
+    { params }: { params: { riskId: string } }
+) {
     try {
-        const risk = await databases.getDocument(db, riskCollection, riskId);
+        const risk = await databases.getDocument(db, riskCollection, params.riskId);
         return NextResponse.json(risk);
     } catch (error) {
         console.error('Error fetching risk:', error);
@@ -19,15 +20,16 @@ export async function GET(request: NextRequest) {
 }
 
 // PUT handler
-export async function PUT(request: NextRequest) {
-    const { riskId } = await request.json();
-
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: { riskId: string } }
+) {
     try {
         const updatedData = await request.json();
         const updatedRisk = await databases.updateDocument(
             db,
             riskCollection,
-            riskId,
+            params.riskId,
             updatedData
         );
         return NextResponse.json(updatedRisk);

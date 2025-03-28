@@ -4,21 +4,15 @@ import { databases, storage } from "@/models/client/config";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { db, riskCollection } from "@/models/name";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertCircle,
-  Calendar,
-  Tag,
-  User,
-  Activity,
-  BarChart2,
-  Shield,
-  ArrowUpRight,
-  File,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useReminderStore } from '@/store/Reminder';
+import { ReminderDialog } from '@/components/ReminderDialog';
+import { Activity, AlertCircle, ArrowUpRight, BarChart2, Bell, Calendar, File, Shield, Tag, User } from 'lucide-react';
+import { useAuthStore } from "@/store/Auth";
 
 interface Risk {
   title: string;
@@ -46,10 +40,13 @@ const RiskDetail = () => {
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
+  const { reminders, fetchReminders, deleteReminder } = useReminderStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
-    const fetchRisk = async () => {
-      if (typeof riskId === "string") {
+    const fetchData = async () => {
+      if (typeof riskId === 'string' && user) {
         try {
           const response = await databases.getDocument(
             db,
@@ -91,21 +88,25 @@ const RiskDetail = () => {
 
             setAttachment(mappedAttachment);
           }
+
+          await fetchReminders(user.$id);
         } catch (err) {
           console.error(err);
-          setError("Error fetching risk details");
+          setError('Error fetching data');
         } finally {
           setLoading(false);
         }
       }
     };
 
-    fetchRisk();
-  }, [riskId]);
+    fetchData();
+  }, [riskId, user, fetchReminders]);
+
+  // const riskReminders = reminders.filter(r => r.riskId === riskId);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800 ">
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-9 w-3/4 rounded-lg bg-gray-200" />
           <div className="flex gap-2">
@@ -158,8 +159,14 @@ const RiskDetail = () => {
     return "bg-green-200 text-green-800";
   };
 
+  const isRiskCreator = user && risk && user.$id === risk.authorId;
+
+  const userRiskReminders = reminders.filter(
+    r => r.riskId === riskId && r.userId === user?.$id
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800 mt-10">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
@@ -327,6 +334,77 @@ const RiskDetail = () => {
             )}
           </CardContent>
         </Card>
+
+        {user && (
+          <Card className="border-gray-200 bg-white">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-blue-500" />
+                  Review Reminders
+                </h3>
+                {isRiskCreator && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsReminderDialogOpen(true)}
+                  >
+                    Set New Reminder
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {userRiskReminders.length === 0 ? (
+                <p className="text-gray-500">
+                  {isRiskCreator 
+                    ? "No reminders set" 
+                    : "Only the risk creator can set reminders"}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {userRiskReminders.map((reminder) => (
+                    <div
+                      key={reminder.$id}
+                      className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium">{reminder.title}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(reminder.datetime).toLocaleString()}
+                        </p>
+                        {reminder.recurrence !== 'none' && (
+                          <Badge variant="outline">
+                            Repeats {reminder.recurrence}
+                          </Badge>
+                        )}
+                      </div>
+                      {isRiskCreator && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deleteReminder(reminder.$id)}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {isRiskCreator && risk && (
+          <ReminderDialog
+            isOpen={isReminderDialogOpen}
+            onClose={() => setIsReminderDialogOpen(false)}
+            riskId={riskId as string}
+            riskTitle={risk.title}
+            userId={user.$id}
+            email={user.email}
+          />
+        )}
       </div>
     </div>
   );

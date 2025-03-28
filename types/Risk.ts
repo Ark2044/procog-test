@@ -6,7 +6,7 @@ export interface Risk {
     tags: string[];
     attachmentId?: string;
     impact: "low" | "medium" | "high";
-    probability: string;
+    probability: number;
     action: "mitigate" | "accept" | "transfer" | "avoid";
     department: string;
     isConfidential: boolean;

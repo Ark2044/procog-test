@@ -15,6 +15,9 @@ import { databases, storage } from "@/models/client/config";
 import { riskCollection, db, riskAttachmentBucket } from "@/models/name";
 import { useAuthStore } from "@/store/Auth";
 import toast from "react-hot-toast";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { useReminderStore } from '@/store/Reminder';
 
 const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   onRiskCreated,
@@ -38,7 +41,11 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const [remainingChars, setRemainingChars] = useState(500);
   const [isConfidential, setIsConfidential] = useState(false);
   const [authorizedViewers, setAuthorizedViewers] = useState<string[]>([]);
+  const [includeReminder, setIncludeReminder] = useState(false);
+  const [reminderDate, setReminderDate] = useState<Date>(new Date());
+  const [reminderRecurrence, setReminderRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const { user } = useAuthStore();
+  const { createReminder } = useReminderStore();
   const [availableUsers, setAvailableUsers] = useState<
     Array<{ $id: string; name: string }>
   >([]);
@@ -70,12 +77,10 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   };
 
   const validateFields = (): boolean => {
-    // Check required fields
     if (!title.trim() || !content.trim()) {
       toast.error("Title and Description are required");
       return false;
     }
-    // Check length limits
     if (title.trim().length > 100) {
       toast.error("Title must be 100 characters or less");
       return false;
@@ -84,7 +89,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       toast.error("Description must be 500 characters or less");
       return false;
     }
-    // If action is mitigate, require mitigation strategy
     if (action === "mitigate" && !mitigation.trim()) {
       toast.error("Please provide mitigation strategies");
       return false;
@@ -95,7 +99,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    // Validate form fields before submission
     if (!validateFields()) {
       return;
     }
@@ -110,7 +113,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       const authorId = user.$id;
       const department = user.prefs?.department || "general";
 
-      // Upload file if provided
       if (file) {
         const fileResponse = await storage.createFile(
           riskAttachmentBucket,
@@ -120,8 +122,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         setAttachmentId(fileResponse.$id);
       }
 
-      // Create the risk document
-      await databases.createDocument(db, riskCollection, "unique()", {
+      const riskResponse = await databases.createDocument(db, riskCollection, "unique()", {
         title,
         content,
         authorId,
@@ -138,10 +139,22 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         updated: new Date().toISOString(),
       });
 
+      if (includeReminder) {
+        await createReminder({
+          title: `Risk Review: ${title}`,
+          description: `Time to review risk: ${title}`,
+          datetime: reminderDate.toISOString(),
+          userId: user.$id,
+          riskId: riskResponse.$id,
+          email: user.email,
+          recurrence: reminderRecurrence,
+          status: 'pending'
+        });
+      }
+
       toast.success("Risk created successfully!");
       onRiskCreated();
 
-      // Reset form fields
       setTitle("");
       setContent("");
       setTags([]);
@@ -154,6 +167,9 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       setIsConfidential(false);
       setAuthorizedViewers([]);
       setRemainingChars(500);
+      setIncludeReminder(false);
+      setReminderDate(new Date());
+      setReminderRecurrence('none');
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError("Failed to create risk: " + err.message);
@@ -444,6 +460,51 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               <p className="text-sm text-gray-500 mt-1">
                 Hold Ctrl/Cmd to select multiple users
               </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="includeReminder"
+              checked={includeReminder}
+              onChange={(e) => setIncludeReminder(e.target.checked)}
+              className="rounded border-gray-300 bg-white text-blue-500"
+            />
+            <label htmlFor="includeReminder" className="text-gray-800">
+              Set Review Reminder
+            </label>
+          </div>
+
+          {includeReminder && (
+            <div className="space-y-4 pl-6">
+              <div>
+                <label className="block text-sm font-medium mb-1">Review Date and Time</label>
+                <DatePicker
+                  selected={reminderDate}
+                  onChange={(date) => setReminderDate(date || new Date())}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  className="w-full p-2 border rounded-md"
+                  minDate={new Date()}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Recurrence</label>
+                <select
+                  value={reminderRecurrence}
+                  onChange={(e) => setReminderRecurrence(e.target.value as 'none' | 'daily' | 'weekly' | 'monthly')}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="none">No recurrence</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
             </div>
           )}
         </div>

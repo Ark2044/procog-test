@@ -16,6 +16,7 @@ import {
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/Auth";
+import { ReminderDialog } from './ReminderDialog';
 
 interface Risk {
   $id: string;
@@ -46,9 +47,10 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [viewMode, setViewMode] = useState<"my" | "all">("my");
   const [sortBy, setSortBy] = useState<"created" | "impact">("created");
   const [filterImpact, setFilterImpact] = useState<string>("all");
+  const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
+  const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
 
   const { user } = useAuthStore();
-  // Use the provided userId prop; fallback to the authenticated user's id
   const currentUserId = userId || user?.$id;
 
   const fetchRisks = useCallback(async () => {
@@ -87,13 +89,11 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   }, [fetchRisks]);
 
   const filteredAndSortedRisks = () => {
-    // Filter by the currentUserId if viewMode is "my"
     let filtered =
       viewMode === "my" && currentUserId
         ? risks.filter((risk) => risk.authorId === currentUserId)
         : risks;
 
-    // If the user is not an admin, further filter risks based on department and confidentiality
     if (user && user.prefs?.role !== "admin") {
       filtered = filtered.filter(
         (risk) =>
@@ -191,24 +191,39 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             </div>
           ) : (
             filteredAndSortedRisks().map((risk) => (
-              <Link key={risk.$id} href={`/risk/${risk.$id}`}>
-                <RiskCard
-                  title={risk.title}
-                  content={risk.content}
-                  authorId={risk.authorId}
-                  tags={risk.tags}
-                  attachmentId={risk.attachmentId}
-                  impact={risk.impact}
-                  probability={risk.probability}
-                  action={risk.action}
-                  mitigation={risk.mitigation}
-                  created={risk.created}
-                  updated={risk.updated}
-                />
-              </Link>
+              <div key={risk.$id}>
+                <Link href={`/risk/${risk.$id}`}>
+                  <RiskCard
+                    {...risk}
+                    currentUserId={user?.$id}
+                    onSetReminder={
+                      user && user.$id === risk.authorId
+                        ? () => {
+                            setSelectedRisk(risk);
+                            setIsReminderDialogOpen(true);
+                          }
+                        : undefined
+                    }
+                  />
+                </Link>
+              </div>
             ))
           )}
         </div>
+      )}
+
+      {selectedRisk && user && (
+        <ReminderDialog
+          isOpen={isReminderDialogOpen}
+          onClose={() => {
+            setIsReminderDialogOpen(false);
+            setSelectedRisk(null);
+          }}
+          riskId={selectedRisk.$id}
+          riskTitle={selectedRisk.title}
+          userId={user.$id}
+          email={user.email}
+        />
       )}
     </div>
   );

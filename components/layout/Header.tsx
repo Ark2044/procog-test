@@ -9,6 +9,7 @@ import {
   FaUserCog,
   FaSignOutAlt,
   FaTable,
+  FaBell,
 } from "react-icons/fa";
 
 export default function Header() {
@@ -155,6 +156,19 @@ export default function Header() {
                         Dashboard
                       </Link>
                     )}
+                  </li>
+                  <li>
+                    <Link
+                      href="/reminders"
+                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                        isScrolled
+                          ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                          : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                      }`}
+                    >
+                      <FaBell className="mr-2 text-lg" />
+                      Reminders
+                    </Link>
                   </li>
                   <li>
                     <Link
