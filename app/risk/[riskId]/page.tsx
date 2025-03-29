@@ -9,11 +9,26 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { useReminderStore } from '@/store/Reminder';
-import { ReminderDialog } from '@/components/ReminderDialog';
-import { Activity, AlertCircle, ArrowUpRight, BarChart2, Bell, Calendar, File, Shield, Tag, User } from 'lucide-react';
+import { useReminderStore } from "@/store/Reminder";
+import { ReminderDialog } from "@/components/ReminderDialog";
+import {
+  Activity,
+  AlertCircle,
+  ArrowUpRight,
+  BarChart2,
+  Bell,
+  Calendar,
+  File,
+  Shield,
+  Tag,
+  User,
+} from "lucide-react";
 import { useAuthStore } from "@/store/Auth";
-import { validateRiskDetail, validateAttachment } from '@/lib/validation';
+import {
+  validateRiskDetail,
+  validateAttachment,
+  RiskDetailValidationInput,
+} from "@/lib/validation";
 
 interface Risk {
   title: string;
@@ -47,7 +62,7 @@ const RiskDetail = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (typeof riskId === 'string' && user) {
+      if (typeof riskId === "string" && user) {
         try {
           const response = await databases.getDocument(
             db,
@@ -62,17 +77,19 @@ const RiskDetail = () => {
             tags: response.tags || [],
             attachmentId: response.attachmentId,
             impact: response.impact,
-            probability: response.probability,
+            probability: response.probability, // Keep as string
             action: response.action,
             mitigation: response.mitigation,
             created: response.created,
             updated: response.updated,
           };
 
-          const validation = validateRiskDetail(mappedRisk);
+          const validation = validateRiskDetail(
+            mappedRisk as unknown as RiskDetailValidationInput
+          );
           if (!validation.isValid) {
-            console.error('Risk validation failed:', validation.error);
-            setError(validation.error || 'Invalid risk data');
+            console.error("Risk validation failed:", validation.error);
+            setError(validation.error || "Invalid risk data");
             return;
           }
 
@@ -90,12 +107,15 @@ const RiskDetail = () => {
               );
 
               const validation = validateAttachment({
-                file: new File([], attachmentResponse.name, { type: attachmentResponse.mimeType })
+                file: new Blob([], { type: attachmentResponse.mimeType }),
               });
-              
+
               if (!validation.isValid) {
-                console.error('Attachment validation failed:', validation.error);
-                console.warn('Skipping invalid attachment');
+                console.error(
+                  "Attachment validation failed:",
+                  validation.error
+                );
+                console.warn("Skipping invalid attachment");
               } else {
                 const mappedAttachment: Attachment = {
                   id: attachmentResponse.$id,
@@ -105,14 +125,14 @@ const RiskDetail = () => {
                 setAttachment(mappedAttachment);
               }
             } catch (attachmentError) {
-              console.error('Error fetching attachment:', attachmentError);
+              console.error("Error fetching attachment:", attachmentError);
             }
           }
 
           await fetchReminders(user.$id);
         } catch (err) {
           console.error(err);
-          setError('Error fetching data');
+          setError("Error fetching data");
         } finally {
           setLoading(false);
         }
@@ -180,7 +200,7 @@ const RiskDetail = () => {
   const isRiskCreator = user && risk && user.$id === risk.authorId;
 
   const userRiskReminders = reminders.filter(
-    r => r.riskId === riskId && r.userId === user?.$id
+    (r) => r.riskId === riskId && r.userId === user?.$id
   );
 
   return (
@@ -374,8 +394,8 @@ const RiskDetail = () => {
             <CardContent>
               {userRiskReminders.length === 0 ? (
                 <p className="text-gray-500">
-                  {isRiskCreator 
-                    ? "No reminders set" 
+                  {isRiskCreator
+                    ? "No reminders set"
                     : "Only the risk creator can set reminders"}
                 </p>
               ) : (
@@ -390,7 +410,7 @@ const RiskDetail = () => {
                         <p className="text-sm text-gray-500">
                           {new Date(reminder.datetime).toLocaleString()}
                         </p>
-                        {reminder.recurrence !== 'none' && (
+                        {reminder.recurrence !== "none" && (
                           <Badge variant="outline">
                             Repeats {reminder.recurrence}
                           </Badge>
@@ -420,7 +440,6 @@ const RiskDetail = () => {
             riskId={riskId as string}
             riskTitle={risk.title}
             userId={user.$id}
-            email={user.email}
           />
         )}
       </div>

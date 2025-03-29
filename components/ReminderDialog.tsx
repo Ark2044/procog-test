@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useReminderStore } from '@/store/Reminder';
+import { useReminderStore } from "@/store/Reminder";
 
 interface ReminderDialogProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ interface ReminderDialogProps {
   riskId: string;
   riskTitle: string;
   userId: string;
+  email?: string;
 }
 
 export function ReminderDialog({
@@ -29,16 +30,18 @@ export function ReminderDialog({
   userId,
 }: ReminderDialogProps) {
   const [datetime, setDatetime] = useState<Date>(new Date());
-  const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
-  const [dateError, setDateError] = useState<string>('');
+  const [recurrence, setRecurrence] = useState<
+    "none" | "daily" | "weekly" | "monthly"
+  >("none");
+  const [dateError, setDateError] = useState<string>("");
   const { createReminder, loading } = useReminderStore();
 
   const validateDate = (date: Date) => {
     if (date < new Date()) {
-      setDateError('Please select a future date and time');
+      setDateError("Please select a future date and time");
       return false;
     }
-    setDateError('');
+    setDateError("");
     return true;
   };
 
@@ -51,7 +54,7 @@ export function ReminderDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateDate(datetime)) {
       return;
     }
@@ -63,7 +66,7 @@ export function ReminderDialog({
       userId,
       riskId,
       recurrence,
-      status: 'pending'
+      status: "pending",
     });
 
     onClose();
@@ -81,7 +84,9 @@ export function ReminderDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Date and Time</label>
+            <label className="block text-sm font-medium mb-1">
+              Date and Time
+            </label>
             <DatePicker
               selected={datetime}
               onChange={handleDateChange}
@@ -101,7 +106,11 @@ export function ReminderDialog({
             <label className="block text-sm font-medium mb-1">Recurrence</label>
             <select
               value={recurrence}
-              onChange={(e) => setRecurrence(e.target.value as 'none' | 'daily' | 'weekly' | 'monthly')}
+              onChange={(e) =>
+                setRecurrence(
+                  e.target.value as "none" | "daily" | "weekly" | "monthly"
+                )
+              }
               className="w-full p-2 border rounded-md"
             >
               <option value="none">No recurrence</option>
@@ -113,10 +122,12 @@ export function ReminderDialog({
 
           <AlertDialogFooter>
             <AlertDialogCancel asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </AlertDialogCancel>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Setting...' : 'Set Reminder'}
+              {loading ? "Setting..." : "Set Reminder"}
             </Button>
           </AlertDialogFooter>
         </form>

@@ -32,7 +32,7 @@ export const validateName = (name: string): ValidationResult => {
 
 export const validateDepartment = (department: string): ValidationResult => {
   if (!department) return { isValid: false, error: "Department is required" };
-  if (!VALID_DEPARTMENTS.includes(department as any)) {
+  if (!VALID_DEPARTMENTS.includes(department as (typeof VALID_DEPARTMENTS)[number])) {
     return { isValid: false, error: "Invalid department" };
   }
   return { isValid: true };
@@ -40,7 +40,7 @@ export const validateDepartment = (department: string): ValidationResult => {
 
 export const validateRole = (role: string): ValidationResult => {
   if (!role) return { isValid: false, error: "Role is required" };
-  if (!VALID_ROLES.includes(role as any)) {
+  if (!VALID_ROLES.includes(role as (typeof VALID_ROLES)[number])) {
     return { isValid: false, error: "Invalid role" };
   }
   return { isValid: true };
@@ -72,13 +72,13 @@ export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
   if (risk.content.length > 1000) {
     return { isValid: false, error: "Content must be 1000 characters or less" };
   }
-  if (!VALID_IMPACTS.includes(risk.impact as any)) {
+  if (!VALID_IMPACTS.includes(risk.impact as (typeof VALID_IMPACTS)[number])) {
     return { isValid: false, error: "Invalid impact value" };
   }
   if (typeof risk.probability !== 'number' || risk.probability < 0 || risk.probability > 5) {
     return { isValid: false, error: "Probability must be between 0 and 5" };
   }
-  if (!VALID_ACTIONS.includes(risk.action as any)) {
+  if (!VALID_ACTIONS.includes(risk.action as (typeof VALID_ACTIONS)[number])) {
     return { isValid: false, error: "Invalid action value" };
   }
   if (risk.action === 'mitigate' && !risk.mitigation?.trim()) {
@@ -115,13 +115,13 @@ export const validateRiskDetail = (risk: RiskDetailValidationInput): ValidationR
   if (risk.content.length > 1000) {
     return { isValid: false, error: "Content must be 1000 characters or less" };
   }
-  if (!VALID_IMPACTS.includes(risk.impact as any)) {
+  if (!VALID_IMPACTS.includes(risk.impact as (typeof VALID_IMPACTS)[number])) {
     return { isValid: false, error: "Invalid impact value" };
   }
   if (typeof risk.probability !== 'number' || risk.probability < 0 || risk.probability > 5) {
     return { isValid: false, error: "Probability must be between 0 and 5" };
   }
-  if (!VALID_ACTIONS.includes(risk.action as any)) {
+  if (!VALID_ACTIONS.includes(risk.action as (typeof VALID_ACTIONS)[number])) {
     return { isValid: false, error: "Invalid action value" };
   }
   if (risk.action === 'mitigate' && !risk.mitigation?.trim()) {
@@ -139,7 +139,7 @@ export const validateRiskDetail = (risk: RiskDetailValidationInput): ValidationR
 
 // Attachment validation
 export interface AttachmentValidationInput {
-  file: File;
+  file: File | Blob;
   maxSize?: number; // in bytes, default 5MB
   allowedTypes?: string[]; // e.g. ['image/jpeg', 'image/png', 'application/pdf']
 }
