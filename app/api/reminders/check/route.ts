@@ -9,6 +9,8 @@ export async function GET() {
         const isVercelCron = !!authHeader;
         const isDevelopment = process.env.NODE_ENV === 'development';
         
+        console.log('Reminder check triggered. Is cron?', isVercelCron, 'Is dev?', isDevelopment);
+        
         // Only allow requests from Vercel Cron or in development
         if (!isVercelCron && !isDevelopment) {
             console.warn('Unauthorized reminder check attempt');
@@ -20,6 +22,8 @@ export async function GET() {
 
         const result = await checkAndSendReminders();
         
+        console.log('Reminder check result:', result);
+
         if (!result.success) {
             console.error('Failed to process reminders:', result.error);
             return NextResponse.json(

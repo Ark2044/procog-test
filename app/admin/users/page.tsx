@@ -10,6 +10,7 @@ import {
   FaSync,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { validateAdminUpdate } from "@/lib/validation";
 
 interface User {
   $id: string;
@@ -33,7 +34,6 @@ const AdminUsersPage = () => {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Redirect if not logged in or not admin
   useEffect(() => {
     if (!user) {
       router.push("/login");
@@ -89,6 +89,15 @@ const AdminUsersPage = () => {
     value: string
   ) => {
     try {
+      const validation = validateAdminUpdate({
+        userId,
+        [field]: value
+      });
+
+      if (!validation.isValid) {
+        throw new Error(validation.error);
+      }
+
       setUpdatingUser(userId);
       const response = await fetch("/api/admin/updateUser", {
         method: "POST",
@@ -103,7 +112,6 @@ const AdminUsersPage = () => {
         throw new Error("Failed to update user");
       }
 
-      // Update local state to avoid refetching
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
           u.$id === userId ? { ...u, prefs: { ...u.prefs, [field]: value } } : u

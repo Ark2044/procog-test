@@ -10,6 +10,7 @@ import {
   FaUserTag,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { validateProfile } from "@/lib/validation";
 
 const Profile = () => {
   const router = useRouter();
@@ -35,6 +36,19 @@ const Profile = () => {
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUpdateError("");
+
+    const validation = validateProfile({
+      name,
+      email,
+      department,
+      role
+    });
+
+    if (!validation.isValid) {
+      setUpdateError(validation.error || "Invalid form data");
+      toast.error(validation.error || "Invalid form data");
+      return;
+    }
 
     const result = await updateUserProfile({
       reputation,

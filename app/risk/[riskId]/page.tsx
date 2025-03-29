@@ -13,6 +13,7 @@ import { useReminderStore } from '@/store/Reminder';
 import { ReminderDialog } from '@/components/ReminderDialog';
 import { Activity, AlertCircle, ArrowUpRight, BarChart2, Bell, Calendar, File, Shield, Tag, User } from 'lucide-react';
 import { useAuthStore } from "@/store/Auth";
+import { validateRiskDetail, validateAttachment } from '@/lib/validation';
 
 interface Risk {
   title: string;
@@ -68,25 +69,44 @@ const RiskDetail = () => {
             updated: response.updated,
           };
 
+          const validation = validateRiskDetail(mappedRisk);
+          if (!validation.isValid) {
+            console.error('Risk validation failed:', validation.error);
+            setError(validation.error || 'Invalid risk data');
+            return;
+          }
+
           setRisk(mappedRisk);
 
           if (response.attachmentId) {
-            const attachmentResponse = await storage.getFile(
-              db,
-              response.attachmentId
-            );
-            const attachmentUrl = storage.getFileView(
-              db,
-              attachmentResponse.$id
-            );
+            try {
+              const attachmentResponse = await storage.getFile(
+                db,
+                response.attachmentId
+              );
+              const attachmentUrl = storage.getFileView(
+                db,
+                attachmentResponse.$id
+              );
 
-            const mappedAttachment: Attachment = {
-              id: attachmentResponse.$id,
-              type: attachmentResponse.mimeType,
-              url: attachmentUrl,
-            };
-
-            setAttachment(mappedAttachment);
+              const validation = validateAttachment({
+                file: new File([], attachmentResponse.name, { type: attachmentResponse.mimeType })
+              });
+              
+              if (!validation.isValid) {
+                console.error('Attachment validation failed:', validation.error);
+                console.warn('Skipping invalid attachment');
+              } else {
+                const mappedAttachment: Attachment = {
+                  id: attachmentResponse.$id,
+                  type: attachmentResponse.mimeType,
+                  url: attachmentUrl,
+                };
+                setAttachment(mappedAttachment);
+              }
+            } catch (attachmentError) {
+              console.error('Error fetching attachment:', attachmentError);
+            }
           }
 
           await fetchReminders(user.$id);
@@ -101,8 +121,6 @@ const RiskDetail = () => {
 
     fetchData();
   }, [riskId, user, fetchReminders]);
-
-  // const riskReminders = reminders.filter(r => r.riskId === riskId);
 
   if (loading) {
     return (
