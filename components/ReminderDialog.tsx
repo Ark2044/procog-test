@@ -19,7 +19,6 @@ interface ReminderDialogProps {
   riskId: string;
   riskTitle: string;
   userId: string;
-  email: string;
 }
 
 export function ReminderDialog({
@@ -28,7 +27,6 @@ export function ReminderDialog({
   riskId,
   riskTitle,
   userId,
-  email,
 }: ReminderDialogProps) {
   const [datetime, setDatetime] = useState<Date>(new Date());
   const [recurrence, setRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
@@ -64,7 +62,6 @@ export function ReminderDialog({
       datetime: datetime.toISOString(),
       userId,
       riskId,
-      email,
       recurrence,
       status: 'pending'
     });

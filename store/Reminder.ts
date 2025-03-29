@@ -81,7 +81,6 @@ export const useReminderStore = create<ReminderState>((set) => ({
                 description: doc.description,
                 status: doc.status,
                 recurrence: doc.recurrence,
-                email: doc.email,
             })) as Reminder[] });
         } catch (error) {
             console.error('Failed to fetch reminders:', error);
@@ -109,7 +108,6 @@ export const useReminderStore = create<ReminderState>((set) => ({
                     description: reminder.description,
                     status: reminder.status,
                     recurrence: reminder.recurrence,
-                    email: reminder.email,
                 } as Reminder]
             }));
         } catch (error) {

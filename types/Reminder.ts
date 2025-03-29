@@ -7,7 +7,6 @@ export interface Reminder {
     riskId: string; // Associated risk ID
     recurrence: 'none' | 'daily' | 'weekly' | 'monthly';
     status: 'pending' | 'completed' | 'cancelled';
-    email: string;
     created: string;
     updated: string;
 }
