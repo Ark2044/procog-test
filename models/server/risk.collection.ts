@@ -33,6 +33,13 @@ export default async function createRiskCollection() {
       databases.createStringAttribute(
         db,
         riskCollection,
+        "authorName",
+        100,
+        true
+      ),
+      databases.createStringAttribute(
+        db,
+        riskCollection,
         "tags",
         1000,
         true,

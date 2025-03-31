@@ -1,25 +1,96 @@
-import { Permission } from "node-appwrite";
+import { Permission, IndexType } from "node-appwrite";
 import { commentCollection, db } from "../name";
 import { databases } from "./config";
 
 export default async function createCommentCollection() {
-    // Creating Collection
-    await databases.createCollection(db, commentCollection, commentCollection, [
-        Permission.create("users"),
-        Permission.read("any"),
-        Permission.read("users"),
-        Permission.update("users"),
-        Permission.delete("users"),
-    ]);
-    console.log("Comment Collection Created");
+  // Creating Collection
+  await databases.createCollection(db, commentCollection, commentCollection, [
+    Permission.create("users"), // Users can create comments
+    Permission.read("any"), // Anyone can read comments
+    Permission.read("users"), // Users can read comments
+    Permission.update("users"), // Users can update comments
+    Permission.delete("users"), // Users can delete comments
+  ]);
+  console.log("Comment Collection Created");
 
-    // Creating Attributes
-    await Promise.all([
-        databases.createStringAttribute(db, commentCollection, "content", 10000, true),
-        databases.createEnumAttribute(db, commentCollection, "type", ["answer", "question"], true),
-        databases.createStringAttribute(db, commentCollection, "typeId", 50, true),
-        databases.createStringAttribute(db, commentCollection, "authorId", 50, true),
-        databases.createDatetimeAttribute(db, commentCollection, "created", true) // New created date attribute
-    ]);
-    console.log("Comment Attributes Created");
+  // Creating Attributes
+  await Promise.all([
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "content",
+      10000,
+      true
+    ), // Comment text
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "authorId",
+      50,
+      true
+    ), // Author's user ID
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "authorName",
+      100,
+      true
+    ), // Author's name (NEW)
+    databases.createStringAttribute(db, commentCollection, "riskId", 50, true), // Associated risk ID
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "parentId",
+      50,
+      false
+    ), // Parent comment ID (optional)
+    databases.createIntegerAttribute(db, commentCollection, "upvotes", true, 0), // Upvote count
+    databases.createIntegerAttribute(
+      db,
+      commentCollection,
+      "downvotes",
+      true,
+      0
+    ), // Downvote count
+    databases.createBooleanAttribute(db, commentCollection, "isFlagged", true), // Flagged status
+    databases.createDatetimeAttribute(db, commentCollection, "created", true), // Creation timestamp
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "mentions",
+      1000,
+      false,
+      undefined,
+      true,
+      true
+    ), // Mentions (array)
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "voters",
+      10000,
+      false,
+      undefined,
+      true,
+      true
+    ), // Voters (array)
+  ]);
+  console.log("Comment Attributes Created");
+
+  // Creating Indexes
+  await Promise.all([
+    databases.createIndex(db, commentCollection, "riskId", IndexType.Key, [
+      "riskId",
+    ]), // Index for filtering by riskId
+    databases.createIndex(db, commentCollection, "parentId", IndexType.Key, [
+      "parentId",
+    ]), // Index for threading
+    databases.createIndex(db, commentCollection, "authorId", IndexType.Key, [
+      "authorId",
+    ]), // Index for filtering by author
+    databases.createIndex(db, commentCollection, "created", IndexType.Key, [
+      "created",
+    ]), // Index for sorting by creation time
+  ]);
+  console.log("Comment Indexes Created");
 }

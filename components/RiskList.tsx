@@ -23,6 +23,7 @@ interface Risk {
   title: string;
   content: string;
   authorId: string;
+  authorName: string;
   tags: string[];
   attachmentId?: string;
   impact: "low" | "medium" | "high";
@@ -62,6 +63,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         title: doc.title,
         content: doc.content,
         authorId: doc.authorId,
+        authorName: doc.authorName,
         tags: doc.tags || [],
         attachmentId: doc.attachmentId,
         impact: doc.impact,

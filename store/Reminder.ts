@@ -1,156 +1,113 @@
-import { create } from 'zustand';
-import { Reminder } from '@/types/Reminder';
-import { databases } from '@/models/client/config';
-import { ID, Query } from 'appwrite';
-import env from '@/app/env';
+// store/Reminder.ts
+import { create } from "zustand";
+import { databases } from "@/models/client/config";
+import { Query } from "appwrite";
+import { db, reminderCollection } from "@/models/name";
+import { Reminder } from "@/types/Reminder";
 
-const COLLECTION_ID = 'reminders';
-
-// Collection functions
-export const getReminders = async (userId: string) => {
-    return await databases.listDocuments(
-        env.appwrite.databaseId,
-        COLLECTION_ID,
-        [Query.equal('userId', userId)]
-    );
-};
-
-export const createReminder = async (data: Omit<Reminder, '$id' | 'created' | 'updated'>) => {
-    return await databases.createDocument(
-        env.appwrite.databaseId,
-        COLLECTION_ID,
-        ID.unique(),
-        {
-            ...data,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-        }
-    );
-};
-
-export const updateReminder = async (reminderId: string, data: Partial<Reminder>) => {
-    return await databases.updateDocument(
-        env.appwrite.databaseId,
-        COLLECTION_ID,
-        reminderId,
-        {
-            ...data,
-            updated: new Date().toISOString(),
-        }
-    );
-};
-
-export const deleteReminder = async (reminderId: string) => {
-    return await databases.deleteDocument(
-        env.appwrite.databaseId,
-        COLLECTION_ID,
-        reminderId
-    );
-};
-
-// Zustand store interface
-interface ReminderState {
-    reminders: Reminder[];
-    loading: boolean;
-    error: string | null;
-    fetchReminders: (userId: string) => Promise<void>;
-    createReminder: (data: Omit<Reminder, '$id' | 'created' | 'updated'>) => Promise<void>;
-    updateReminder: (reminderId: string, data: Partial<Reminder>) => Promise<void>;
-    deleteReminder: (reminderId: string) => Promise<void>;
+interface ReminderStore {
+  reminders: Reminder[];
+  loading: boolean;
+  error: string | null;
+  fetchReminders: (userId: string) => Promise<void>;
+  addReminder: (reminder: Reminder) => Promise<void>;
+  updateReminder: (
+    reminderId: string,
+    data: Partial<Reminder>
+  ) => Promise<void>;
+  deleteReminder: (reminderId: string) => Promise<void>;
 }
 
-export const useReminderStore = create<ReminderState>((set) => ({
-    reminders: [],
-    loading: false,
-    error: null,
+export const useReminderStore = create<ReminderStore>((set) => ({
+  reminders: [],
+  loading: false,
+  error: null,
 
-    fetchReminders: async (userId: string) => {
-        set({ loading: true, error: null });
-        try {
-            console.log('Fetching reminders for user:', userId);
-            const response = await getReminders(userId);
-            console.log('Fetched reminders:', response.documents.length);
-            set({ reminders: response.documents.map(doc => ({
-                $id: doc.$id,
-                title: doc.title,
-                datetime: doc.datetime,
-                userId: doc.userId,
-                riskId: doc.riskId,
-                created: doc.created,
-                updated: doc.updated,
-                description: doc.description,
-                status: doc.status,
-                recurrence: doc.recurrence,
-            })) as Reminder[] });
-        } catch (error) {
-            console.error('Failed to fetch reminders:', error);
-            set({ error: 'Failed to fetch reminders' });
-        } finally {
-            set({ loading: false });
-        }
-    },
+  fetchReminders: async (userId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await databases.listDocuments(db, reminderCollection, [
+        Query.equal("userId", userId),
+      ]);
 
-    createReminder: async (data) => {
-        set({ loading: true, error: null });
-        try {
-            console.log('Creating reminder:', data);
-            const reminder = await createReminder(data);
-            console.log('Created reminder:', reminder.$id);
-            set((state) => ({
-                reminders: [...state.reminders, {
-                    $id: reminder.$id,
-                    title: reminder.title,
-                    datetime: reminder.datetime,
-                    userId: reminder.userId,
-                    riskId: reminder.riskId,
-                    created: reminder.created,
-                    updated: reminder.updated,
-                    description: reminder.description,
-                    status: reminder.status,
-                    recurrence: reminder.recurrence,
-                } as Reminder]
-            }));
-        } catch (error) {
-            console.error('Failed to create reminder:', error);
-            set({ error: 'Failed to create reminder' });
-        } finally {
-            set({ loading: false });
-        }
-    },
-
-    updateReminder: async (reminderId, data) => {
-        set({ loading: true, error: null });
-        try {
-            console.log('Updating reminder:', reminderId, data);
-            const updated = await updateReminder(reminderId, data);
-            console.log('Updated reminder:', updated.$id);
-            set((state) => ({
-                reminders: state.reminders.map((r) => 
-                    r.$id === reminderId ? { ...r, ...updated } : r
-                )
-            }));
-        } catch (error) {
-            console.error('Failed to update reminder:', error);
-            set({ error: 'Failed to update reminder' });
-        } finally {
-            set({ loading: false });
-        }
-    },
-
-    deleteReminder: async (reminderId) => {
-        set({ loading: true, error: null });
-        try {
-            console.log('Deleting reminder:', reminderId);
-            await deleteReminder(reminderId);
-            console.log('Deleted reminder:', reminderId);
-            set((state) => ({
-                reminders: state.reminders.filter((r) => r.$id !== reminderId)
-            }));
-        } catch (error) {
-            console.error('Failed to delete reminder:', error);
-            set({ error: 'Failed to delete reminder' });
-        } finally {
-            set({ loading: false });
-        }
+      set({
+        reminders: response.documents.map((doc) => ({
+          $id: doc.$id,
+          title: doc.title,
+          description: doc.description,
+          datetime: doc.datetime,
+          recurrence: doc.recurrence,
+          userId: doc.userId,
+          riskId: doc.riskId,
+          riskTitle: doc.riskTitle,
+          status: doc.status,
+          created: doc.created,
+          updated: doc.updated,
+        })) as Reminder[],
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error fetching reminders:", error);
+      set({
+        error: "Failed to fetch reminders",
+        loading: false,
+      });
     }
+  },
+
+  addReminder: async (reminder: Reminder) => {
+    set({ loading: true, error: null });
+    try {
+      set((state) => ({
+        reminders: [...state.reminders, reminder],
+        loading: false,
+      }));
+    } catch (error) {
+      console.error("Error adding reminder:", error);
+      set({
+        error: "Failed to add reminder",
+        loading: false,
+      });
+    }
+  },
+
+  updateReminder: async (reminderId: string, data: Partial<Reminder>) => {
+    set({ loading: true, error: null });
+    try {
+      await databases.updateDocument(db, reminderCollection, reminderId, data);
+
+      set((state) => ({
+        reminders: state.reminders.map((reminder) =>
+          reminder.$id === reminderId ? { ...reminder, ...data } : reminder
+        ),
+        loading: false,
+      }));
+    } catch (error) {
+      console.error("Error updating reminder:", error);
+      set({
+        error: "Failed to update reminder",
+        loading: false,
+      });
+    }
+  },
+
+  deleteReminder: async (reminderId: string) => {
+    set({ loading: true, error: null });
+    try {
+      await databases.deleteDocument(db, reminderCollection, reminderId);
+
+      set((state) => ({
+        reminders: state.reminders.filter(
+          (reminder) => reminder.$id !== reminderId
+        ),
+        loading: false,
+      }));
+    } catch (error) {
+      console.error("Error deleting reminder:", error);
+      set({
+        error: "Failed to delete reminder",
+        loading: false,
+      });
+    }
+  },
 }));

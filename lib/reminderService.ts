@@ -2,7 +2,7 @@ import { Reminder } from '@/types/Reminder';
 import { databases } from '@/models/server/config';
 import { Query } from 'node-appwrite';
 import env from '@/app/env';
-const COLLECTION_ID = 'reminders';
+import { reminderCollection } from '@/models/name';
 
 // Validation constants
 const VALID_RECURRENCE = ['none', 'daily', 'weekly', 'monthly'] as const;
@@ -31,7 +31,7 @@ export async function checkAndSendReminders() {
 
         const response = await databases.listDocuments(
             env.appwrite.databaseId,
-            COLLECTION_ID,
+            reminderCollection,
             [
                 Query.equal('status', 'pending'),
                 Query.lessThanEqual('datetime', fiveMinutesFromNow.toISOString()),
@@ -62,7 +62,7 @@ export async function checkAndSendReminders() {
                 // Update reminder status
                 await databases.updateDocument(
                     env.appwrite.databaseId,
-                    COLLECTION_ID,
+                    reminderCollection,
                     reminder.$id,
                     {
                         status: 'completed'
@@ -95,7 +95,7 @@ export async function checkAndSendReminders() {
                     if (nextValidation.isValid) {
                         await databases.createDocument(
                             env.appwrite.databaseId,
-                            COLLECTION_ID,
+                            reminderCollection,
                             'unique()',
                             nextReminder
                         );

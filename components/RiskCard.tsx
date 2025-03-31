@@ -10,6 +10,7 @@ interface RiskCardProps {
   title: string;
   content: string;
   authorId: string;
+  authorName: string; // New field for author name
   tags: string[];
   attachmentId?: string;
   impact: "low" | "medium" | "high";
@@ -66,6 +67,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
   title,
   content,
   authorId,
+  authorName,
   tags,
   attachmentId,
   impact,
@@ -131,7 +133,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
         <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
           <div className="flex items-center gap-1">
             <User className="w-4 h-4" />
-            <span>{authorId}</span>
+            <span>{authorName}</span> {/* Display author name instead of ID */}
           </div>
 
           <div className="flex items-center gap-1">

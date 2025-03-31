@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { databases, storage } from "@/models/client/config";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { db, riskCollection } from "@/models/name";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +29,13 @@ import {
   validateAttachment,
   RiskDetailValidationInput,
 } from "@/lib/validation";
+import { CommentSection } from "@/components/comments/CommentSection";
 
 interface Risk {
   title: string;
   content: string;
   authorId: string;
+  authorName: string;
   tags: string[];
   attachmentId?: string;
   impact: string;
@@ -51,14 +53,43 @@ interface Attachment {
 }
 
 const RiskDetail = () => {
+  const router = useRouter();
   const { riskId } = useParams();
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [risk, setRisk] = useState<Risk | null>(null);
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
   const { reminders, fetchReminders, deleteReminder } = useReminderStore();
-  const { user } = useAuthStore();
+  const { user, verifySession, session } = useAuthStore();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        await verifySession();
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setSessionChecked(true);
+      }
+    };
+    checkSession();
+  }, [verifySession]);
+
+  useEffect(() => {
+    if (sessionChecked && !loading) {
+      if (!session) {
+        router.push("/login");
+      } else if (user) {
+        if (user.prefs?.role === "admin") {
+          router.push("/admin/users");
+        } else if (`${user.$id}` !== user.$id) {
+          router.push(`/dashboard/${user.$id}`);
+        }
+      }
+    }
+  }, [sessionChecked, loading, session, user, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,10 +105,11 @@ const RiskDetail = () => {
             title: response.title,
             content: response.content,
             authorId: response.authorId,
+            authorName: response.authorName,
             tags: response.tags || [],
             attachmentId: response.attachmentId,
             impact: response.impact,
-            probability: response.probability, // Keep as string
+            probability: response.probability,
             action: response.action,
             mitigation: response.mitigation,
             created: response.created,
@@ -234,7 +266,9 @@ const RiskDetail = () => {
                   <User className="w-5 h-5 text-blue-500" />
                   <div>
                     <p className="text-xs text-gray-500">Reported by</p>
-                    <p className="text-gray-800 font-medium">{risk.authorId}</p>
+                    <p className="text-gray-800 font-medium">
+                      {risk.authorName}
+                    </p>
                   </div>
                 </div>
 
@@ -403,15 +437,20 @@ const RiskDetail = () => {
                   {userRiskReminders.map((reminder) => (
                     <div
                       key={reminder.$id}
-                      className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
+                      className="flex justify-between items-start p-4 bg-gray-50 rounded-lg"
                     >
-                      <div>
-                        <p className="font-medium">{reminder.title}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(reminder.datetime).toLocaleString()}
-                        </p>
+                      <div className="space-y-2">
+                        <div>
+                          <h4 className="font-medium text-gray-800">
+                            {reminder.title}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            {new Date(reminder.datetime).toLocaleString()}
+                          </p>
+                        </div>
+                        <p className="text-gray-700">{reminder.description}</p>
                         {reminder.recurrence !== "none" && (
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="mt-1">
                             Repeats {reminder.recurrence}
                           </Badge>
                         )}
@@ -441,6 +480,14 @@ const RiskDetail = () => {
             riskTitle={risk.title}
             userId={user.$id}
           />
+        )}
+
+        {user && riskId && (
+          <Card className="border-gray-200 bg-white">
+            <CardContent className="p-6">
+              <CommentSection riskId={riskId as string} />
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

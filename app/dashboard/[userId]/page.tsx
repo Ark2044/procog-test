@@ -18,6 +18,7 @@ import {
   LucideRefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { account } from "@/models/client/config";
 
 type ImpactCount = {
   low: number;
@@ -67,8 +68,8 @@ const Dashboard = () => {
     transfer: 0,
     avoid: 0,
   });
+  const [authorNames, setAuthorNames] = useState<Record<string, string>>({});
 
-  // Verify session and mark session as checked when done.
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -82,7 +83,6 @@ const Dashboard = () => {
     checkSession();
   }, [verifySession]);
 
-  // Only trigger redirect after session has been checked and loading is false.
   useEffect(() => {
     if (sessionChecked && !loading) {
       if (!session) {
@@ -118,6 +118,8 @@ const Dashboard = () => {
           updated: doc.updated,
           isConfidential: doc.isConfidential ?? false,
           authorizedViewers: doc.authorizedViewers ?? [],
+          authorName: authorNames[doc.authorId] || "Unknown", // Add authorName
+          riskTitle: doc.title || "Untitled Risk", // Add riskTitle
         }));
 
         let risksToSet = fetchedRisks;
@@ -161,14 +163,37 @@ const Dashboard = () => {
         }
       }
     },
-    [user]
+    [authorNames, user]
   );
+
+  const fetchAuthorName = useCallback(async (authorId: string) => {
+    if (authorNames[authorId]) return authorNames[authorId];
+    try {
+      const authorUser = await account.get();
+      setAuthorNames(prev => ({ ...prev, [authorId]: authorUser.name }));
+      return authorUser.name;
+    } catch (error) {
+      console.error('Error fetching author name:', error);
+      return authorId;
+    }
+  }, [authorNames]);
 
   useEffect(() => {
     if (session) {
       fetchRisks();
     }
   }, [session, fetchRisks]);
+
+  useEffect(() => {
+    const fetchAllAuthorNames = async () => {
+      const uniqueAuthorIds = [...new Set(risks.map(risk => risk.authorId))];
+      await Promise.all(uniqueAuthorIds.map(fetchAuthorName));
+    };
+
+    if (risks.length > 0) {
+      fetchAllAuthorNames();
+    }
+  }, [fetchAuthorName, risks]);
 
   const handleRiskCreated = () => {
     setShowCreateRisk(false);
@@ -209,7 +234,6 @@ const Dashboard = () => {
       animate={{ opacity: 1 }}
       className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16"
     >
-      {/* Sidebar */}
       <div className="w-full lg:w-64 bg-white border-r border-gray-200">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
           <div>
@@ -281,7 +305,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-800">
@@ -328,7 +351,9 @@ const Dashboard = () => {
           })}
         </div>
 
-        <RiskList userId={userIdString} />
+        <RiskList 
+          userId={userIdString} 
+        />
       </div>
     </motion.div>
   );

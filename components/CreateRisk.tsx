@@ -17,7 +17,7 @@ import { useAuthStore } from "@/store/Auth";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useReminderStore } from '@/store/Reminder';
+import { useReminderStore } from "@/store/Reminder";
 
 const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   onRiskCreated,
@@ -43,9 +43,11 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const [authorizedViewers, setAuthorizedViewers] = useState<string[]>([]);
   const [includeReminder, setIncludeReminder] = useState(false);
   const [reminderDate, setReminderDate] = useState<Date>(new Date());
-  const [reminderRecurrence, setReminderRecurrence] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [reminderRecurrence, setReminderRecurrence] = useState<
+    "none" | "daily" | "weekly" | "monthly"
+  >("none");
   const { user } = useAuthStore();
-  const { createReminder } = useReminderStore();
+  const { addReminder } = useReminderStore();
   const [availableUsers, setAvailableUsers] = useState<
     Array<{ $id: string; name: string }>
   >([]);
@@ -111,6 +113,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         return;
       }
       const authorId = user.$id;
+      const authorName = user.name || "Anonymous";
       const department = user.prefs?.department || "general";
 
       if (file) {
@@ -122,32 +125,42 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         setAttachmentId(fileResponse.$id);
       }
 
-      const riskResponse = await databases.createDocument(db, riskCollection, "unique()", {
-        title,
-        content,
-        authorId,
-        tags,
-        attachmentId,
-        impact,
-        probability,
-        action,
-        mitigation: action === "mitigate" ? mitigation : "",
-        department,
-        isConfidential,
-        authorizedViewers: isConfidential ? authorizedViewers : [],
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-      });
+      const riskResponse = await databases.createDocument(
+        db,
+        riskCollection,
+        "unique()",
+        {
+          title,
+          content,
+          authorId,
+          authorName,
+          tags,
+          attachmentId,
+          impact,
+          probability,
+          action,
+          mitigation: action === "mitigate" ? mitigation : "",
+          department,
+          isConfidential,
+          authorizedViewers: isConfidential ? authorizedViewers : [],
+          created: new Date().toISOString(),
+          updated: new Date().toISOString(),
+        }
+      );
 
       if (includeReminder) {
-        await createReminder({
+        await addReminder({
           title: `Risk Review: ${title}`,
           description: `Time to review risk: ${title}`,
           datetime: reminderDate.toISOString(),
           userId: user.$id,
           riskId: riskResponse.$id,
+          riskTitle: "",
           recurrence: reminderRecurrence,
-          status: 'pending'
+          status: "pending",
+          $id: "",
+          created: "",
+          updated: "",
         });
       }
 
@@ -168,7 +181,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       setRemainingChars(500);
       setIncludeReminder(false);
       setReminderDate(new Date());
-      setReminderRecurrence('none');
+      setReminderRecurrence("none");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError("Failed to create risk: " + err.message);
@@ -478,7 +491,9 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           {includeReminder && (
             <div className="space-y-4 pl-6">
               <div>
-                <label className="block text-sm font-medium mb-1">Review Date and Time</label>
+                <label className="block text-sm font-medium mb-1">
+                  Review Date and Time
+                </label>
                 <DatePicker
                   selected={reminderDate}
                   onChange={(date) => setReminderDate(date || new Date())}
@@ -492,10 +507,16 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Recurrence</label>
+                <label className="block text-sm font-medium mb-1">
+                  Recurrence
+                </label>
                 <select
                   value={reminderRecurrence}
-                  onChange={(e) => setReminderRecurrence(e.target.value as 'none' | 'daily' | 'weekly' | 'monthly')}
+                  onChange={(e) =>
+                    setReminderRecurrence(
+                      e.target.value as "none" | "daily" | "weekly" | "monthly"
+                    )
+                  }
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="none">No recurrence</option>
