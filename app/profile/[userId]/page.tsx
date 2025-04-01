@@ -80,7 +80,7 @@ const Profile = () => {
     );
 
   return (
-    <div className="min-h-screen mt-10 bg-gradient-to-br from-indigo-50 to-purple-50 flex justify-center items-center pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex justify-center items-center pt-10">
       <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold mb-6 text-center">Your Profile</h1>
         {updateError && (

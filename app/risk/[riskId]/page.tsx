@@ -54,7 +54,8 @@ interface Attachment {
 
 const RiskDetail = () => {
   const router = useRouter();
-  const { riskId } = useParams();
+  const params = useParams();
+  const riskId = params?.riskId as string | undefined;
   const [sessionChecked, setSessionChecked] = useState(false);
   const [risk, setRisk] = useState<Risk | null>(null);
   const [attachment, setAttachment] = useState<Attachment | null>(null);
@@ -236,7 +237,7 @@ const RiskDetail = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800 mt-10">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">

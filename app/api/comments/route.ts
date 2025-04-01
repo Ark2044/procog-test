@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { databases } from "@/models/client/config";
 import { commentCollection, db } from "@/models/name";
 import { ID } from "appwrite";
+import { handleApiError, createSuccessResponse, validateRequestBody } from "@/lib/apiUtils";
+import { validateComment } from "@/lib/validation";
+import { checkCommentRateLimit, isSpam } from "@/lib/rateLimit";
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -16,24 +19,53 @@ export async function GET(request: NextRequest) {
             db,
             commentCollection,
             [
-                // Query parameters
+                // Query parameters for comments
             ]
         );
-        return NextResponse.json(response.documents);
+        return createSuccessResponse(response.documents);
     } catch (error) {
-        console.error("Error fetching comments:", error);
-        return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
+        return handleApiError(error);
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        const body = await validateRequestBody(request) as {
+            content: string;
+            authorId: string;
+            riskId: string;
+            parentId?: string;
+            mentions?: string[];
+        };
         const { content, authorId, riskId, parentId, mentions } = body;
 
-        if (!content || !authorId || !riskId) {
+        // Validate input
+        const validation = validateComment({
+            content,
+            type: parentId ? "answer" : "question",
+            typeId: riskId
+        });
+
+        if (!validation.isValid) {
             return NextResponse.json(
-                { error: "Missing required fields" },
+                { error: validation.error },
+                { status: 400 }
+            );
+        }
+
+        // Check rate limit
+        const underLimit = await checkCommentRateLimit(authorId);
+        if (!underLimit) {
+            return NextResponse.json(
+                { error: "Rate limit exceeded. Please wait before posting again." },
+                { status: 429 }
+            );
+        }
+
+        // Check for spam
+        if (isSpam(content)) {
+            return NextResponse.json(
+                { error: "Comment detected as potential spam" },
                 { status: 400 }
             );
         }
@@ -56,12 +88,8 @@ export async function POST(request: NextRequest) {
             }
         );
 
-        return NextResponse.json(comment);
+        return createSuccessResponse(comment, 201);
     } catch (error) {
-        console.error("Error creating comment:", error);
-        return NextResponse.json(
-            { error: "Failed to create comment" },
-            { status: 500 }
-        );
+        return handleApiError(error);
     }
 }
