@@ -48,8 +48,10 @@ const DashboardSkeleton = () => (
 );
 
 const Dashboard = () => {
-  const { userId } = useParams();
-  const userIdString = Array.isArray(userId) ? userId[0] : userId;
+  const params = useParams();
+  const userId = Array.isArray(params?.userId)
+    ? params.userId[0]
+    : params?.userId;
   const router = useRouter();
   const { user, loading, error, verifySession, session } = useAuthStore();
   const [sessionChecked, setSessionChecked] = useState(false);
@@ -90,12 +92,12 @@ const Dashboard = () => {
       } else if (user) {
         if (user.prefs?.role === "admin") {
           router.push("/admin/users");
-        } else if (userIdString !== user.$id) {
+        } else if (userId !== user.$id) {
           router.push(`/dashboard/${user.$id}`);
         }
       }
     }
-  }, [sessionChecked, loading, session, user, router, userIdString]);
+  }, [sessionChecked, loading, session, user, router, userId]);
 
   const fetchRisks = useCallback(
     async (showRefreshIndicator = false) => {
@@ -166,17 +168,20 @@ const Dashboard = () => {
     [authorNames, user]
   );
 
-  const fetchAuthorName = useCallback(async (authorId: string) => {
-    if (authorNames[authorId]) return authorNames[authorId];
-    try {
-      const authorUser = await account.get();
-      setAuthorNames(prev => ({ ...prev, [authorId]: authorUser.name }));
-      return authorUser.name;
-    } catch (error) {
-      console.error('Error fetching author name:', error);
-      return authorId;
-    }
-  }, [authorNames]);
+  const fetchAuthorName = useCallback(
+    async (authorId: string) => {
+      if (authorNames[authorId]) return authorNames[authorId];
+      try {
+        const authorUser = await account.get();
+        setAuthorNames((prev) => ({ ...prev, [authorId]: authorUser.name }));
+        return authorUser.name;
+      } catch (error) {
+        console.error("Error fetching author name:", error);
+        return authorId;
+      }
+    },
+    [authorNames]
+  );
 
   useEffect(() => {
     if (session) {
@@ -186,7 +191,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchAllAuthorNames = async () => {
-      const uniqueAuthorIds = [...new Set(risks.map(risk => risk.authorId))];
+      const uniqueAuthorIds = [...new Set(risks.map((risk) => risk.authorId))];
       await Promise.all(uniqueAuthorIds.map(fetchAuthorName));
     };
 
@@ -232,7 +237,7 @@ const Dashboard = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16"
+      className="flex flex-col lg:flex-row min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-10"
     >
       <div className="w-full lg:w-64 bg-white border-r border-gray-200">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
@@ -243,7 +248,7 @@ const Dashboard = () => {
                 {user?.name || "User"}
               </p>
             </div>
-            <p className="text-xs text-gray-500">ID: {userIdString}</p>
+            <p className="text-xs text-gray-500">ID: {userId}</p>
             <p className="text-xs text-gray-500">
               Department: {user?.prefs?.department}
             </p>
@@ -351,12 +356,9 @@ const Dashboard = () => {
           })}
         </div>
 
-        <RiskList 
-          userId={userIdString} 
-        />
+        <RiskList userId={userId} />
       </div>
     </motion.div>
   );
 };
-
 export default Dashboard;
