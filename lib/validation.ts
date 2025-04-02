@@ -3,10 +3,21 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const NAME_REGEX = /^[a-zA-Z\s'-]{2,50}$/;
 
 // Department and role constants
-export const VALID_DEPARTMENTS = ['general', 'engineering', 'sales', 'marketing', 'hr'] as const;
-export const VALID_ROLES = ['user', 'admin'] as const;
-export const VALID_IMPACTS = ['low', 'medium', 'high'] as const;
-export const VALID_ACTIONS = ['mitigate', 'accept', 'transfer', 'avoid'] as const;
+export const VALID_DEPARTMENTS = [
+  "general",
+  "engineering",
+  "sales",
+  "marketing",
+  "hr",
+] as const;
+export const VALID_ROLES = ["user", "admin"] as const;
+export const VALID_IMPACTS = ["low", "medium", "high"] as const;
+export const VALID_ACTIONS = [
+  "mitigate",
+  "accept",
+  "transfer",
+  "avoid",
+] as const;
 
 // Validation types
 export type ValidationResult = {
@@ -17,22 +28,29 @@ export type ValidationResult = {
 // Validation functions
 export const validateEmail = (email: string): ValidationResult => {
   if (!email) return { isValid: false, error: "Email is required" };
-  if (!EMAIL_REGEX.test(email)) return { isValid: false, error: "Invalid email format" };
+  if (!EMAIL_REGEX.test(email))
+    return { isValid: false, error: "Invalid email format" };
   return { isValid: true };
 };
 
 export const validateName = (name: string): ValidationResult => {
   if (!name) return { isValid: false, error: "Name is required" };
-  if (!NAME_REGEX.test(name)) return { 
-    isValid: false, 
-    error: "Name must be 2-50 characters and contain only letters, spaces, hyphens and apostrophes" 
-  };
+  if (!NAME_REGEX.test(name))
+    return {
+      isValid: false,
+      error:
+        "Name must be 2-50 characters and contain only letters, spaces, hyphens and apostrophes",
+    };
   return { isValid: true };
 };
 
 export const validateDepartment = (department: string): ValidationResult => {
   if (!department) return { isValid: false, error: "Department is required" };
-  if (!VALID_DEPARTMENTS.includes(department as (typeof VALID_DEPARTMENTS)[number])) {
+  if (
+    !VALID_DEPARTMENTS.includes(
+      department as (typeof VALID_DEPARTMENTS)[number]
+    )
+  ) {
     return { isValid: false, error: "Invalid department" };
   }
   return { isValid: true };
@@ -57,6 +75,7 @@ export interface RiskValidationInput {
   department?: string;
   isConfidential?: boolean;
   authorizedViewers?: string[];
+  dueDate?: string;
 }
 
 export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
@@ -75,17 +94,30 @@ export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
   if (!VALID_IMPACTS.includes(risk.impact as (typeof VALID_IMPACTS)[number])) {
     return { isValid: false, error: "Invalid impact value" };
   }
-  if (typeof risk.probability !== 'number' || risk.probability < 0 || risk.probability > 5) {
+  if (
+    typeof risk.probability !== "number" ||
+    risk.probability < 0 ||
+    risk.probability > 5
+  ) {
     return { isValid: false, error: "Probability must be between 0 and 5" };
   }
   if (!VALID_ACTIONS.includes(risk.action as (typeof VALID_ACTIONS)[number])) {
     return { isValid: false, error: "Invalid action value" };
   }
-  if (risk.action === 'mitigate' && !risk.mitigation?.trim()) {
-    return { isValid: false, error: "Mitigation strategy is required when action is mitigate" };
+  if (risk.action === "mitigate" && !risk.mitigation?.trim()) {
+    return {
+      isValid: false,
+      error: "Mitigation strategy is required when action is mitigate",
+    };
   }
-  if (risk.isConfidential && (!risk.authorizedViewers || risk.authorizedViewers.length === 0)) {
-    return { isValid: false, error: "Authorized viewers are required for confidential risks" };
+  if (
+    risk.isConfidential &&
+    (!risk.authorizedViewers || risk.authorizedViewers.length === 0)
+  ) {
+    return {
+      isValid: false,
+      error: "Authorized viewers are required for confidential risks",
+    };
   }
   return { isValid: true };
 };
@@ -100,9 +132,12 @@ export interface RiskDetailValidationInput {
   action: string;
   mitigation?: string;
   attachmentId?: string;
+  dueDate?: string;
 }
 
-export const validateRiskDetail = (risk: RiskDetailValidationInput): ValidationResult => {
+export const validateRiskDetail = (
+  risk: RiskDetailValidationInput
+): ValidationResult => {
   if (!risk.title?.trim()) {
     return { isValid: false, error: "Title is required" };
   }
@@ -118,14 +153,21 @@ export const validateRiskDetail = (risk: RiskDetailValidationInput): ValidationR
   if (!VALID_IMPACTS.includes(risk.impact as (typeof VALID_IMPACTS)[number])) {
     return { isValid: false, error: "Invalid impact value" };
   }
-  if (typeof risk.probability !== 'number' || risk.probability < 0 || risk.probability > 5) {
+  if (
+    typeof risk.probability !== "number" ||
+    risk.probability < 0 ||
+    risk.probability > 5
+  ) {
     return { isValid: false, error: "Probability must be between 0 and 5" };
   }
   if (!VALID_ACTIONS.includes(risk.action as (typeof VALID_ACTIONS)[number])) {
     return { isValid: false, error: "Invalid action value" };
   }
-  if (risk.action === 'mitigate' && !risk.mitigation?.trim()) {
-    return { isValid: false, error: "Mitigation strategy is required when action is mitigate" };
+  if (risk.action === "mitigate" && !risk.mitigation?.trim()) {
+    return {
+      isValid: false,
+      error: "Mitigation strategy is required when action is mitigate",
+    };
   }
   if (risk.tags) {
     for (const tag of risk.tags) {
@@ -147,24 +189,26 @@ export interface AttachmentValidationInput {
 export const validateAttachment = (
   input: AttachmentValidationInput,
   maxSize = 5 * 1024 * 1024, // 5MB default
-  allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf']
+  allowedTypes = ["image/jpeg", "image/png", "image/gif", "application/pdf"]
 ): ValidationResult => {
   if (!input.file) {
     return { isValid: false, error: "File is required" };
   }
 
   if (input.file.size > (input.maxSize || maxSize)) {
-    return { 
-      isValid: false, 
-      error: `File size must be less than ${Math.round((input.maxSize || maxSize) / (1024 * 1024))}MB` 
+    return {
+      isValid: false,
+      error: `File size must be less than ${Math.round(
+        (input.maxSize || maxSize) / (1024 * 1024)
+      )}MB`,
     };
   }
 
   const types = input.allowedTypes || allowedTypes;
   if (!types.includes(input.file.type)) {
-    return { 
-      isValid: false, 
-      error: `File type must be one of: ${types.join(', ')}` 
+    return {
+      isValid: false,
+      error: `File type must be one of: ${types.join(", ")}`,
     };
   }
 
@@ -174,18 +218,23 @@ export const validateAttachment = (
 // Comment validation
 export interface CommentValidationInput {
   content: string;
-  type: 'answer' | 'question';
+  type: "answer" | "question";
   typeId: string;
 }
 
-export const validateComment = (comment: CommentValidationInput): ValidationResult => {
+export const validateComment = (
+  comment: CommentValidationInput
+): ValidationResult => {
   if (!comment.content?.trim()) {
     return { isValid: false, error: "Comment content is required" };
   }
   if (comment.content.length > 10000) {
-    return { isValid: false, error: "Comment must be 10000 characters or less" };
+    return {
+      isValid: false,
+      error: "Comment must be 10000 characters or less",
+    };
   }
-  if (!['answer', 'question'].includes(comment.type)) {
+  if (!["answer", "question"].includes(comment.type)) {
     return { isValid: false, error: "Invalid comment type" };
   }
   if (!comment.typeId) {
@@ -200,12 +249,17 @@ export interface SolutionValidationInput {
   riskId: string;
 }
 
-export const validateSolution = (solution: SolutionValidationInput): ValidationResult => {
+export const validateSolution = (
+  solution: SolutionValidationInput
+): ValidationResult => {
   if (!solution.content?.trim()) {
     return { isValid: false, error: "Solution content is required" };
   }
   if (solution.content.length > 10000) {
-    return { isValid: false, error: "Solution must be 10000 characters or less" };
+    return {
+      isValid: false,
+      error: "Solution must be 10000 characters or less",
+    };
   }
   if (!solution.riskId) {
     return { isValid: false, error: "Risk ID is required" };
@@ -221,7 +275,9 @@ export interface ProfileValidationInput {
   role?: string;
 }
 
-export const validateProfile = (profile: ProfileValidationInput): ValidationResult => {
+export const validateProfile = (
+  profile: ProfileValidationInput
+): ValidationResult => {
   const nameValidation = validateName(profile.name);
   if (!nameValidation.isValid) return nameValidation;
 
@@ -248,7 +304,9 @@ export interface AdminUpdateValidationInput {
   department?: string;
 }
 
-export const validateAdminUpdate = (update: AdminUpdateValidationInput): ValidationResult => {
+export const validateAdminUpdate = (
+  update: AdminUpdateValidationInput
+): ValidationResult => {
   if (!update.userId) {
     return { isValid: false, error: "User ID is required" };
   }
@@ -264,7 +322,10 @@ export const validateAdminUpdate = (update: AdminUpdateValidationInput): Validat
   }
 
   if (!update.role && !update.department) {
-    return { isValid: false, error: "At least one field (role or department) must be updated" };
+    return {
+      isValid: false,
+      error: "At least one field (role or department) must be updated",
+    };
   }
 
   return { isValid: true };
@@ -299,9 +360,10 @@ export const validateAuth = (auth: AuthValidationInput): ValidationResult => {
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(auth.password);
 
   if (!(hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar)) {
-    return { 
-      isValid: false, 
-      error: "Password must contain uppercase, lowercase, numbers, and special characters" 
+    return {
+      isValid: false,
+      error:
+        "Password must contain uppercase, lowercase, numbers, and special characters",
     };
   }
 

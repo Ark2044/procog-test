@@ -16,7 +16,7 @@ import {
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/Auth";
-import { ReminderDialog } from './ReminderDialog';
+import { ReminderDialog } from "./ReminderDialog";
 
 interface Risk {
   $id: string;
@@ -35,6 +35,7 @@ interface Risk {
   isConfidential?: boolean;
   authorizedViewers?: string[];
   department?: string;
+  dueDate?: string;
 }
 
 interface RiskListProps {
@@ -46,8 +47,11 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"my" | "all">("my");
-  const [sortBy, setSortBy] = useState<"created" | "impact">("created");
+  const [sortBy, setSortBy] = useState<"created" | "impact" | "dueDate">(
+    "created"
+  );
   const [filterImpact, setFilterImpact] = useState<string>("all");
+  const [filterDueDate, setFilterDueDate] = useState<string>("all");
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
 
@@ -75,6 +79,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         isConfidential: doc.isConfidential,
         authorizedViewers: doc.authorizedViewers,
         department: doc.department,
+        dueDate: doc.dueDate,
       }));
 
       setRisks(risksData);
@@ -110,12 +115,44 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
       filtered = filtered.filter((risk) => risk.impact === filterImpact);
     }
 
+    if (filterDueDate !== "all") {
+      const now = new Date();
+      filtered = filtered.filter((risk) => {
+        if (!risk.dueDate) return false;
+        const dueDate = new Date(risk.dueDate);
+        switch (filterDueDate) {
+          case "overdue":
+            return dueDate < now;
+          case "today":
+            return dueDate.toDateString() === now.toDateString();
+          case "week":
+            const weekFromNow = new Date(now);
+            weekFromNow.setDate(now.getDate() + 7);
+            return dueDate <= weekFromNow && dueDate > now;
+          case "month":
+            const monthFromNow = new Date(now);
+            monthFromNow.setMonth(now.getMonth() + 1);
+            return dueDate <= monthFromNow && dueDate > now;
+          default:
+            return true;
+        }
+      });
+    }
+
     return filtered.sort((a, b) => {
-      if (sortBy === "created") {
-        return new Date(b.created).getTime() - new Date(a.created).getTime();
-      } else {
-        const impactOrder = { high: 3, medium: 2, low: 1 };
-        return impactOrder[b.impact] - impactOrder[a.impact];
+      switch (sortBy) {
+        case "created":
+          return new Date(b.created).getTime() - new Date(a.created).getTime();
+        case "impact":
+          const impactOrder = { high: 3, medium: 2, low: 1 };
+          return impactOrder[b.impact] - impactOrder[a.impact];
+        case "dueDate":
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        default:
+          return 0;
       }
     });
   };
@@ -135,10 +172,10 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         <Tabs
           defaultValue={viewMode}
           onValueChange={(value) => setViewMode(value as "my" | "all")}
-          className="w-full sm:w-auto "
+          className="w-full sm:w-auto"
         >
           <TabsList className="grid w-full grid-cols-2 sm:w-[240px] border border-gray-200 rounded">
-            <TabsTrigger value="my" className="text-gray-800 ">
+            <TabsTrigger value="my" className="text-gray-800">
               My Risks
             </TabsTrigger>
             <TabsTrigger value="all" className="text-gray-800">
@@ -163,9 +200,27 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             </SelectContent>
           </Select>
 
+          <Select value={filterDueDate} onValueChange={setFilterDueDate}>
+            <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
+              <SelectValue placeholder="Due Date" />
+            </SelectTrigger>
+            <SelectContent className="bg-white text-gray-800 border border-gray-200">
+              <SelectGroup>
+                <SelectLabel>Filter by Due Date</SelectLabel>
+                <SelectItem value="all">All Due Dates</SelectItem>
+                <SelectItem value="overdue">Overdue</SelectItem>
+                <SelectItem value="today">Due Today</SelectItem>
+                <SelectItem value="week">Due This Week</SelectItem>
+                <SelectItem value="month">Due This Month</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
           <Select
             value={sortBy}
-            onValueChange={(value) => setSortBy(value as "created" | "impact")}
+            onValueChange={(value) =>
+              setSortBy(value as "created" | "impact" | "dueDate")
+            }
           >
             <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
               <SelectValue placeholder="Sort by" />
@@ -175,6 +230,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                 <SelectLabel>Sort by</SelectLabel>
                 <SelectItem value="created">Date Created</SelectItem>
                 <SelectItem value="impact">Impact Level</SelectItem>
+                <SelectItem value="dueDate">Due Date</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -215,7 +271,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         </div>
       )}
 
-      {selectedRisk && user && (
+      {selectedRisk && (
         <ReminderDialog
           isOpen={isReminderDialogOpen}
           onClose={() => {
@@ -224,8 +280,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           }}
           riskId={selectedRisk.$id}
           riskTitle={selectedRisk.title}
-          userId={user.$id}
-          email={user.email}
+          userId={user?.$id || ""}
+          email={user?.email}
         />
       )}
     </div>

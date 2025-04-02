@@ -73,6 +73,7 @@ export default async function createRiskCollection() {
       ),
       databases.createDatetimeAttribute(db, riskCollection, "created", true),
       databases.createDatetimeAttribute(db, riskCollection, "updated", true),
+      databases.createDatetimeAttribute(db, riskCollection, "dueDate", false),
       databases.createBooleanAttribute(
         db,
         riskCollection,
@@ -99,7 +100,6 @@ export default async function createRiskCollection() {
     ]);
     console.log("Base Risk Attributes created");
 
-    
     // Create indexes for base attributes
     await Promise.all([
       databases.createIndex(db, riskCollection, "title", IndexType.Fulltext, [
@@ -125,6 +125,9 @@ export default async function createRiskCollection() {
       ]),
       databases.createIndex(db, riskCollection, "updated", IndexType.Key, [
         "updated",
+      ]),
+      databases.createIndex(db, riskCollection, "dueDate", IndexType.Key, [
+        "dueDate",
       ]),
       databases.createIndex(
         db,

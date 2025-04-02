@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Paperclip, Clock, User, AlertCircle } from "lucide-react";
+import { Paperclip, Clock, User, AlertCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FaLock } from "react-icons/fa";
 import { Bell } from "lucide-react";
@@ -26,6 +26,7 @@ interface RiskCardProps {
   onSetReminder?: () => void;
   currentUserId?: string;
   riskId: string;
+  dueDate?: string;
 }
 
 const getImpactColor = (impact: "low" | "medium" | "high") => {
@@ -112,7 +113,8 @@ const RiskCard: React.FC<RiskCardProps> = ({
   onSetReminder,
   ...props
 }) => {
-  const { loading, error, subscribeToRisk, unsubscribeFromRisk } = useRiskStore();
+  const { loading, error, subscribeToRisk, unsubscribeFromRisk } =
+    useRiskStore();
 
   useEffect(() => {
     subscribeToRisk(riskId);
@@ -203,13 +205,26 @@ const RiskCard: React.FC<RiskCardProps> = ({
 
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>Created: {new Date(props.created).toLocaleDateString()}</span>
+              <span>
+                Created: {new Date(props.created).toLocaleDateString()}
+              </span>
             </div>
 
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>Updated: {new Date(props.updated).toLocaleDateString()}</span>
+              <span>
+                Updated: {new Date(props.updated).toLocaleDateString()}
+              </span>
             </div>
+
+            {props.dueDate && (
+              <div className="flex items-center gap-1">
+                <Calendar className="w-4 h-4 text-red-500" />
+                <span className="text-red-600">
+                  Due: {new Date(props.dueDate).toLocaleDateString()}
+                </span>
+              </div>
+            )}
 
             {onSetReminder && isRiskCreator && (
               <Button

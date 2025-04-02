@@ -46,6 +46,7 @@ interface Risk {
   mitigation: string;
   created: string;
   updated: string;
+  dueDate?: string;
 }
 
 interface Attachment {
@@ -119,6 +120,7 @@ const RiskDetail = () => {
             mitigation: response.mitigation,
             created: response.created,
             updated: response.updated,
+            dueDate: response.dueDate,
           };
 
           const validation = validateRiskDetail(
@@ -354,6 +356,24 @@ const RiskDetail = () => {
                     </p>
                   </div>
                 </div>
+
+                {risk.dueDate && (
+                  <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                    <Calendar className="w-5 h-5 text-red-500" />
+                    <div>
+                      <p className="text-xs text-gray-500">Due Date</p>
+                      <p className="text-red-600 font-medium">
+                        {new Date(risk.dueDate).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -13,6 +13,7 @@ export interface Risk {
   department: string;
   isConfidential: boolean;
   authorizedViewers: string[];
+  dueDate?: string;
   created: string;
   updated: string;
 }
