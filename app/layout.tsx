@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
+import UserGuide from "@/components/UserGuide";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800", "900"],
@@ -28,6 +29,7 @@ export default function RootLayout({
           <main className="flex-grow mt-10">
             <Toaster />
             {children}
+            <UserGuide position="bottom-right" />
           </main>
           <Footer />
         </div>

@@ -1,4 +1,5 @@
 import { FaFacebookF, FaTwitter, FaLinkedinIn } from "react-icons/fa";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -24,6 +25,14 @@ export default function Footer() {
                 >
                   About
                 </a>
+              </li>
+              <li>
+                <Link
+                  href="/guide"
+                  className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all duration-300 inline-block"
+                >
+                  User Guide
+                </Link>
               </li>
               <li>
                 <a

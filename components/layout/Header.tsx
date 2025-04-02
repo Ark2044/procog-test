@@ -10,6 +10,7 @@ import {
   FaSignOutAlt,
   FaTable,
   FaBell,
+  FaQuestionCircle,
 } from "react-icons/fa";
 
 export default function Header() {
@@ -103,6 +104,20 @@ export default function Header() {
             }`}
           >
             <ul className="flex flex-col lg:flex-row items-center lg:space-x-4 lg:space-y-0 space-y-4 py-4 lg:py-0">
+              <li>
+                <Link
+                  href="/guide"
+                  className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                    isScrolled
+                      ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                      : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                  }`}
+                >
+                  <FaQuestionCircle className="mr-2 text-lg" />
+                  User Guide
+                </Link>
+              </li>
+
               {!session ? (
                 <>
                   <li>
