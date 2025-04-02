@@ -18,6 +18,7 @@ export const VALID_ACTIONS = [
   "transfer",
   "avoid",
 ] as const;
+const VALID_STATUSES = ["active", "closed", "resolved"] as const;
 
 // Validation types
 export type ValidationResult = {
@@ -72,10 +73,15 @@ export interface RiskValidationInput {
   probability: number;
   action: string;
   mitigation?: string;
+  acceptance?: string;
+  transfer?: string;
+  avoidance?: string;
   department?: string;
   isConfidential?: boolean;
   authorizedViewers?: string[];
   dueDate?: string;
+  status?: string;
+  resolution?: string;
 }
 
 export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
@@ -104,12 +110,33 @@ export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
   if (!VALID_ACTIONS.includes(risk.action as (typeof VALID_ACTIONS)[number])) {
     return { isValid: false, error: "Invalid action value" };
   }
+
+  // Validate strategy based on action type
   if (risk.action === "mitigate" && !risk.mitigation?.trim()) {
     return {
       isValid: false,
       error: "Mitigation strategy is required when action is mitigate",
     };
   }
+  if (risk.action === "accept" && !risk.acceptance?.trim()) {
+    return {
+      isValid: false,
+      error: "Acceptance strategy is required when action is accept",
+    };
+  }
+  if (risk.action === "transfer" && !risk.transfer?.trim()) {
+    return {
+      isValid: false,
+      error: "Transfer strategy is required when action is transfer",
+    };
+  }
+  if (risk.action === "avoid" && !risk.avoidance?.trim()) {
+    return {
+      isValid: false,
+      error: "Avoidance strategy is required when action is avoid",
+    };
+  }
+
   if (
     risk.isConfidential &&
     (!risk.authorizedViewers || risk.authorizedViewers.length === 0)
@@ -117,6 +144,18 @@ export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
     return {
       isValid: false,
       error: "Authorized viewers are required for confidential risks",
+    };
+  }
+  if (
+    risk.status &&
+    !VALID_STATUSES.includes(risk.status as (typeof VALID_STATUSES)[number])
+  ) {
+    return { isValid: false, error: "Invalid status value" };
+  }
+  if (risk.status === "closed" && !risk.resolution?.trim()) {
+    return {
+      isValid: false,
+      error: "Resolution is required when closing a risk",
     };
   }
   return { isValid: true };
@@ -131,8 +170,13 @@ export interface RiskDetailValidationInput {
   probability: number;
   action: string;
   mitigation?: string;
+  acceptance?: string;
+  transfer?: string;
+  avoidance?: string;
   attachmentId?: string;
   dueDate?: string;
+  status?: string;
+  resolution?: string;
 }
 
 export const validateRiskDetail = (
@@ -163,18 +207,51 @@ export const validateRiskDetail = (
   if (!VALID_ACTIONS.includes(risk.action as (typeof VALID_ACTIONS)[number])) {
     return { isValid: false, error: "Invalid action value" };
   }
+
+  // Validate strategy based on action type
   if (risk.action === "mitigate" && !risk.mitigation?.trim()) {
     return {
       isValid: false,
       error: "Mitigation strategy is required when action is mitigate",
     };
   }
+  if (risk.action === "accept" && !risk.acceptance?.trim()) {
+    return {
+      isValid: false,
+      error: "Acceptance strategy is required when action is accept",
+    };
+  }
+  if (risk.action === "transfer" && !risk.transfer?.trim()) {
+    return {
+      isValid: false,
+      error: "Transfer strategy is required when action is transfer",
+    };
+  }
+  if (risk.action === "avoid" && !risk.avoidance?.trim()) {
+    return {
+      isValid: false,
+      error: "Avoidance strategy is required when action is avoid",
+    };
+  }
+
   if (risk.tags) {
     for (const tag of risk.tags) {
       if (tag.length > 50) {
         return { isValid: false, error: "Tags must be 50 characters or less" };
       }
     }
+  }
+  if (
+    risk.status &&
+    !VALID_STATUSES.includes(risk.status as (typeof VALID_STATUSES)[number])
+  ) {
+    return { isValid: false, error: "Invalid status value" };
+  }
+  if (risk.status === "closed" && !risk.resolution?.trim()) {
+    return {
+      isValid: false,
+      error: "Resolution is required when closing a risk",
+    };
   }
   return { isValid: true };
 };

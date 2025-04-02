@@ -30,12 +30,17 @@ interface Risk {
   probability: number;
   action: "mitigate" | "accept" | "transfer" | "avoid";
   mitigation?: string;
+  acceptance?: string;
+  transfer?: string;
+  avoidance?: string;
   created: string;
   updated: string;
   isConfidential?: boolean;
   authorizedViewers?: string[];
   department?: string;
   dueDate?: string;
+  status?: "active" | "closed" | "resolved";
+  resolution?: string;
 }
 
 interface RiskListProps {
@@ -52,6 +57,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   );
   const [filterImpact, setFilterImpact] = useState<string>("all");
   const [filterDueDate, setFilterDueDate] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
 
@@ -74,12 +80,17 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         probability: doc.probability,
         action: doc.action,
         mitigation: doc.mitigation,
+        acceptance: doc.acceptance,
+        transfer: doc.transfer,
+        avoidance: doc.avoidance,
         created: doc.created,
         updated: doc.updated,
         isConfidential: doc.isConfidential,
         authorizedViewers: doc.authorizedViewers,
         department: doc.department,
         dueDate: doc.dueDate,
+        status: doc.status || "active",
+        resolution: doc.resolution,
       }));
 
       setRisks(risksData);
@@ -113,6 +124,10 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
     if (filterImpact !== "all") {
       filtered = filtered.filter((risk) => risk.impact === filterImpact);
+    }
+
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((risk) => risk.status === filterStatus);
     }
 
     if (filterDueDate !== "all") {
@@ -212,6 +227,21 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                 <SelectItem value="today">Due Today</SelectItem>
                 <SelectItem value="week">Due This Week</SelectItem>
                 <SelectItem value="month">Due This Month</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Status</SelectLabel>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

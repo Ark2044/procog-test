@@ -12,6 +12,7 @@ interface RiskState {
 
   fetchRisk: (riskId: string) => Promise<void>;
   updateRisk: (riskId: string, updates: Partial<Risk>) => Promise<void>;
+  closeRisk: (riskId: string, resolution?: string) => Promise<void>;
   subscribeToRisk: (riskId: string) => void;
   unsubscribeFromRisk: () => void;
 }
@@ -38,12 +39,16 @@ export const useRiskStore = create<RiskState>((set, get) => ({
         probability: response.probability || 0,
         action: response.action || "mitigate",
         mitigation: response.mitigation || "",
+        acceptance: response.acceptance || "",
+        transfer: response.transfer || "",
+        avoidance: response.avoidance || "",
         department: response.department || "",
         isConfidential: response.isConfidential || false,
         authorizedViewers: response.authorizedViewers || [],
         created: response.created,
         updated: response.updated,
-        
+        status: response.status || "active",
+        resolution: response.resolution,
       };
       set({ risk });
     } catch (error) {
@@ -90,11 +95,16 @@ export const useRiskStore = create<RiskState>((set, get) => ({
         probability: response.probability || 0,
         action: response.action || "mitigate",
         mitigation: response.mitigation || "",
+        acceptance: response.acceptance || "",
+        transfer: response.transfer || "",
+        avoidance: response.avoidance || "",
         department: response.department || "",
         isConfidential: response.isConfidential || false,
         authorizedViewers: response.authorizedViewers || [],
         created: response.created,
         updated: response.updated,
+        status: response.status || "active",
+        resolution: response.resolution,
       };
       set({ risk: updatedRisk });
       toast.success("Risk updated successfully");
@@ -106,6 +116,30 @@ export const useRiskStore = create<RiskState>((set, get) => ({
       toast.error(message);
       // Refetch to ensure consistency
       get().fetchRisk(riskId);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  closeRisk: async (riskId: string, resolution?: string) => {
+    set({ loading: true, error: null });
+    try {
+      const updates: Partial<Risk> = {
+        status: "closed",
+        updated: new Date().toISOString(),
+      };
+
+      if (resolution) {
+        updates.resolution = resolution;
+      }
+
+      await get().updateRisk(riskId, updates);
+      toast.success("Risk closed successfully");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to close risk";
+      set({ error: message });
+      toast.error(message);
     } finally {
       set({ loading: false });
     }

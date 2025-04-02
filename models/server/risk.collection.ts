@@ -71,6 +71,27 @@ export default async function createRiskCollection() {
         1000,
         false
       ),
+      databases.createStringAttribute(
+        db,
+        riskCollection,
+        "acceptance",
+        1000,
+        false
+      ),
+      databases.createStringAttribute(
+        db,
+        riskCollection,
+        "transfer",
+        1000,
+        false
+      ),
+      databases.createStringAttribute(
+        db,
+        riskCollection,
+        "avoidance",
+        1000,
+        false
+      ),
       databases.createDatetimeAttribute(db, riskCollection, "created", true),
       databases.createDatetimeAttribute(db, riskCollection, "updated", true),
       databases.createDatetimeAttribute(db, riskCollection, "dueDate", false),
@@ -97,6 +118,14 @@ export default async function createRiskCollection() {
         100,
         false // Make it optional
       ),
+      databases.createStringAttribute(db, riskCollection, "status", 50, false),
+      databases.createStringAttribute(
+        db,
+        riskCollection,
+        "resolution",
+        1000,
+        false
+      ),
     ]);
     console.log("Base Risk Attributes created");
 
@@ -119,6 +148,15 @@ export default async function createRiskCollection() {
       ]),
       databases.createIndex(db, riskCollection, "mitigation", IndexType.Key, [
         "mitigation",
+      ]),
+      databases.createIndex(db, riskCollection, "acceptance", IndexType.Key, [
+        "acceptance",
+      ]),
+      databases.createIndex(db, riskCollection, "transfer", IndexType.Key, [
+        "transfer",
+      ]),
+      databases.createIndex(db, riskCollection, "avoidance", IndexType.Key, [
+        "avoidance",
       ]),
       databases.createIndex(db, riskCollection, "created", IndexType.Key, [
         "created",
@@ -145,6 +183,12 @@ export default async function createRiskCollection() {
       ),
       databases.createIndex(db, riskCollection, "department", IndexType.Key, [
         "department",
+      ]),
+      databases.createIndex(db, riskCollection, "status", IndexType.Key, [
+        "status",
+      ]),
+      databases.createIndex(db, riskCollection, "resolution", IndexType.Key, [
+        "resolution",
       ]),
     ]);
     console.log("Base Indexes created");

@@ -1,13 +1,30 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Paperclip, Clock, User, AlertCircle, Calendar } from "lucide-react";
+import {
+  Paperclip,
+  Clock,
+  User,
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FaLock } from "react-icons/fa";
 import { Bell } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRiskStore } from "@/store/Risk";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface RiskCardProps {
   title: string;
@@ -20,6 +37,9 @@ interface RiskCardProps {
   probability: number;
   action: "mitigate" | "accept" | "transfer" | "avoid";
   mitigation?: string;
+  acceptance?: string;
+  transfer?: string;
+  avoidance?: string;
   created: string;
   updated: string;
   isConfidential?: boolean;
@@ -27,6 +47,8 @@ interface RiskCardProps {
   currentUserId?: string;
   riskId: string;
   dueDate?: string;
+  status?: "active" | "closed" | "resolved";
+  resolution?: string;
 }
 
 const getImpactColor = (impact: "low" | "medium" | "high") => {
@@ -113,8 +135,10 @@ const RiskCard: React.FC<RiskCardProps> = ({
   onSetReminder,
   ...props
 }) => {
-  const { loading, error, subscribeToRisk, unsubscribeFromRisk } =
+  const { loading, error, subscribeToRisk, unsubscribeFromRisk, closeRisk } =
     useRiskStore();
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+  const [resolution, setResolution] = useState("");
 
   useEffect(() => {
     subscribeToRisk(riskId);
@@ -125,6 +149,25 @@ const RiskCard: React.FC<RiskCardProps> = ({
   if (error) return <ErrorState error={error} />;
 
   const isRiskCreator = currentUserId === props.authorId;
+  const status = props.status || "active";
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "closed":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "resolved":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-blue-100 text-blue-800 border-blue-200";
+    }
+  };
+
+  const handleCloseRisk = async () => {
+    await closeRisk(riskId, resolution);
+    setIsCloseDialogOpen(false);
+  };
 
   return (
     <motion.div
@@ -155,6 +198,9 @@ const RiskCard: React.FC<RiskCardProps> = ({
               >
                 Probability: {props.probability * 20}%
               </Badge>
+              <Badge variant="outline" className={getStatusColor(status)}>
+                {status}
+              </Badge>
             </div>
           </div>
         </CardHeader>
@@ -165,6 +211,27 @@ const RiskCard: React.FC<RiskCardProps> = ({
             <div className="mb-4">
               <strong className="text-gray-800">Mitigation Strategy:</strong>
               <p className="text-gray-700">{props.mitigation}</p>
+            </div>
+          )}
+
+          {props.action === "accept" && props.acceptance && (
+            <div className="mb-4">
+              <strong className="text-gray-800">Acceptance Rationale:</strong>
+              <p className="text-gray-700">{props.acceptance}</p>
+            </div>
+          )}
+
+          {props.action === "transfer" && props.transfer && (
+            <div className="mb-4">
+              <strong className="text-gray-800">Transfer Mechanism:</strong>
+              <p className="text-gray-700">{props.transfer}</p>
+            </div>
+          )}
+
+          {props.action === "avoid" && props.avoidance && (
+            <div className="mb-4">
+              <strong className="text-gray-800">Avoidance Approach:</strong>
+              <p className="text-gray-700">{props.avoidance}</p>
             </div>
           )}
 
@@ -241,8 +308,58 @@ const RiskCard: React.FC<RiskCardProps> = ({
               </Button>
             )}
           </div>
+
+          {status === "active" && isRiskCreator && (
+            <div className="mt-4 flex justify-end">
+              <Button
+                variant="outline"
+                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                onClick={() => setIsCloseDialogOpen(true)}
+              >
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Close Risk
+              </Button>
+            </div>
+          )}
+
+          {props.resolution && (
+            <div className="mt-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+              <h4 className="font-medium text-gray-700 flex items-center">
+                <XCircle className="mr-2 h-4 w-4 text-gray-500" />
+                Resolution
+              </h4>
+              <p className="mt-1 text-gray-600">{props.resolution}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Close Risk</DialogTitle>
+            <DialogDescription>
+              Provide a resolution summary for this risk. This will mark the
+              risk as closed.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Describe how this risk was addressed..."
+            value={resolution}
+            onChange={(e) => setResolution(e.target.value)}
+            className="min-h-[100px]"
+          />
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCloseDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCloseRisk}>Close Risk</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
