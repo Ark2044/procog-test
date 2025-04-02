@@ -16,11 +16,12 @@ import { useAuthStore } from "@/store/Auth";
 // GET handler
 export async function GET(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
     const user = useAuthStore.getState().user;
-    const hasPermission = await hasRiskPermission(user, params.riskId, "read");
+    const { riskId } = await params;
+    const hasPermission = await hasRiskPermission(user, riskId, "read");
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -29,7 +30,7 @@ export async function GET(
       );
     }
 
-    const risk = await databases.getDocument(db, riskCollection, params.riskId);
+    const risk = await databases.getDocument(db, riskCollection, riskId);
     return createSuccessResponse(risk);
   } catch (error) {
     return handleApiError(error);
@@ -39,13 +40,15 @@ export async function GET(
 // PUT handler
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
     const user = useAuthStore.getState().user;
+    const { riskId } = await params;
+
     const hasPermission = await hasRiskPermission(
       user,
-      params.riskId,
+      riskId,
       "update"
     );
 
@@ -74,7 +77,7 @@ export async function PUT(
     const updatedRisk = await databases.updateDocument(
       db,
       riskCollection,
-      params.riskId,
+      riskId,
       updatePayload
     );
 
@@ -87,13 +90,15 @@ export async function PUT(
 // DELETE handler
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
     const user = await useAuthStore.getState().user;
+    const { riskId } = await params;
+
     const hasPermission = await hasRiskPermission(
       user,
-      params.riskId,
+      riskId,
       "delete"
     );
 
@@ -104,7 +109,7 @@ export async function DELETE(
       );
     }
 
-    await databases.deleteDocument(db, riskCollection, params.riskId);
+    await databases.deleteDocument(db, riskCollection, riskId);
     return createSuccessResponse({ message: "Risk deleted successfully" });
   } catch (error) {
     return handleApiError(error);

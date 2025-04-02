@@ -26,9 +26,29 @@ export const useRiskStore = create<RiskState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await databases.getDocument(db, riskCollection, riskId);
-      set({ risk: response as Risk });
+      const risk: Risk = {
+        $id: response.$id,
+        title: response.title,
+        content: response.content,
+        authorId: response.authorId,
+        authorName: response.authorName,
+        tags: response.tags || [],
+        attachmentId: response.attachmentId,
+        impact: response.impact || "low",
+        probability: response.probability || 0,
+        action: response.action || "mitigate",
+        mitigation: response.mitigation || "",
+        department: response.department || "",
+        isConfidential: response.isConfidential || false,
+        authorizedViewers: response.authorizedViewers || [],
+        created: response.created,
+        updated: response.updated,
+        
+      };
+      set({ risk });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch risk";
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch risk";
       set({ error: message });
       toast.error(message);
     } finally {
@@ -42,7 +62,13 @@ export const useRiskStore = create<RiskState>((set, get) => ({
       // Optimistic update
       const currentRisk = get().risk;
       if (currentRisk) {
-        set({ risk: { ...currentRisk, ...updates, updated: new Date().toISOString() } });
+        set({
+          risk: {
+            ...currentRisk,
+            ...updates,
+            updated: new Date().toISOString(),
+          },
+        });
       }
 
       const response = await databases.updateDocument(
@@ -52,11 +78,30 @@ export const useRiskStore = create<RiskState>((set, get) => ({
         { ...updates, updated: new Date().toISOString() }
       );
 
-      set({ risk: response as Risk });
+      const updatedRisk: Risk = {
+        $id: response.$id,
+        title: response.title,
+        content: response.content,
+        authorId: response.authorId,
+        authorName: response.authorName,
+        tags: response.tags || [],
+        attachmentId: response.attachmentId,
+        impact: response.impact || "low",
+        probability: response.probability || 0,
+        action: response.action || "mitigate",
+        mitigation: response.mitigation || "",
+        department: response.department || "",
+        isConfidential: response.isConfidential || false,
+        authorizedViewers: response.authorizedViewers || [],
+        created: response.created,
+        updated: response.updated,
+      };
+      set({ risk: updatedRisk });
       toast.success("Risk updated successfully");
     } catch (error) {
       // Revert optimistic update
-      const message = error instanceof Error ? error.message : "Failed to update risk";
+      const message =
+        error instanceof Error ? error.message : "Failed to update risk";
       set({ error: message });
       toast.error(message);
       // Refetch to ensure consistency
@@ -70,8 +115,12 @@ export const useRiskStore = create<RiskState>((set, get) => ({
     const unsubscribe = client.subscribe(
       `databases.${db}.collections.${riskCollection}.documents.${riskId}`,
       (response) => {
-        if (response.events.includes("databases.*.collections.*.documents.*.update")) {
-          set({ risk: response.payload as Risk });
+        if (
+          response.events.includes(
+            "databases.*.collections.*.documents.*.update"
+          )
+        ) {
+          get().fetchRisk(riskId);
         }
       }
     );

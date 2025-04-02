@@ -65,14 +65,6 @@ export default async function createRemindersCollection() {
         255,
         true
       ),
-      // Added missing attribute: riskTitle
-      databases.createStringAttribute(
-        db,
-        reminderCollection,
-        "riskTitle",
-        255,
-        true
-      ),
       // Use string instead of datetime for date fields
       databases.createStringAttribute(
         db,
@@ -137,14 +129,6 @@ export default async function createRemindersCollection() {
       databases.createIndex(db, reminderCollection, "email", IndexType.Key, [
         "email",
       ]),
-      // Added index for the new riskTitle attribute
-      databases.createIndex(
-        db,
-        reminderCollection,
-        "riskTitle",
-        IndexType.Key,
-        ["riskTitle"]
-      ),
       databases.createIndex(db, reminderCollection, "datetime", IndexType.Key, [
         "datetime",
       ]),

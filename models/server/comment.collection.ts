@@ -44,6 +44,20 @@ export default async function createCommentCollection() {
       50,
       false
     ), // Parent comment ID (optional)
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "replyToName",
+      100,
+      false
+    ), // Name of user being replied to (optional)
+    databases.createStringAttribute(
+      db,
+      commentCollection,
+      "replyToContent",
+      1000,
+      false
+    ), // Content snippet of the comment being replied to (optional)
     databases.createIntegerAttribute(db, commentCollection, "upvotes", true, 0), // Upvote count
     databases.createIntegerAttribute(
       db,

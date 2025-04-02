@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { databases } from "@/models/client/config";
 import {
   Dialog,
@@ -43,6 +43,8 @@ interface ReminderDialogProps {
   riskTitle: string;
   userId: string;
   email?: string;
+  editingReminder?: Reminder | null;
+  onUpdate?: (reminderId: string, data: Partial<Reminder>) => Promise<void>;
 }
 
 const reminderSchema = z.object({
@@ -60,6 +62,8 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
   riskId,
   riskTitle,
   userId,
+  editingReminder,
+  onUpdate,
 }) => {
   const { addReminder } = useReminderStore();
   const { user } = useAuthStore();
@@ -77,6 +81,26 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
     },
   });
 
+  useEffect(() => {
+    if (editingReminder) {
+      form.reset({
+        title: editingReminder.title,
+        description: editingReminder.description || "",
+        datetime: new Date(editingReminder.datetime).toISOString().slice(0, 16),
+        recurrence: editingReminder.recurrence || "none",
+      });
+    } else {
+      form.reset({
+        title: "",
+        description: "",
+        datetime: new Date(Date.now() + 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 16),
+        recurrence: "none",
+      });
+    }
+  }, [editingReminder, form]);
+
   const onSubmit = async (values: ReminderValues) => {
     setIsSubmitting(true);
     try {
@@ -87,32 +111,38 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
         recurrence: values.recurrence,
         userId: userId,
         riskId: riskId,
-        riskTitle: riskTitle,
-        status: "pending" as const, // Explicitly type status as literal
+        status: "pending" as const,
         email: user?.email,
-        created: new Date().toISOString(),
         updated: new Date().toISOString(),
       };
 
-      const response = await databases.createDocument(
-        db,
-        reminderCollection,
-        ID.unique(),
-        reminderData
-      );
+      if (editingReminder && onUpdate) {
+        await onUpdate(editingReminder.$id, reminderData);
+        toast.success("Reminder updated successfully");
+      } else {
+        const response = await databases.createDocument(
+          db,
+          reminderCollection,
+          ID.unique(),
+          {
+            ...reminderData,
+            created: new Date().toISOString(),
+          }
+        );
 
-      await addReminder({
-        ...response,
-        ...reminderData,
-        created: response.$createdAt,
-        updated: response.$updatedAt,
-      } as Reminder); // Type assertion to match Reminder interface
+        await addReminder({
+          ...reminderData,
+          $id: response.$id,
+          created: response.$createdAt,
+          updated: response.$updatedAt,
+        } as Reminder);
 
-      toast.success(
-        `Reminder set successfully: Your reminder has been scheduled for ${new Date(
-          values.datetime
-        ).toLocaleString()}`
-      );
+        toast.success(
+          `Reminder set successfully: Your reminder has been scheduled for ${new Date(
+            values.datetime
+          ).toLocaleString()}`
+        );
+      }
 
       form.reset();
       onClose();
@@ -124,14 +154,17 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
     }
   };
 
-  // Rest of the component remains the same...
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Set Review Reminder</DialogTitle>
+          <DialogTitle>
+            {editingReminder ? "Edit Review Reminder" : "Set Review Reminder"}
+          </DialogTitle>
           <DialogDescription>
-            Create a reminder to review the risk: {riskTitle}
+            {editingReminder
+              ? "Update your reminder for the risk"
+              : `Create a reminder to review the risk: ${riskTitle}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -167,6 +200,7 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
                     <Textarea
                       placeholder="What should be reviewed or addressed?"
                       rows={3}
+                      className="min-h-[100px]"
                       {...field}
                     />
                   </FormControl>
@@ -226,7 +260,11 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Setting..." : "Set Reminder"}
+                {isSubmitting
+                  ? "Saving..."
+                  : editingReminder
+                  ? "Update Reminder"
+                  : "Set Reminder"}
               </Button>
             </DialogFooter>
           </form>

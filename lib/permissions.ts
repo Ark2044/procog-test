@@ -3,10 +3,10 @@ import { db, riskCollection } from "@/models/name";
 import { UserPrefs } from "@/store/Auth";
 import { Models } from "node-appwrite";
 
-interface User extends Models.User<UserPrefs> {}
+// Removed redundant User interface
 
 export async function hasRiskPermission(
-  user: User | null,
+  user: Models.User<UserPrefs> | null,
   riskId: string,
   action: "read" | "update" | "delete"
 ): Promise<boolean> {

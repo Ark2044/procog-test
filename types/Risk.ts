@@ -3,16 +3,16 @@ export interface Risk {
   title: string;
   content: string;
   authorId: string;
-  authorName: string; // New field for author name
+  authorName: string;
   tags: string[];
   attachmentId?: string;
   impact: "low" | "medium" | "high";
   probability: number;
   action: "mitigate" | "accept" | "transfer" | "avoid";
+  mitigation: string;
   department: string;
   isConfidential: boolean;
   authorizedViewers: string[];
   created: string;
   updated: string;
-  riskTitle: string;
 }

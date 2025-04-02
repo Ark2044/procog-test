@@ -24,9 +24,9 @@ export async function POST(
       commentId
     );
 
-    let upvotes = comment.upvotes;
-    let downvotes = comment.downvotes;
-    let voters = [...comment.voters];
+    let upvotes = comment.upvotes || 0;
+    let downvotes = comment.downvotes || 0;
+    let voters = Array.isArray(comment.voters) ? [...comment.voters] : [];
 
     const existingVote = voters.find((v) => v.userId === userId);
 

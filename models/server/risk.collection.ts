@@ -13,7 +13,7 @@ export default async function createRiskCollection() {
     ]);
     console.log("Risk Collection is created");
 
-    // Create attributes (replace enums with strings)
+    // Create base attributes
     await Promise.all([
       databases.createStringAttribute(db, riskCollection, "title", 100, true),
       databases.createStringAttribute(
@@ -89,7 +89,6 @@ export default async function createRiskCollection() {
         true,
         true
       ),
-      // Add the department attribute
       databases.createStringAttribute(
         db,
         riskCollection,
@@ -98,9 +97,10 @@ export default async function createRiskCollection() {
         false // Make it optional
       ),
     ]);
-    console.log("Risk Attributes created");
+    console.log("Base Risk Attributes created");
 
-    // Create indexes
+    
+    // Create indexes for base attributes
     await Promise.all([
       databases.createIndex(db, riskCollection, "title", IndexType.Fulltext, [
         "title",
@@ -140,12 +140,11 @@ export default async function createRiskCollection() {
         IndexType.Key,
         ["authorizedViewers"]
       ),
-      // Optional: Add an index for the department if needed
       databases.createIndex(db, riskCollection, "department", IndexType.Key, [
         "department",
       ]),
     ]);
-    console.log("Indexes created");
+    console.log("Base Indexes created");
   } catch (error) {
     console.error("Error creating risk collection or attributes:", error);
     throw error; // Re-throw to allow caller to handle the error

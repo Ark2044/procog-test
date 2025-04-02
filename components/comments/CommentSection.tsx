@@ -1,15 +1,19 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { useCommentStore } from "@/store/Comment";
 import { CommentEditor } from "./CommentEditor";
 import { CommentItem } from "./CommentItem";
 import { useAuthStore } from "@/store/Auth";
 import { Comment } from "@/types/Comment";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, TrendingUp, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 
 interface CommentSectionProps {
   riskId: string;
+  resourceId: string;
+  resourceType: string;
 }
 
 interface CommentWithReplies extends Comment {
@@ -50,18 +54,22 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
   } = useCommentStore();
   const { user } = useAuthStore();
   const observer = useRef<IntersectionObserver>();
+  const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
 
   // Infinite scroll setup
-  const lastCommentRef = useCallback((node: HTMLDivElement) => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        loadMoreComments(riskId);
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore, loadMoreComments, riskId]);
+  const lastCommentRef = useCallback(
+    (node: HTMLDivElement) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMoreComments(riskId);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore, loadMoreComments, riskId]
+  );
 
   useEffect(() => {
     fetchComments(riskId, true);
@@ -72,18 +80,33 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
   const handleSubmitComment = async (content: string, parentId?: string) => {
     if (!user) return;
 
+    if (!content.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
     const mentions = (content.match(/@(\w+)/g) || []).map((mention) =>
       mention.slice(1)
     );
 
-    await addComment({
-      content,
-      authorId: user.$id,
-      authorName: user.name,
-      riskId,
-      parentId,
-      mentions,
-    });
+    try {
+      await addComment({
+        content,
+        authorId: user.$id,
+        authorName: user.name,
+        riskId,
+        parentId,
+        mentions,
+      });
+
+      // Refresh comments to show the new reply
+      if (parentId) {
+        fetchComments(riskId, true);
+      }
+    } catch (error) {
+      console.error("Failed to add comment:", error);
+      toast.error("Failed to add comment. Please try again.");
+    }
   };
 
   if (error) {
@@ -98,30 +121,80 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
   }
 
   // Organize comments into a tree structure
-  const commentTree = comments.reduce(
-    (acc, comment) => {
-      if (!comment.parentId) {
+  const commentTree = comments.reduce((acc, comment) => {
+    if (!comment.parentId) {
+      // This is a top-level comment
+      acc[comment.$id] = {
+        ...comment,
+        replies: [],
+        isCollapsed: false,
+      };
+    } else if (comment.parentId) {
+      // This is a reply - find the right parent
+      if (acc[comment.parentId]) {
+        // Direct child of a top-level comment
+        acc[comment.parentId].replies.push(comment);
+      } else {
+        // It might be a reply to a reply, or parent not loaded yet
+        // For simplicity, we'll treat it as a top-level comment
         acc[comment.$id] = {
           ...comment,
           replies: [],
           isCollapsed: false,
         };
-      } else if (acc[comment.parentId]) {
-        acc[comment.parentId].replies.push(comment);
       }
-      return acc;
-    },
-    {} as Record<string, CommentWithReplies>
-  );
+    }
+    return acc;
+  }, {} as Record<string, CommentWithReplies>);
 
-  // Sort comments by votes (upvotes - downvotes)
-  const sortedComments = Object.values(commentTree).sort(
-    (a, b) => b.upvotes - b.downvotes - (a.upvotes - a.downvotes)
-  );
+  // Sort comments based on selected sort method
+  const sortedComments = Object.values(commentTree).sort((a, b) => {
+    if (sortBy === "popular") {
+      // Sort by votes (upvotes - downvotes)
+      return b.upvotes - b.downvotes - (a.upvotes - a.downvotes);
+    } else {
+      // Sort by most recent
+      return new Date(b.created).getTime() - new Date(a.created).getTime();
+    }
+  });
+
+  // Also sort replies by the same criteria
+  Object.values(commentTree).forEach((comment) => {
+    comment.replies.sort((a, b) => {
+      if (sortBy === "popular") {
+        return b.upvotes - b.downvotes - (a.upvotes - a.downvotes);
+      } else {
+        return new Date(b.created).getTime() - new Date(a.created).getTime();
+      }
+    });
+  });
 
   return (
     <div className="space-y-6 mt-8">
-      <h3 className="text-xl font-semibold">Comments</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold">Comments</h3>
+
+        <div className="flex gap-2">
+          <Button
+            variant={sortBy === "popular" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSortBy("popular")}
+            className="flex items-center gap-1"
+          >
+            <TrendingUp className="w-4 h-4" />
+            Most Helpful
+          </Button>
+          <Button
+            variant={sortBy === "recent" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSortBy("recent")}
+            className="flex items-center gap-1"
+          >
+            <Clock className="w-4 h-4" />
+            Most Recent
+          </Button>
+        </div>
+      </div>
 
       {user && (
         <CommentEditor
@@ -143,21 +216,34 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                ref={index === sortedComments.length - 1 ? lastCommentRef : null}
+                ref={
+                  index === sortedComments.length - 1 ? lastCommentRef : null
+                }
               >
                 <CommentItem
+                  key={`comment-${comment.$id}`}
                   comment={comment}
                   depth={0}
-                  onReply={(parentId) => handleSubmitComment(comment.content, parentId)}
+                  onReply={(content) =>
+                    handleSubmitComment(content, comment.$id)
+                  }
                 />
-                {!comment.isCollapsed && comment.replies.map((reply) => (
-                  <CommentItem
-                    key={reply.$id}
-                    comment={reply}
-                    depth={1}
-                    onReply={(parentId) => handleSubmitComment(reply.content, parentId)}
-                  />
-                ))}
+                {!comment.isCollapsed &&
+                  comment.replies.map((reply) => (
+                    <div
+                      key={`reply-${reply.$id}`}
+                      className="ml-6 pl-4 border-l-2 border-gray-200"
+                    >
+                      <CommentItem
+                        key={`reply-item-${reply.$id}`}
+                        comment={reply}
+                        depth={1}
+                        onReply={(content) =>
+                          handleSubmitComment(content, reply.$id)
+                        }
+                      />
+                    </div>
+                  ))}
               </motion.div>
             ))
           )}

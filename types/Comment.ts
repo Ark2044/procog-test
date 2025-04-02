@@ -6,6 +6,8 @@ export interface Comment extends Models.Document {
   riskId: string;
   authorName: string;
   parentId?: string;
+  replyToName?: string;
+  replyToContent?: string;
   upvotes: number;
   downvotes: number;
   voters: { userId: string; vote: "up" | "down" }[];

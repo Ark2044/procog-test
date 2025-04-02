@@ -122,6 +122,7 @@ const Dashboard = () => {
           authorizedViewers: doc.authorizedViewers ?? [],
           authorName: authorNames[doc.authorId] || "Unknown", // Add authorName
           riskTitle: doc.title || "Untitled Risk", // Add riskTitle
+          mitigation: doc.mitigation || "No mitigation provided", // Add mitigation
         }));
 
         let risksToSet = fetchedRisks;

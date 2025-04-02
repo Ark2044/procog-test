@@ -22,6 +22,7 @@ import {
   Shield,
   Tag,
   User,
+  Edit,
 } from "lucide-react";
 import { useAuthStore } from "@/store/Auth";
 import {
@@ -30,6 +31,7 @@ import {
   RiskDetailValidationInput,
 } from "@/lib/validation";
 import { CommentSection } from "@/components/comments/CommentSection";
+import { Reminder } from "@/types/Reminder";
 
 interface Risk {
   title: string;
@@ -62,7 +64,9 @@ const RiskDetail = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
-  const { reminders, fetchReminders, deleteReminder } = useReminderStore();
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const { reminders, fetchReminders, deleteReminder, updateReminder } =
+    useReminderStore();
   const { user, verifySession, session } = useAuthStore();
 
   useEffect(() => {
@@ -175,6 +179,16 @@ const RiskDetail = () => {
     fetchData();
   }, [riskId, user, fetchReminders]);
 
+  const handleEditReminder = (reminder: Reminder) => {
+    setEditingReminder(reminder);
+    setIsReminderDialogOpen(true);
+  };
+
+  const handleCloseReminderDialog = () => {
+    setIsReminderDialogOpen(false);
+    setEditingReminder(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800 ">
@@ -182,12 +196,18 @@ const RiskDetail = () => {
           <Skeleton className="h-9 w-3/4 rounded-lg bg-gray-200" />
           <div className="flex gap-2">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-6 w-20 rounded-full bg-gray-200" />
+              <Skeleton
+                key={`tag-skeleton-${i}`}
+                className="h-6 w-20 rounded-full bg-gray-200"
+              />
             ))}
           </div>
           <div className="space-y-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-4 w-full rounded bg-gray-200" />
+              <Skeleton
+                key={`content-skeleton-${i}`}
+                className="h-4 w-full rounded bg-gray-200"
+              />
             ))}
           </div>
         </div>
@@ -419,7 +439,10 @@ const RiskDetail = () => {
                 {isRiskCreator && (
                   <Button
                     variant="outline"
-                    onClick={() => setIsReminderDialogOpen(true)}
+                    onClick={() => {
+                      setEditingReminder(null);
+                      setIsReminderDialogOpen(true);
+                    }}
                   >
                     Set New Reminder
                   </Button>
@@ -457,13 +480,22 @@ const RiskDetail = () => {
                         )}
                       </div>
                       {isRiskCreator && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteReminder(reminder.$id)}
-                        >
-                          Delete
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditReminder(reminder)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => deleteReminder(reminder.$id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       )}
                     </div>
                   ))}
@@ -476,17 +508,23 @@ const RiskDetail = () => {
         {isRiskCreator && risk && (
           <ReminderDialog
             isOpen={isReminderDialogOpen}
-            onClose={() => setIsReminderDialogOpen(false)}
+            onClose={handleCloseReminderDialog}
             riskId={riskId as string}
             riskTitle={risk.title}
             userId={user.$id}
+            editingReminder={editingReminder}
+            onUpdate={updateReminder}
           />
         )}
 
         {user && riskId && (
           <Card className="border-gray-200 bg-white">
             <CardContent className="p-6">
-              <CommentSection riskId={riskId as string} />
+              <CommentSection
+                riskId={riskId as string}
+                resourceId={riskId as string}
+                resourceType="risk"
+              />
             </CardContent>
           </Card>
         )}

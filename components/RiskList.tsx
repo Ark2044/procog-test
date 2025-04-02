@@ -197,6 +197,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                 <Link href={`/risk/${risk.$id}`}>
                   <RiskCard
                     {...risk}
+                    riskId={risk.$id}
                     currentUserId={user?.$id}
                     onSetReminder={
                       user && user.$id === risk.authorId

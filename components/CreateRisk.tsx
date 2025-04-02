@@ -155,12 +155,8 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           datetime: reminderDate.toISOString(),
           userId: user.$id,
           riskId: riskResponse.$id,
-          riskTitle: "",
           recurrence: reminderRecurrence,
           status: "pending",
-          $id: "",
-          created: "",
-          updated: "",
         });
       }
 

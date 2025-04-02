@@ -42,7 +42,7 @@ export default function RemindersPage() {
                   <CardContent className="p-4">
                     <h3 className="text-xl font-semibold">{reminder.title}</h3>
                     {reminder.description && (
-                      <p className="text-gray-600 mt-1">
+                      <p className="text-gray-600 mt-2 p-2 bg-gray-50 rounded-md">
                         {reminder.description}
                       </p>
                     )}

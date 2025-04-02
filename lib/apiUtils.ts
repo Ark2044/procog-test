@@ -33,7 +33,7 @@ export function handleApiError(error: unknown): NextResponse {
 export async function validateRequestBody<T>(request: Request): Promise<T> {
   try {
     return await request.json();
-  } catch (error) {
+  } catch {
     throw new Error("Invalid request body");
   }
 }

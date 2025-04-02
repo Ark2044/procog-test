@@ -20,7 +20,7 @@ export default function EditReminderPage() {
   const { user } = useAuthStore();
   const { reminders, updateReminder, loading, error } = useReminderStore();
 
-  const reminder = reminders.find((r) => r.$id === params.id);
+  const reminder = params ? reminders.find((r) => r.$id === params.id) : null;
 
   const [title, setTitle] = useState(reminder?.title || "");
   const [description, setDescription] = useState(reminder?.description || "");

@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export interface Reminder {
   $id: string;
   title: string;
@@ -5,10 +7,19 @@ export interface Reminder {
   datetime: string; // ISO string
   userId: string;
   riskId: string; // Associated risk ID
-  riskTitle: string; // Title of the associated risk
   recurrence: "none" | "daily" | "weekly" | "monthly";
   status: "pending" | "completed" | "cancelled";
   created: string;
   updated: string;
   email?: string;
+}
+
+// Extended reminder with associated risk information
+export interface ReminderWithRisk extends Reminder {
+  reminderDate: string | number | Date;
+  note: ReactNode;
+  risk?: {
+    title: string;
+    // Add other risk fields if needed
+  };
 }
