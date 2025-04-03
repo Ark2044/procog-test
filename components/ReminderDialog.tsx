@@ -35,6 +35,8 @@ import { reminderCollection, db } from "@/models/name";
 import { ID } from "appwrite";
 import { useAuthStore } from "@/store/Auth";
 import { Reminder } from "@/types/Reminder";
+import { useViewedItemsStore } from "@/store/ViewedItems";
+import { Query } from "appwrite";
 
 interface ReminderDialogProps {
   isOpen: boolean;
@@ -68,6 +70,7 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
   const { addReminder } = useReminderStore();
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { markRemindersViewed } = useViewedItemsStore();
 
   const form = useForm<ReminderValues>({
     resolver: zodResolver(reminderSchema),
@@ -100,6 +103,28 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
       });
     }
   }, [editingReminder, form]);
+
+  useEffect(() => {
+    if (isOpen && userId && riskId) {
+      const fetchAndMarkReminders = async () => {
+        try {
+          const response = await databases.listDocuments(
+            db,
+            reminderCollection,
+            [Query.equal("riskId", riskId), Query.equal("userId", userId)]
+          );
+
+          if (response && response.total > 0) {
+            markRemindersViewed(userId, riskId, response.total);
+          }
+        } catch (error) {
+          console.error("Error fetching reminders:", error);
+        }
+      };
+
+      fetchAndMarkReminders();
+    }
+  }, [isOpen, riskId, userId, markRemindersViewed]);
 
   const onSubmit = async (values: ReminderValues) => {
     setIsSubmitting(true);

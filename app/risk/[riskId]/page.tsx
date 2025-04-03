@@ -3,7 +3,12 @@ import React, { useEffect, useState, useRef } from "react";
 import { databases, storage } from "@/models/client/config";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
-import { db, riskCollection } from "@/models/name";
+import {
+  commentCollection,
+  db,
+  reminderCollection,
+  riskCollection,
+} from "@/models/name";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -61,6 +66,8 @@ import {
   HelpCircleIcon,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useViewedItemsStore } from "@/store/ViewedItems";
+import { Query } from "appwrite";
 
 interface Risk {
   title: string;
@@ -181,7 +188,9 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
       const updatedRisk = {
         title,
         content,
-        impact: validImpacts.includes(impact as (typeof validImpacts)[number]) ? (impact as (typeof validImpacts)[number]) : undefined,
+        impact: validImpacts.includes(impact as (typeof validImpacts)[number])
+          ? (impact as (typeof validImpacts)[number])
+          : undefined,
         probability: Number(probability),
         action: action as "mitigate" | "accept" | "transfer" | "avoid",
         ...strategyData,
@@ -1079,6 +1088,7 @@ const RiskDetail = () => {
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
   const [resolution, setResolution] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { markCommentsViewed, markRemindersViewed } = useViewedItemsStore();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -1184,6 +1194,28 @@ const RiskDetail = () => {
           }
 
           await fetchReminders(user.$id);
+
+          // Mark any reminders for this risk as viewed - now with userId
+          const userReminders = await databases.listDocuments(
+            db,
+            reminderCollection,
+            [Query.equal("riskId", riskId), Query.equal("userId", user.$id)]
+          );
+
+          if (userReminders && userReminders.total > 0) {
+            markRemindersViewed(user.$id, riskId, userReminders.total);
+          }
+
+          // Count comments for this risk
+          const commentsData = await databases.listDocuments(
+            db,
+            commentCollection,
+            [Query.equal("riskId", riskId)]
+          );
+
+          if (commentsData && commentsData.total > 0) {
+            markCommentsViewed(user.$id, riskId, commentsData.total);
+          }
         } catch (err) {
           console.error(err);
           setError("Error fetching data");
@@ -1194,7 +1226,7 @@ const RiskDetail = () => {
     };
 
     fetchData();
-  }, [riskId, user, fetchReminders]);
+  }, [riskId, user, fetchReminders, markCommentsViewed, markRemindersViewed]);
 
   const handleEditReminder = (reminder: Reminder) => {
     setEditingReminder(reminder);

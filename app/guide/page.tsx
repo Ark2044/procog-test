@@ -195,8 +195,8 @@ const UserGuidePage = () => {
                             the process
                           </li>
                           <li>
-                            Check your department&apos;s existing risks to understand
-                            your team&apos;s risk landscape
+                            Check your department&apos;s existing risks to
+                            understand your team&apos;s risk landscape
                           </li>
                         </ol>
                       </AccordionContent>
@@ -606,8 +606,8 @@ const UserGuidePage = () => {
                               <li>Navigate to the Reminders section</li>
                               <li>Click &quot;Create Reminder&quot;</li>
                               <li>
-                                Select the risk to be reviewed or choose &quot;All
-                                Risks&quot;
+                                Select the risk to be reviewed or choose
+                                &quot;All Risks&quot;
                               </li>
                               <li>
                                 Set the frequency (one-time, weekly, monthly,

@@ -6,8 +6,8 @@ import { account } from "@/models/client/config";
 
 export interface UserPrefs {
   reputation: number;
-  role: string;         // e.g., "user", "admin"
-  department: string;   // e.g., "sales", "engineering"
+  role: string; // e.g., "user", "admin"
+  department: string; // e.g., "sales", "engineering"
 }
 
 interface IAuthStore {
@@ -75,30 +75,37 @@ export const useAuthStore = create<IAuthStore>()(
       async login(email: string, password: string) {
         set({ loading: true, error: null });
         try {
-          const session = await account.createEmailPasswordSession(email, password);
+          const session = await account.createEmailPasswordSession(
+            email,
+            password
+          );
           const [user, { jwt }] = await Promise.all([
             account.get<UserPrefs>(),
-            account.createJWT()
+            account.createJWT(),
           ]);
 
-          if (!user.prefs?.role || !user.prefs?.department || user.prefs?.reputation === undefined) {
+          if (
+            !user.prefs?.role ||
+            !user.prefs?.department ||
+            user.prefs?.reputation === undefined
+          ) {
             await account.updatePrefs<UserPrefs>({
               reputation: user.prefs?.reputation || 0,
               role: user.prefs?.role || "user",
-              department: user.prefs?.department || "general"
+              department: user.prefs?.department || "general",
             });
             const updatedUser = await account.get<UserPrefs>();
             set({ session, user: updatedUser, jwt });
           } else {
             set({ session, user, jwt });
           }
-          
+
           return { success: true };
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
           return {
             success: false,
-            error: error instanceof AppwriteException ? error : null
+            error: error instanceof AppwriteException ? error : null,
           };
         } finally {
           set({ loading: false });
@@ -110,30 +117,33 @@ export const useAuthStore = create<IAuthStore>()(
         try {
           // Create the account
           await account.create(ID.unique(), email, password, name);
-          
+
           // Set up initial preferences
           await account.updatePrefs<UserPrefs>({
             reputation: 0,
             role: "user",
-            department: "general"
+            department: "general",
           });
-          
+
           // Get the updated user after preferences are set
           const updatedUser = await account.get<UserPrefs>();
           set({ user: updatedUser });
-          
+
           // Automatically log in after account creation
-          const session = await account.createEmailPasswordSession(email, password);
+          const session = await account.createEmailPasswordSession(
+            email,
+            password
+          );
           const { jwt } = await account.createJWT();
-          
+
           set({ session, jwt });
-          
+
           return { success: true };
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
           return {
             success: false,
-            error: error instanceof AppwriteException ? error : null
+            error: error instanceof AppwriteException ? error : null,
           };
         } finally {
           set({ loading: false });
@@ -141,10 +151,11 @@ export const useAuthStore = create<IAuthStore>()(
       },
 
       async logout() {
-        set({ loading: true });
+        set({ loading: true, error: null });
         try {
-          await account.deleteSessions();
+          await account.deleteSession("current");
           set({ session: null, jwt: null, user: null });
+          return;
         } catch (error) {
           set({ error: error instanceof AppwriteException ? error : null });
         } finally {
@@ -177,7 +188,7 @@ export const useAuthStore = create<IAuthStore>()(
         return (state, error) => {
           if (!error) state?.setHydrated();
         };
-      }
+      },
     }
   )
 );

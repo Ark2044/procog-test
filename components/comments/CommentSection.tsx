@@ -9,6 +9,7 @@ import { AlertCircle, Loader2, TrendingUp, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { useViewedItemsStore } from "@/store/ViewedItems";
 
 interface CommentSectionProps {
   riskId: string;
@@ -55,6 +56,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
   const { user } = useAuthStore();
   const observer = useRef<IntersectionObserver>();
   const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
+  const { markCommentsViewed } = useViewedItemsStore();
 
   // Infinite scroll setup
   const lastCommentRef = useCallback(
@@ -76,6 +78,12 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
     subscribe(riskId);
     return () => unsubscribe();
   }, [riskId, fetchComments, subscribe, unsubscribe]);
+
+  useEffect(() => {
+    if (comments.length > 0 && user) {
+      markCommentsViewed(user.$id, riskId, comments.length);
+    }
+  }, [comments.length, riskId, user, markCommentsViewed]);
 
   const handleSubmitComment = async (content: string, parentId?: string) => {
     if (!user) return;

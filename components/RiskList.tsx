@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { databases } from "@/models/client/config";
-import { riskCollection, db } from "@/models/name";
+import {
+  riskCollection,
+  db,
+  commentCollection,
+  reminderCollection,
+} from "@/models/name";
 import RiskCard from "./RiskCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -17,6 +22,7 @@ import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/Auth";
 import { ReminderDialog } from "./ReminderDialog";
+import { Query } from "appwrite";
 
 interface Risk {
   $id: string;
@@ -41,6 +47,8 @@ interface Risk {
   dueDate?: string;
   status?: "active" | "closed" | "resolved";
   resolution?: string;
+  commentCount?: number;
+  reminderCount?: number;
 }
 
 interface RiskListProps {
@@ -60,9 +68,67 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
+    {}
+  );
+  const [reminderCounts, setReminderCounts] = useState<Record<string, number>>(
+    {}
+  );
 
   const { user } = useAuthStore();
   const currentUserId = userId || user?.$id;
+
+  const fetchCommentCounts = async (riskIds: string[]) => {
+    if (riskIds.length === 0) return;
+
+    try {
+      const counts: Record<string, number> = {};
+
+      await Promise.all(
+        riskIds.map(async (riskId) => {
+          const response = await databases.listDocuments(
+            db,
+            commentCollection,
+            [Query.equal("riskId", riskId)]
+          );
+          counts[riskId] = response.total;
+        })
+      );
+
+      setCommentCounts(counts);
+    } catch (error) {
+      console.error("Failed to fetch comment counts:", error);
+    }
+  };
+
+  const fetchReminderCounts = useCallback(
+    async (riskIds: string[]) => {
+      if (!currentUserId || riskIds.length === 0) return;
+
+      try {
+        const counts: Record<string, number> = {};
+
+        await Promise.all(
+          riskIds.map(async (riskId) => {
+            const response = await databases.listDocuments(
+              db,
+              reminderCollection,
+              [
+                Query.equal("riskId", riskId),
+                Query.equal("userId", currentUserId),
+              ]
+            );
+            counts[riskId] = response.total;
+          })
+        );
+
+        setReminderCounts(counts);
+      } catch (error) {
+        console.error("Failed to fetch reminder counts:", error);
+      }
+    },
+    [currentUserId]
+  );
 
   const fetchRisks = useCallback(async () => {
     setLoading(true);
@@ -94,13 +160,17 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
       }));
 
       setRisks(risksData);
+
+      const riskIds = risksData.map((risk) => risk.$id);
+      fetchCommentCounts(riskIds);
+      fetchReminderCounts(riskIds);
     } catch (err) {
       setError("Failed to fetch risks");
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchReminderCounts]);
 
   useEffect(() => {
     fetchRisks();
@@ -272,36 +342,47 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
         </div>
       ) : (
-        <div className="grid gap-4">
-          {filteredAndSortedRisks().length === 0 ? (
-            <div className="rounded-lg border border-dashed p-8 text-center bg-gray-100">
-              <p className="text-gray-600">No risks found</p>
+        <div className="mt-8 grid grid-cols-1 gap-6">
+          {loading && !risks.length ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="animate-spin mr-2" />
+              <span>Loading risks...</span>
+            </div>
+          ) : filteredAndSortedRisks().length === 0 ? (
+            <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500 border border-gray-200">
+              <p className="mb-4">No risks found matching your criteria.</p>
+              <Link
+                href="/risk/new"
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                Create a new risk
+              </Link>
             </div>
           ) : (
             filteredAndSortedRisks().map((risk) => (
-              <div key={risk.$id}>
-                <Link href={`/risk/${risk.$id}`}>
-                  <RiskCard
-                    {...risk}
-                    riskId={risk.$id}
-                    currentUserId={user?.$id}
-                    onSetReminder={
-                      user && user.$id === risk.authorId
-                        ? () => {
-                            setSelectedRisk(risk);
-                            setIsReminderDialogOpen(true);
-                          }
-                        : undefined
-                    }
-                  />
-                </Link>
+              <div key={risk.$id} className="w-full">
+                <RiskCard
+                  {...risk}
+                  riskId={risk.$id}
+                  currentUserId={currentUserId}
+                  onSetReminder={
+                    user && user.$id === risk.authorId
+                      ? () => {
+                          setSelectedRisk(risk);
+                          setIsReminderDialogOpen(true);
+                        }
+                      : undefined
+                  }
+                  commentCount={commentCounts[risk.$id] || 0}
+                  reminderCount={reminderCounts[risk.$id] || 0}
+                />
               </div>
             ))
           )}
         </div>
       )}
 
-      {selectedRisk && (
+      {selectedRisk && isReminderDialogOpen && (
         <ReminderDialog
           isOpen={isReminderDialogOpen}
           onClose={() => {
@@ -310,7 +391,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           }}
           riskId={selectedRisk.$id}
           riskTitle={selectedRisk.title}
-          userId={user?.$id || ""}
+          userId={currentUserId || ""}
           email={user?.email}
         />
       )}
