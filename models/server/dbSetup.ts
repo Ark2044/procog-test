@@ -5,6 +5,7 @@ import createRiskCollection from "./risk.collection";
 import createVoteCollection from "./vote.collection";
 import { databases } from "./config";
 import createRemindersCollection from "./reminder.collection";
+import createRiskAnalysisCollection from "./riskAnalysis.collection";
 
 export default async function getOrCreateDB() {
   try {
@@ -21,6 +22,7 @@ export default async function getOrCreateDB() {
         createCommentCollection(),
         createVoteCollection(),
         createRemindersCollection(),
+        createRiskAnalysisCollection(),
       ]);
       console.log("Collections created");
       console.log("Database connected");

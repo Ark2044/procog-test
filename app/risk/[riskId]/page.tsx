@@ -68,8 +68,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewedItemsStore } from "@/store/ViewedItems";
 import { Query } from "appwrite";
+import RiskAnalysisPanel from "@/components/RiskAnalysisPanel";
 
 interface Risk {
+  $id: string;
   title: string;
   content: string;
   authorId: string;
@@ -1089,6 +1091,7 @@ const RiskDetail = () => {
   const [resolution, setResolution] = useState("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { markCommentsViewed, markRemindersViewed } = useViewedItemsStore();
+  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -1128,6 +1131,7 @@ const RiskDetail = () => {
           );
 
           const mappedRisk: Risk = {
+            $id: response.$id,
             title: response.title,
             content: response.content,
             authorId: response.authorId,
@@ -1678,8 +1682,10 @@ const RiskDetail = () => {
             <CardContent className="p-6">
               <CommentSection
                 riskId={riskId as string}
-                resourceId={riskId as string}
-                resourceType="risk"
+                entityType="risk"
+                onCommentsCountChange={(count: number) =>
+                  setCommentCount(count)
+                }
               />
             </CardContent>
           </Card>
@@ -1721,6 +1727,144 @@ const RiskDetail = () => {
             onRiskUpdated={handleRiskUpdated}
           />
         )}
+
+        <Tabs defaultValue="discussion" className="w-full mt-8">
+          <TabsList className="w-full justify-start border-b rounded-none p-0 h-auto">
+            <TabsTrigger
+              value="discussion"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+            >
+              Discussion {commentCount > 0 && `(${commentCount})`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="reminders"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+            >
+              Reminders{" "}
+              {userRiskReminders.length > 0 && `(${userRiskReminders.length})`}
+            </TabsTrigger>
+            <TabsTrigger
+              value="analysis"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+            >
+              AI Analysis
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="discussion" className="mt-6">
+            <CommentSection
+              riskId={risk.$id}
+              entityType="risk"
+              onCommentsCountChange={(count: number) => setCommentCount(count)}
+            />
+          </TabsContent>
+
+          <TabsContent value="reminders" className="mt-6">
+            <div className="space-y-4">
+              {userRiskReminders.length === 0 ? (
+                <div className="text-center py-12">
+                  <Bell className="mx-auto h-12 w-12 text-gray-300" />
+                  <h3 className="mt-4 text-lg font-medium text-gray-900">
+                    No reminders yet
+                  </h3>
+                  <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+                    Set reminders for this risk to notify yourself or the team
+                    about important deadlines or follow-up tasks.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setEditingReminder(null);
+                      setIsReminderDialogOpen(true);
+                    }}
+                    className="mt-4"
+                    size="sm"
+                  >
+                    <Bell className="mr-2 h-4 w-4" />
+                    Set a Reminder
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium text-gray-900">
+                      Reminders
+                    </h3>
+                    <Button
+                      onClick={() => {
+                        setEditingReminder(null);
+                        setIsReminderDialogOpen(true);
+                      }}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Bell className="mr-2 h-4 w-4" />
+                      Add Reminder
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {userRiskReminders.map((reminder) => (
+                      <div
+                        key={reminder.$id}
+                        className="flex justify-between items-start p-4 bg-gray-50 rounded-lg"
+                      >
+                        <div className="space-y-2">
+                          <div>
+                            <h4 className="font-medium text-gray-800">
+                              {reminder.title}
+                            </h4>
+                            <p className="text-sm text-gray-500">
+                              {new Date(reminder.datetime).toLocaleString()}
+                            </p>
+                          </div>
+                          <p className="text-gray-700">
+                            {reminder.description}
+                          </p>
+                          {reminder.recurrence !== "none" && (
+                            <Badge variant="outline" className="mt-1">
+                              Repeats {reminder.recurrence}
+                            </Badge>
+                          )}
+                        </div>
+                        {isRiskCreator && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditReminder(reminder)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => deleteReminder(reminder.$id)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analysis" className="mt-6">
+            {user ? (
+              <RiskAnalysisPanel riskId={risk.$id} userId={user.$id} />
+            ) : (
+              <Card className="border-yellow-200 bg-yellow-50">
+                <CardContent className="p-4">
+                  <p className="text-yellow-800">
+                    Please log in to use the AI analysis feature.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

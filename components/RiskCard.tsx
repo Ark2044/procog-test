@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
+  CardDescription,
 } from "@/components/ui/card";
 import {
   Paperclip,
@@ -19,8 +20,11 @@ import {
   Bell,
   AlertTriangle,
   Tag,
-  Info,
   FileText,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,7 +46,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { format, isAfter } from "date-fns";
+import { format, isAfter, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -72,6 +76,7 @@ interface RiskCardProps {
   resolution?: string;
   commentCount?: number;
   reminderCount?: number;
+  onAnalyze?: () => void;
 }
 
 const getImpactColor = (impact: "low" | "medium" | "high") => {
@@ -130,37 +135,19 @@ const getProbabilityColor = (probability: number) => {
   return "bg-green-100 text-green-800 border-green-200";
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "active":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "closed":
-      return "bg-gray-100 text-gray-800 border-gray-200";
-    case "resolved":
-      return "bg-green-100 text-green-800 border-green-200";
-    default:
-      return "bg-blue-100 text-blue-800 border-blue-200";
-  }
-};
-
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "active":
-      return <AlertCircle className="w-3 h-3" />;
-    case "closed":
-      return <XCircle className="w-3 h-3" />;
-    case "resolved":
-      return <CheckCircle className="w-3 h-3" />;
-    default:
-      return <AlertCircle className="w-3 h-3" />;
-  }
-};
-
 const formatDate = (dateString: string) => {
   try {
     return format(new Date(dateString), "MMM d, yyyy");
   } catch {
     return "Invalid date";
+  }
+};
+
+const formatTimeAgo = (dateString: string) => {
+  try {
+    return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+  } catch {
+    return "Unknown time";
   }
 };
 
@@ -185,6 +172,20 @@ const isOverdue = (dueDate?: string) => {
   } catch {
     return false;
   }
+};
+
+const getDueStatusText = (dueDate?: string) => {
+  if (!dueDate) return "";
+  if (isOverdue(dueDate)) return "Overdue";
+  if (isDueSoon(dueDate)) return "Due soon";
+  return "Upcoming";
+};
+
+const getDueStatusColor = (dueDate?: string) => {
+  if (!dueDate) return "";
+  if (isOverdue(dueDate)) return "text-red-600";
+  if (isDueSoon(dueDate)) return "text-yellow-600";
+  return "text-blue-600";
 };
 
 const RiskCardSkeleton = () => (
@@ -234,6 +235,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
   riskId,
   currentUserId,
   onSetReminder,
+  onAnalyze,
   ...props
 }) => {
   const { loading, error, subscribeToRisk, unsubscribeFromRisk, closeRisk } =
@@ -254,25 +256,18 @@ const RiskCard: React.FC<RiskCardProps> = ({
     return () => unsubscribeFromRisk();
   }, [riskId, subscribeToRisk, unsubscribeFromRisk]);
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (
-      e.target instanceof HTMLElement &&
-      (e.target.tagName === "BUTTON" ||
-        e.target.closest("button") ||
-        e.target.tagName === "A" ||
-        e.target.closest("a"))
-    ) {
-      return;
-    }
+  const toggleExpand = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    if (!currentUserId) return;
+    if (currentUserId) {
+      if (props.commentCount) {
+        markCommentsViewed(currentUserId, riskId, props.commentCount);
+      }
 
-    if (props.commentCount) {
-      markCommentsViewed(currentUserId, riskId, props.commentCount);
-    }
-
-    if (props.reminderCount) {
-      markRemindersViewed(currentUserId, riskId, props.reminderCount);
+      if (props.reminderCount) {
+        markRemindersViewed(currentUserId, riskId, props.reminderCount);
+      }
     }
 
     setIsExpanded(!isExpanded);
@@ -313,6 +308,33 @@ const RiskCard: React.FC<RiskCardProps> = ({
     avoid: "Avoidance Approach",
   };
 
+  const riskImpactPriority =
+    {
+      high: 3,
+      medium: 2,
+      low: 1,
+    }[props.impact] || 0;
+
+  // Calculate overall risk priority
+  const riskPriority = riskImpactPriority * props.probability;
+  const priorityLabel =
+    riskPriority >= 10
+      ? "Critical"
+      : riskPriority >= 6
+      ? "High"
+      : riskPriority >= 3
+      ? "Medium"
+      : "Low";
+
+  const priorityColor =
+    riskPriority >= 10
+      ? "text-red-600 bg-red-50 border-red-200"
+      : riskPriority >= 6
+      ? "text-orange-600 bg-orange-50 border-orange-200"
+      : riskPriority >= 3
+      ? "text-yellow-600 bg-yellow-50 border-yellow-200"
+      : "text-green-600 bg-green-50 border-green-200";
+
   return (
     <TooltipProvider>
       <motion.div
@@ -323,7 +345,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
       >
         <Card
           className={cn(
-            "w-full bg-white hover:shadow-lg transition-shadow duration-200 border",
+            "w-full bg-white hover:shadow-md transition-shadow duration-200 border relative overflow-hidden",
             props.isConfidential ? "border-red-200" : "border-gray-200",
             isOverdue(props.dueDate) && status === "active"
               ? "border-l-4 border-l-red-500"
@@ -334,66 +356,71 @@ const RiskCard: React.FC<RiskCardProps> = ({
             status === "resolved" ? "bg-green-50" : "",
             status === "closed" ? "bg-gray-50" : ""
           )}
-          onClick={handleCardClick}
-          role="button"
-          tabIndex={0}
-          aria-expanded={isExpanded}
         >
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start flex-wrap gap-2">
-              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Link
-                  href={`/risk/${riskId}`}
-                  key={riskId}
-                  className="hover:text-blue-500 hover:underline"
-                >
-                  {props.title}
-                </Link>
-                {props.isConfidential && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center text-red-500">
-                        <Info className="w-4 h-4" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Confidential Risk</p>
-                    </TooltipContent>
-                  </Tooltip>
+          {/* Top-right corner indicators */}
+          <div className="absolute top-0 right-0 flex">
+            {status !== "active" && (
+              <div
+                className={cn(
+                  "py-1 px-3 text-xs font-medium",
+                  status === "resolved"
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-500 text-white"
                 )}
-              </CardTitle>
+              >
+                {status === "resolved" ? "Resolved" : "Closed"}
+              </div>
+            )}
+            {props.isConfidential && (
+              <div className="bg-red-500 text-white py-1 px-3 text-xs font-medium">
+                Confidential
+              </div>
+            )}
+          </div>
 
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className={getStatusColor(status)}>
-                  <span className="flex items-center gap-1">
-                    {getStatusIcon(status)}
-                    {status}
-                  </span>
+          <CardHeader className="pb-1 pt-3">
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col">
+                <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2 group">
+                  <Link
+                    href={`/risk/${riskId}`}
+                    className="hover:text-blue-600 hover:underline flex items-center"
+                  >
+                    {props.title}
+                    <ExternalLink className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                </CardTitle>
+
+                <CardDescription className="mt-1 text-sm text-gray-500 flex items-center">
+                  <User className="w-3 h-3 mr-1" />
+                  {props.authorName}
+                  <span className="mx-2">•</span>
+                  <Clock className="w-3 h-3 mr-1" />
+                  {formatTimeAgo(props.created)}
+                  {props.dueDate && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <Calendar className="w-3 h-3 mr-1" />
+                      <span className={getDueStatusColor(props.dueDate)}>
+                        {getDueStatusText(props.dueDate)}:
+                      </span>{" "}
+                      {formatDate(props.dueDate)}
+                    </>
+                  )}
+                </CardDescription>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Badge className={cn("font-medium", priorityColor)}>
+                  {priorityLabel} Priority
                 </Badge>
-
-                {newCommentsCount > 0 && (
-                  <Badge
-                    className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-1"
-                    variant="default"
-                  >
-                    <Reply className="w-3 h-3" />
-                    {newCommentsCount}
-                  </Badge>
-                )}
-
-                {newRemindersCount > 0 && isRiskCreator && (
-                  <Badge
-                    className="bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-1"
-                    variant="default"
-                  >
-                    <Bell className="w-3 h-3" />
-                    {newRemindersCount}
-                  </Badge>
-                )}
               </div>
             </div>
+          </CardHeader>
 
-            <div className="flex flex-wrap gap-2 mt-2">
+          <CardContent className="pt-2">
+            {/* Primary risk information */}
+            <div className="flex flex-wrap gap-2 mb-3">
               <Badge variant="outline" className={getImpactColor(props.impact)}>
                 <span className="flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" />
@@ -418,28 +445,52 @@ const RiskCard: React.FC<RiskCardProps> = ({
                 </span>
               </Badge>
 
-              {props.dueDate && (
+              {newCommentsCount > 0 && (
                 <Badge
-                  variant="outline"
-                  className={cn(
-                    "flex items-center gap-1",
-                    isOverdue(props.dueDate)
-                      ? "bg-red-100 text-red-800 border-red-200"
-                      : isDueSoon(props.dueDate)
-                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                      : "bg-blue-100 text-blue-800 border-blue-200"
-                  )}
+                  className="bg-indigo-500 text-white hover:bg-indigo-600 flex items-center gap-1"
+                  variant="default"
                 >
-                  <Calendar className="w-3 h-3" />
-                  Due: {formatDate(props.dueDate)}
+                  <Reply className="w-3 h-3" />
+                  {newCommentsCount} new
+                </Badge>
+              )}
+
+              {newRemindersCount > 0 && isRiskCreator && (
+                <Badge
+                  className="bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-1"
+                  variant="default"
+                >
+                  <Bell className="w-3 h-3" />
+                  {newRemindersCount} new
                 </Badge>
               )}
             </div>
-          </CardHeader>
 
-          <CardContent>
-            <div className={cn("text-gray-700", !isExpanded && "line-clamp-2")}>
-              {props.content}
+            {/* Risk content with expansion toggle */}
+            <div className="bg-gray-50 p-3 rounded-md border border-gray-100 mb-3">
+              <div
+                className={cn(
+                  "text-gray-700 prose-sm",
+                  !isExpanded && "max-h-16 overflow-hidden"
+                )}
+              >
+                {props.content}
+              </div>
+
+              <button
+                onClick={toggleExpand}
+                className="flex items-center justify-center w-full mt-2 text-blue-500 hover:text-blue-600 text-sm font-medium"
+              >
+                {isExpanded ? (
+                  <>
+                    Show less <ChevronUp className="w-4 h-4 ml-1" />
+                  </>
+                ) : (
+                  <>
+                    Show more <ChevronDown className="w-4 h-4 ml-1" />
+                  </>
+                )}
+              </button>
             </div>
 
             <AnimatePresence>
@@ -449,7 +500,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="mt-4 space-y-4 overflow-hidden"
+                  className="space-y-4 overflow-hidden"
                 >
                   {actionStrategy[props.action] && (
                     <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
@@ -459,9 +510,11 @@ const RiskCard: React.FC<RiskCardProps> = ({
                           {actionTitle[props.action]}:
                         </span>
                       </h4>
-                      <ReactMarkdown>
-                        {actionStrategy[props.action]}
-                      </ReactMarkdown>
+                      <div className="mt-1 text-gray-600 prose-sm max-w-none">
+                        <ReactMarkdown>
+                          {actionStrategy[props.action]}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   )}
 
@@ -491,15 +544,10 @@ const RiskCard: React.FC<RiskCardProps> = ({
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span>{props.authorName}</span>
-                    </div>
-
                     {props.attachmentId && (
                       <div className="flex items-center gap-1">
                         <Paperclip className="w-4 h-4 text-gray-500" />
-                        <span>Attachment</span>
+                        <span>Attachment available</span>
                       </div>
                     )}
 
@@ -518,46 +566,74 @@ const RiskCard: React.FC<RiskCardProps> = ({
             </AnimatePresence>
           </CardContent>
 
-          <CardFooter className="flex flex-wrap justify-between gap-2 pt-2 border-t border-gray-100">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-600"
-              onClick={() => setIsExpanded(!isExpanded)}
-              aria-label={isExpanded ? "Show less" : "Show more"}
+          <CardFooter className="pt-0 border-t border-gray-100 mt-2 flex flex-wrap justify-between items-center gap-2">
+            <Link
+              href={`/risk/${riskId}`}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
             >
-              {isExpanded ? "Show less" : "Show more"}
-            </Button>
+              <Reply className="w-3 h-3 mr-1" />
+              {props.commentCount || 0} Comments
+            </Link>
 
             <div className="flex items-center gap-2">
-              {onSetReminder && isRiskCreator && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSetReminder();
-                  }}
-                >
-                  <Bell className="w-4 h-4" />
-                  Reminder
-                </Button>
+              {status === "active" && onSetReminder && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSetReminder();
+                      }}
+                    >
+                      <Bell className="h-3 w-3 mr-1" />
+                      Remind
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Set a reminder for this risk</TooltipContent>
+                </Tooltip>
+              )}
+
+              {status === "active" && onAnalyze && currentUserId && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 border-purple-200 text-purple-600 hover:bg-purple-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAnalyze();
+                      }}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Analyze
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>AI analysis of this risk</TooltipContent>
+                </Tooltip>
               )}
 
               {status === "active" && isRiskCreator && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsCloseDialogOpen(true);
-                  }}
-                >
-                  <CheckCircle className="mr-1 h-4 w-4" />
-                  Close
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsCloseDialogOpen(true);
+                      }}
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Close
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Close this risk</TooltipContent>
+                </Tooltip>
               )}
             </div>
           </CardFooter>

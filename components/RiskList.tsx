@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/Auth";
 import { ReminderDialog } from "./ReminderDialog";
 import { Query } from "appwrite";
+import { useRouter } from "next/navigation";
 
 interface Risk {
   $id: string;
@@ -77,6 +78,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
   const { user } = useAuthStore();
   const currentUserId = userId || user?.$id;
+  const router = useRouter();
 
   const fetchCommentCounts = async (riskIds: string[]) => {
     if (riskIds.length === 0) return;
@@ -242,6 +244,10 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
     });
   };
 
+  const handleAnalyzeRisk = (riskId: string) => {
+    router.push(`/risk/${riskId}?tab=analysis`);
+  };
+
   if (error) {
     return (
       <div className="rounded-lg bg-red-100 p-4 text-gray-800 border border-red-200">
@@ -372,6 +378,9 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                           setIsReminderDialogOpen(true);
                         }
                       : undefined
+                  }
+                  onAnalyze={
+                    user ? () => handleAnalyzeRisk(risk.$id) : undefined
                   }
                   commentCount={commentCounts[risk.$id] || 0}
                   reminderCount={reminderCounts[risk.$id] || 0}

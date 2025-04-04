@@ -13,8 +13,8 @@ import { useViewedItemsStore } from "@/store/ViewedItems";
 
 interface CommentSectionProps {
   riskId: string;
-  resourceId: string;
-  resourceType: string;
+  entityType?: string;
+  onCommentsCountChange?: (count: number) => void;
 }
 
 interface CommentWithReplies extends Comment {
@@ -41,7 +41,10 @@ const CommentSkeleton = () => (
   </div>
 );
 
-export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
+export const CommentSection: React.FC<CommentSectionProps> = ({
+  riskId,
+  onCommentsCountChange,
+}) => {
   const {
     comments,
     loading,
@@ -82,8 +85,17 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ riskId }) => {
   useEffect(() => {
     if (comments.length > 0 && user) {
       markCommentsViewed(user.$id, riskId, comments.length);
+      if (onCommentsCountChange) {
+        onCommentsCountChange(comments.length);
+      }
     }
-  }, [comments.length, riskId, user, markCommentsViewed]);
+  }, [
+    comments.length,
+    riskId,
+    user,
+    markCommentsViewed,
+    onCommentsCountChange,
+  ]);
 
   const handleSubmitComment = async (content: string, parentId?: string) => {
     if (!user) return;
