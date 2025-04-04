@@ -1033,7 +1033,15 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setReminderRecurrence(option.value as "none" | "daily" | "weekly" | "monthly")}
+                      onClick={() =>
+                        setReminderRecurrence(
+                          option.value as
+                            | "none"
+                            | "daily"
+                            | "weekly"
+                            | "monthly"
+                        )
+                      }
                       className={`py-2 px-3 text-sm text-center rounded ${
                         reminderRecurrence === option.value
                           ? "bg-blue-100 text-blue-700 border border-blue-300"
@@ -1116,7 +1124,9 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             {["basic", "assessment", "settings"].map((tab, index) => (
               <div key={tab} className="flex flex-col items-center w-1/3">
                 <div
-                  onClick={() => setActiveTab(tab as "basic" | "assessment" | "settings")}
+                  onClick={() =>
+                    setActiveTab(tab as "basic" | "assessment" | "settings")
+                  }
                   className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 cursor-pointer
             ${
               activeTab === tab

@@ -1736,13 +1736,16 @@ const RiskDetail = () => {
             >
               Discussion {commentCount > 0 && `(${commentCount})`}
             </TabsTrigger>
-            <TabsTrigger
-              value="reminders"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
-            >
-              Reminders{" "}
-              {userRiskReminders.length > 0 && `(${userRiskReminders.length})`}
-            </TabsTrigger>
+            {isRiskCreator && (
+              <TabsTrigger
+                value="reminders"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+              >
+                Reminders{" "}
+                {userRiskReminders.length > 0 &&
+                  `(${userRiskReminders.length})`}
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="analysis"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
@@ -1759,97 +1762,99 @@ const RiskDetail = () => {
             />
           </TabsContent>
 
-          <TabsContent value="reminders" className="mt-6">
-            <div className="space-y-4">
-              {userRiskReminders.length === 0 ? (
-                <div className="text-center py-12">
-                  <Bell className="mx-auto h-12 w-12 text-gray-300" />
-                  <h3 className="mt-4 text-lg font-medium text-gray-900">
-                    No reminders yet
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-                    Set reminders for this risk to notify yourself or the team
-                    about important deadlines or follow-up tasks.
-                  </p>
-                  <Button
-                    onClick={() => {
-                      setEditingReminder(null);
-                      setIsReminderDialogOpen(true);
-                    }}
-                    className="mt-4"
-                    size="sm"
-                  >
-                    <Bell className="mr-2 h-4 w-4" />
-                    Set a Reminder
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      Reminders
+          {isRiskCreator && (
+            <TabsContent value="reminders" className="mt-6">
+              <div className="space-y-4">
+                {userRiskReminders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Bell className="mx-auto h-12 w-12 text-gray-300" />
+                    <h3 className="mt-4 text-lg font-medium text-gray-900">
+                      No reminders yet
                     </h3>
+                    <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+                      Set reminders for this risk to notify yourself or the team
+                      about important deadlines or follow-up tasks.
+                    </p>
                     <Button
                       onClick={() => {
                         setEditingReminder(null);
                         setIsReminderDialogOpen(true);
                       }}
+                      className="mt-4"
                       size="sm"
-                      variant="outline"
                     >
                       <Bell className="mr-2 h-4 w-4" />
-                      Add Reminder
+                      Set a Reminder
                     </Button>
                   </div>
-                  <div className="space-y-4">
-                    {userRiskReminders.map((reminder) => (
-                      <div
-                        key={reminder.$id}
-                        className="flex justify-between items-start p-4 bg-gray-50 rounded-lg"
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        Reminders
+                      </h3>
+                      <Button
+                        onClick={() => {
+                          setEditingReminder(null);
+                          setIsReminderDialogOpen(true);
+                        }}
+                        size="sm"
+                        variant="outline"
                       >
-                        <div className="space-y-2">
-                          <div>
-                            <h4 className="font-medium text-gray-800">
-                              {reminder.title}
-                            </h4>
-                            <p className="text-sm text-gray-500">
-                              {new Date(reminder.datetime).toLocaleString()}
+                        <Bell className="mr-2 h-4 w-4" />
+                        Add Reminder
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      {userRiskReminders.map((reminder) => (
+                        <div
+                          key={reminder.$id}
+                          className="flex justify-between items-start p-4 bg-gray-50 rounded-lg"
+                        >
+                          <div className="space-y-2">
+                            <div>
+                              <h4 className="font-medium text-gray-800">
+                                {reminder.title}
+                              </h4>
+                              <p className="text-sm text-gray-500">
+                                {new Date(reminder.datetime).toLocaleString()}
+                              </p>
+                            </div>
+                            <p className="text-gray-700">
+                              {reminder.description}
                             </p>
+                            {reminder.recurrence !== "none" && (
+                              <Badge variant="outline" className="mt-1">
+                                Repeats {reminder.recurrence}
+                              </Badge>
+                            )}
                           </div>
-                          <p className="text-gray-700">
-                            {reminder.description}
-                          </p>
-                          {reminder.recurrence !== "none" && (
-                            <Badge variant="outline" className="mt-1">
-                              Repeats {reminder.recurrence}
-                            </Badge>
+                          {isRiskCreator && (
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditReminder(reminder)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteReminder(reminder.$id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           )}
                         </div>
-                        {isRiskCreator && (
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditReminder(reminder)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => deleteReminder(reminder.$id)}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </TabsContent>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </TabsContent>
+          )}
 
           <TabsContent value="analysis" className="mt-6">
             {user ? (

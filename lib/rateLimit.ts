@@ -1,23 +1,20 @@
 import { databases } from "@/models/client/config";
-import { db, commentCollection } from "@/models/name";
+import { db, commentCollection, riskAnalysisCollection } from "@/models/name";
 import { Query } from "node-appwrite";
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_COMMENTS_PER_WINDOW = 5;
+const MAX_ANALYSIS_PER_WINDOW = 3;
 
 export async function checkCommentRateLimit(userId: string): Promise<boolean> {
   try {
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW).toISOString();
-    
-    const response = await databases.listDocuments(
-      db,
-      commentCollection,
-      [
-        Query.equal("authorId", userId),
-        Query.greaterThan("created", windowStart),
-        Query.limit(MAX_COMMENTS_PER_WINDOW + 1)
-      ]
-    );
+
+    const response = await databases.listDocuments(db, commentCollection, [
+      Query.equal("authorId", userId),
+      Query.greaterThan("created", windowStart),
+      Query.limit(MAX_COMMENTS_PER_WINDOW + 1),
+    ]);
 
     return response.total < MAX_COMMENTS_PER_WINDOW;
   } catch (error) {
@@ -26,18 +23,35 @@ export async function checkCommentRateLimit(userId: string): Promise<boolean> {
   }
 }
 
+export async function checkAnalysisRateLimit(userId: string): Promise<boolean> {
+  try {
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW).toISOString();
+
+    const response = await databases.listDocuments(db, riskAnalysisCollection, [
+      Query.equal("userId", userId),
+      Query.greaterThan("created", windowStart),
+      Query.limit(MAX_ANALYSIS_PER_WINDOW + 1),
+    ]);
+
+    return response.total < MAX_ANALYSIS_PER_WINDOW;
+  } catch (error) {
+    console.error("Error checking analysis rate limit:", error);
+    return false;
+  }
+}
+
 // Basic spam detection
 export function isSpam(content: string): boolean {
   // Convert to lowercase for checking
   const lowerContent = content.toLowerCase();
-  
+
   // Check for common spam patterns
   const spamPatterns = [
     /\b(buy|sell|cheap|discount|offer|price|deal|order)\b.*\b(viagra|cialis|pharmacy|pills|drugs)\b/i,
     /\b(casino|poker|gambling|bet|lottery)\b.*\b(online|money|win|cash)\b/i,
-    /(https?:\/\/[^\s]+){3,}/,  // More than 2 URLs
-    /(.)\1{4,}/,  // Repeated characters
-    /\b[A-Z\s]{10,}\b/,  // All caps words
+    /(https?:\/\/[^\s]+){3,}/, // More than 2 URLs
+    /(.)\1{4,}/, // Repeated characters
+    /\b[A-Z\s]{10,}\b/, // All caps words
   ];
 
   // Check content length
@@ -50,7 +64,8 @@ export function isSpam(content: string): boolean {
   }
 
   // Check for excessive symbols
-  const symbolRatio = (content.match(/[!?$@#%^&*()]/g) || []).length / content.length;
+  const symbolRatio =
+    (content.match(/[!?$@#%^&*()]/g) || []).length / content.length;
   if (symbolRatio > 0.3) return true;
 
   return false;

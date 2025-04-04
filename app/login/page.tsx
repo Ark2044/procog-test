@@ -60,13 +60,7 @@ export default function Login() {
         setIsLoading(false);
       } else {
         toast.success("Login successful!");
-        const currentUser = useAuthStore.getState().user;
-        // Redirect based on role after successful login
-        if (currentUser?.prefs?.role === "admin") {
-          router.push("/admin/users");
-        } else {
-          router.push(`/dashboard/${currentUser?.$id}`);
-        }
+        // The redirect will be handled by the useEffect when user state updates
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -77,10 +71,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md px-6">
-        <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 transition-transform hover:scale-105">
-          <h2 className="text-4xl font-bold text-center mb-4">Welcome Back</h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="w-full max-w-md">
+        <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 sm:p-8 transition-transform hover:scale-[1.02]">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
+            Welcome Back
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div className="relative">
               <div className="flex items-center border-b border-gray-300 pb-2">
                 <FaEnvelope className="text-gray-500 mr-3" />
@@ -91,7 +87,7 @@ export default function Login() {
                   disabled={isLoading}
                   placeholder="Email address"
                   defaultValue={isLoading ? "user@example.com" : ""}
-                  className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
                 />
               </div>
             </div>
@@ -105,18 +101,18 @@ export default function Login() {
                   disabled={isLoading}
                   placeholder="Password"
                   defaultValue={isLoading ? "••••••••" : ""}
-                  className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                  className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-semibold hover:opacity-90 transition-all focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
+              className="w-full py-2 sm:py-3 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-semibold hover:opacity-90 transition-all focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 text-sm sm:text-base"
             >
               {isLoading ? (
                 <motion.div
-                  className="w-6 h-6 border-4 border-t-4 border-gray-200 rounded-full"
+                  className="w-5 h-5 sm:w-6 sm:h-6 border-4 border-t-4 border-gray-200 rounded-full"
                   style={{ borderTopColor: "#ffffff" }}
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, ease: "linear", duration: 1 }}
@@ -126,10 +122,10 @@ export default function Login() {
               )}
             </button>
           </form>
-          <div className="text-center mt-6">
+          <div className="text-center mt-5 sm:mt-6">
             <Link
               href="/register"
-              className="text-blue-600 hover:text-blue-500 transition"
+              className="text-blue-600 hover:text-blue-500 transition text-sm sm:text-base"
             >
               Don&apos;t have an account? Sign up
             </Link>

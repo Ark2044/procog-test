@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-indigo-50 to-purple-50 text-gray-700 py-16 border-t border-indigo-100">
+    <footer className="bg-gradient-to-b from-indigo-50 to-purple-50 text-gray-700 py-16 border-t border-indigo-100 relative z-20">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
           {/* Brand Section */}

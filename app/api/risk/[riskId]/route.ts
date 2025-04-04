@@ -11,7 +11,7 @@ import {
   RiskDetailValidationInput,
   validateRiskDetail,
 } from "@/lib/validation";
-import { useAuthStore } from "@/store/Auth";
+import { getCurrentUser } from "@/lib/serverAuth";
 
 // GET handler
 export async function GET(
@@ -19,8 +19,16 @@ export async function GET(
   { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
-    const user = useAuthStore.getState().user;
+    const user = await getCurrentUser();
     const { riskId } = await params;
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const hasPermission = await hasRiskPermission(user, riskId, "read");
 
     if (!hasPermission) {
@@ -43,14 +51,17 @@ export async function PUT(
   { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
-    const user = useAuthStore.getState().user;
+    const user = await getCurrentUser();
     const { riskId } = await params;
 
-    const hasPermission = await hasRiskPermission(
-      user,
-      riskId,
-      "update"
-    );
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const hasPermission = await hasRiskPermission(user, riskId, "update");
 
     if (!hasPermission) {
       return NextResponse.json(
@@ -93,14 +104,17 @@ export async function DELETE(
   { params }: { params: Promise<{ riskId: string }> }
 ) {
   try {
-    const user = await useAuthStore.getState().user;
+    const user = await getCurrentUser();
     const { riskId } = await params;
 
-    const hasPermission = await hasRiskPermission(
-      user,
-      riskId,
-      "delete"
-    );
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    const hasPermission = await hasRiskPermission(user, riskId, "delete");
 
     if (!hasPermission) {
       return NextResponse.json(

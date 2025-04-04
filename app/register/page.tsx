@@ -80,12 +80,12 @@ export default function Register() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md px-6">
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 transition-transform hover:scale-105">
-            <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
+        <div className="w-full max-w-md">
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 sm:p-8 transition-transform hover:scale-[1.02]">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
               Create your account
             </h2>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
               <div className="relative">
                 <label htmlFor="firstname" className="sr-only">
                   Firstname
@@ -100,7 +100,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Firstname"
                     defaultValue={isLoading ? "John" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -118,7 +118,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Lastname"
                     defaultValue={isLoading ? "Doe" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -137,7 +137,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Email address"
                     defaultValue={isLoading ? "user@example.com" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -156,7 +156,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Password"
                     defaultValue={isLoading ? "••••••••" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -164,11 +164,11 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-semibold hover:opacity-90 transition-all sm:text-lg md:text-xl lg:py-4 disabled:opacity-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
+                  className="w-full py-2 sm:py-3 md:py-4 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl text-white font-semibold hover:opacity-90 transition-all text-sm sm:text-base md:text-lg disabled:opacity-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
                 >
                   {isLoading ? (
                     <motion.div
-                      className="w-6 h-6 border-4 border-t-4 border-gray-200 rounded-full"
+                      className="w-5 h-5 sm:w-6 sm:h-6 border-4 border-t-4 border-gray-200 rounded-full"
                       style={{ borderTopColor: "#ffffff" }}
                       animate={{ rotate: 360 }}
                       transition={{
@@ -183,10 +183,10 @@ export default function Register() {
                 </button>
               </div>
             </form>
-            <div className="text-center mt-6">
+            <div className="text-center mt-4 sm:mt-6">
               <Link
                 href="/login"
-                className="text-blue-600 hover:text-blue-500 transition"
+                className="text-blue-600 hover:text-blue-500 transition text-sm sm:text-base"
               >
                 Already have an account? Sign in
               </Link>

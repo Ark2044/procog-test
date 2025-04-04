@@ -101,16 +101,16 @@ const HomePage = () => {
 
       {/* Features Section */}
       <motion.section
-        className="py-32 container mx-auto px-4"
+        className="py-16 sm:py-24 md:py-32 container mx-auto px-4"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
-        <h2 className="text-5xl font-extrabold text-center mb-16 text-gray-800">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-8 sm:mb-12 md:mb-16 text-gray-800">
           Key Features
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
           <AnimatePresence>
             {features.map((feature, index) => (
               <motion.div
@@ -125,16 +125,16 @@ const HomePage = () => {
                 }}
               >
                 <div
-                  className={`p-6 rounded-xl ${feature.bgColor} border ${feature.borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}
+                  className={`p-4 sm:p-6 rounded-xl ${feature.bgColor} border ${feature.borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}
                 >
                   <feature.icon
-                    className="w-12 h-12 mb-4"
+                    className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4"
                     style={{ color: feature.iconColor }}
                   />
-                  <h3 className="text-2xl font-bold mb-2 text-gray-800">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gray-800">
                     {feature.title}
                   </h3>
-                  <p className={`${feature.textColor}`}>
+                  <p className={`${feature.textColor} text-sm sm:text-base`}>
                     {feature.description}
                   </p>
                 </div>
@@ -146,16 +146,16 @@ const HomePage = () => {
 
       {/* Benefits Section */}
       <motion.section
-        className="py-32 container mx-auto px-4 bg-white shadow-inner"
+        className="py-16 sm:py-24 md:py-32 container mx-auto px-4 bg-white shadow-inner"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
-        <h2 className="text-5xl font-extrabold text-center mb-16 text-gray-800">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-8 sm:mb-12 md:mb-16 text-gray-800">
           Key Benefits
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
           <AnimatePresence>
             {benefits.map((benefit, index) => (
               <motion.div
@@ -168,16 +168,18 @@ const HomePage = () => {
                 }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
                 viewport={{ once: true }}
-                className={`p-6 rounded-xl ${benefit.bgColor} shadow-md border ${benefit.borderColor}`}
+                className={`p-4 sm:p-6 rounded-xl ${benefit.bgColor} shadow-md border ${benefit.borderColor}`}
               >
                 <benefit.icon
-                  className="w-12 h-12 mb-4"
+                  className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4"
                   style={{ color: benefit.iconColor }}
                 />
-                <h3 className="text-2xl font-bold mb-2 text-gray-800">
+                <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gray-800">
                   {benefit.title}
                 </h3>
-                <p className={`${benefit.textColor}`}>{benefit.description}</p>
+                <p className={`${benefit.textColor} text-sm sm:text-base`}>
+                  {benefit.description}
+                </p>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -186,27 +188,27 @@ const HomePage = () => {
 
       {/* Call to Action */}
       <motion.section
-        className="py-20 text-center"
+        className="py-12 sm:py-16 md:py-20 text-center"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
       >
         <div
-          className="py-16 px-8 rounded-3xl mx-auto max-w-4xl shadow-lg border border-indigo-100"
+          className="py-10 sm:py-16 px-4 sm:px-8 rounded-3xl mx-auto max-w-4xl shadow-lg border border-indigo-100"
           style={{
             background: "linear-gradient(135deg, #F5F3FF, #EFF6FF, #EEF2FF)",
           }}
         >
-          <h3 className="text-4xl font-bold mb-6 text-gray-800">
+          <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-gray-800 px-2">
             Ready to Elevate Your Experience?
           </h3>
-          <p className="text-xl mb-8 text-gray-600">
+          <p className="text-lg sm:text-xl mb-6 sm:mb-8 text-gray-600 px-2">
             Join us today and unlock the full potential of our platform.
           </p>
           <motion.button
             onClick={() => router.push("/register")}
-            className="px-10 py-5 rounded-xl font-bold text-lg text-white shadow-md focus:outline-none focus-visible:ring focus-visible:ring-indigo-500"
+            className="px-6 sm:px-10 py-3 sm:py-5 rounded-xl font-bold text-base sm:text-lg text-white shadow-md focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 w-full sm:w-auto"
             style={{
               background: "linear-gradient(to right, #6366F1, #8B5CF6)",
             }}

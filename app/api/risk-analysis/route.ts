@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { databases } from "@/models/client/config";
+import { db, riskAnalysisCollection } from "@/models/name";
+import { ID } from "appwrite";
+import { getCurrentUser } from "@/lib/serverAuth";
+import { checkAnalysisRateLimit } from "@/lib/rateLimit";
 
 // Initialize the API client
 const genAI = new GoogleGenAI({
@@ -16,7 +21,7 @@ interface RiskAnalysisInput {
   acceptance?: string;
   transfer?: string;
   avoidance?: string;
-  userId: string;
+  riskId: string;
 }
 
 export interface RiskAnalysis {
@@ -31,10 +36,38 @@ export interface RiskAnalysis {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get the current user
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Apply rate limiting
+    const underLimit = await checkAnalysisRateLimit(user.$id);
+    if (!underLimit) {
+      return NextResponse.json(
+        {
+          error:
+            "Rate limit exceeded. Please wait before requesting another analysis.",
+        },
+        { status: 429 }
+      );
+    }
+
     // Parse the request body as JSON
     const riskData = (await request.json()) as RiskAnalysisInput;
-    // Generate a riskId (you could also use a UUID package)
-    const riskId = crypto.randomUUID();
+
+    // Validate required fields
+    if (!riskData.riskId) {
+      return NextResponse.json(
+        { error: "Risk ID is required" },
+        { status: 400 }
+      );
+    }
 
     // Build the prompt
     const prompt = `
@@ -107,12 +140,20 @@ export async function POST(request: NextRequest) {
       summary: parsedResponse.summary,
       keyConcerns: parsedResponse.keyConcerns,
       recommendations: parsedResponse.recommendations,
-      userId: riskData.userId,
-      riskId: riskId,
+      userId: user.$id,
+      riskId: riskData.riskId,
       created: new Date().toISOString(),
     };
 
-    return NextResponse.json(riskAnalysis);
+    // Save to database
+    const savedAnalysis = await databases.createDocument(
+      db,
+      riskAnalysisCollection,
+      ID.unique(),
+      riskAnalysis
+    );
+
+    return NextResponse.json(savedAnalysis);
   } catch (error) {
     console.error("Error generating risk analysis:", error);
     return NextResponse.json(

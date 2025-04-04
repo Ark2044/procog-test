@@ -39,6 +39,26 @@ export default function Header() {
     return () => window.removeEventListener("resize", handleResize);
   }, [isOpen]);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isOpen && !target.closest("nav") && !target.closest("button")) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  // Close menu when link is clicked
+  const handleLinkClick = () => {
+    if (window.innerWidth < 1024) {
+      setIsOpen(false);
+    }
+  };
+
   return (
     <header
       className={`fixed w-full top-0 z-20 transition-all duration-300 ${
@@ -47,11 +67,11 @@ export default function Header() {
           : "bg-gradient-to-r from-indigo-50 to-purple-50 backdrop-blur-sm"
       }`}
     >
-      <div className="container mx-auto px-6 py-4 lg:px-10">
+      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 lg:px-10">
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className={`text-2xl lg:text-3xl font-extrabold transition duration-300 ${
+            className={`text-xl sm:text-2xl lg:text-3xl font-extrabold transition duration-300 ${
               isScrolled
                 ? "text-indigo-700"
                 : "text-indigo-600 hover:text-indigo-800"
@@ -103,11 +123,12 @@ export default function Header() {
                 : "bg-white/90 lg:bg-transparent"
             }`}
           >
-            <ul className="flex flex-col lg:flex-row items-center lg:space-x-4 lg:space-y-0 space-y-4 py-4 lg:py-0">
-              <li>
+            <ul className="flex flex-col lg:flex-row items-center lg:space-x-4 lg:space-y-0 space-y-3 py-3 lg:py-0 px-4 lg:px-0">
+              <li className="w-full lg:w-auto">
                 <Link
                   href="/guide"
-                  className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                  onClick={handleLinkClick}
+                  className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                     isScrolled
                       ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                       : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
@@ -120,10 +141,11 @@ export default function Header() {
 
               {!session ? (
                 <>
-                  <li>
+                  <li className="w-full lg:w-auto">
                     <Link
                       href="/login"
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                      onClick={handleLinkClick}
+                      className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                         isScrolled
                           ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                           : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
@@ -133,10 +155,11 @@ export default function Header() {
                       Login
                     </Link>
                   </li>
-                  <li>
+                  <li className="w-full lg:w-auto">
                     <Link
                       href="/register"
-                      className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md text-white"
+                      onClick={handleLinkClick}
+                      className="flex items-center justify-center lg:justify-start bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto"
                     >
                       <FaUserPlus className="mr-2 text-lg" />
                       Sign Up
@@ -145,11 +168,12 @@ export default function Header() {
                 </>
               ) : (
                 <>
-                  <li>
+                  <li className="w-full lg:w-auto">
                     {user?.prefs?.role === "admin" ? (
                       <Link
                         href="/admin/users"
-                        className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                        onClick={handleLinkClick}
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
@@ -161,7 +185,8 @@ export default function Header() {
                     ) : (
                       <Link
                         href={user ? `/dashboard/${user.$id}` : "#"}
-                        className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                        onClick={handleLinkClick}
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
@@ -172,10 +197,11 @@ export default function Header() {
                       </Link>
                     )}
                   </li>
-                  <li>
+                  <li className="w-full lg:w-auto">
                     <Link
                       href="/reminders"
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                      onClick={handleLinkClick}
+                      className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                         isScrolled
                           ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                           : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
@@ -185,10 +211,11 @@ export default function Header() {
                       Reminders
                     </Link>
                   </li>
-                  <li>
+                  <li className="w-full lg:w-auto">
                     <Link
                       href={`/profile/${session.userId}`}
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                      onClick={handleLinkClick}
+                      className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                         isScrolled
                           ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                           : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
@@ -198,10 +225,13 @@ export default function Header() {
                       Profile
                     </Link>
                   </li>
-                  <li>
+                  <li className="w-full lg:w-auto">
                     <button
-                      onClick={() => logout()}
-                      className={`flex items-center transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border ${
+                      onClick={() => {
+                        logout();
+                        handleLinkClick();
+                      }}
+                      className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
                         isScrolled
                           ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                           : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"

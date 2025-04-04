@@ -58,6 +58,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   } = useCommentStore();
   const { user } = useAuthStore();
   const observer = useRef<IntersectionObserver>();
+  const prevCommentCountRef = useRef<number>(0);
   const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
   const { markCommentsViewed } = useViewedItemsStore();
 
@@ -85,17 +86,19 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
   useEffect(() => {
     if (comments.length > 0 && user) {
       markCommentsViewed(user.$id, riskId, comments.length);
-      if (onCommentsCountChange) {
+    }
+  }, [comments.length, riskId, user, markCommentsViewed]);
+
+  // Separate effect for comment count changes to avoid infinite loops
+  useEffect(() => {
+    if (comments.length > 0 && user && onCommentsCountChange) {
+      // Only call the callback if the count actually changed
+      if (prevCommentCountRef.current !== comments.length) {
         onCommentsCountChange(comments.length);
+        prevCommentCountRef.current = comments.length;
       }
     }
-  }, [
-    comments.length,
-    riskId,
-    user,
-    markCommentsViewed,
-    onCommentsCountChange,
-  ]);
+  }, [comments.length, onCommentsCountChange, user]);
 
   const handleSubmitComment = async (content: string, parentId?: string) => {
     if (!user) return;

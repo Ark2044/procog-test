@@ -91,7 +91,7 @@ const AdminUsersPage = () => {
     try {
       const validation = validateAdminUpdate({
         userId,
-        [field]: value
+        [field]: value,
       });
 
       if (!validation.isValid) {
@@ -151,25 +151,25 @@ const AdminUsersPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-600">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-600">
             User Management
           </h1>
-          <div className="mt-4 sm:mt-0 flex items-center space-x-4">
-            <div className="relative">
+          <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row items-center gap-4 sm:space-x-4 w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
               <input
                 type="text"
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white text-gray-800 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 border border-gray-200"
+                className="bg-white text-gray-800 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64 border border-gray-200"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
             <button
               onClick={fetchUsers}
               disabled={refreshing}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 flex items-center transition-colors disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 flex items-center justify-center transition-colors disabled:opacity-50 w-full sm:w-auto"
             >
               <FaSync className={`mr-2 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
@@ -187,13 +187,13 @@ const AdminUsersPage = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       Role
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                       Department
                     </th>
                   </tr>
@@ -204,28 +204,30 @@ const AdminUsersPage = () => {
                       key={usr.$id}
                       className="hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium text-lg">
+                          <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium text-sm sm:text-lg">
                               {usr.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-800">
+                          <div className="ml-3 sm:ml-4">
+                            <div className="text-xs sm:text-sm font-medium text-gray-800">
                               {usr.name}
                             </div>
-                            <div className="text-sm text-gray-600 flex items-center">
-                              <FaEnvelope className="mr-1 text-xs" />
-                              {usr.email}
+                            <div className="text-xs sm:text-sm text-gray-600 flex items-center">
+                              <FaEnvelope className="mr-1 text-xs hidden sm:inline" />
+                              <span className="truncate max-w-[120px] sm:max-w-none">
+                                {usr.email}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div className="relative">
                           <select
-                            className="bg-white text-gray-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
+                            className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
                             value={usr.prefs.role}
                             onChange={(e) =>
                               handleUpdate(usr.$id, "role", e.target.value)
@@ -236,19 +238,19 @@ const AdminUsersPage = () => {
                             <option value="admin">Admin</option>
                           </select>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                            <FaUserCog />
+                            <FaUserCog className="text-xs sm:text-sm" />
                           </div>
                           {updatingUser === usr.$id && (
                             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                              <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+                              <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div className="relative">
                           <select
-                            className="bg-white text-gray-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
+                            className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
                             value={usr.prefs.department}
                             onChange={(e) =>
                               handleUpdate(
@@ -260,19 +262,16 @@ const AdminUsersPage = () => {
                             disabled={updatingUser === usr.$id}
                           >
                             <option value="general">General</option>
-                            <option value="engineering">Engineering</option>
-                            <option value="sales">Sales</option>
-                            <option value="marketing">Marketing</option>
+                            <option value="it">IT</option>
                             <option value="hr">HR</option>
+                            <option value="finance">Finance</option>
+                            <option value="operations">Operations</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="sales">Sales</option>
                           </select>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                            <FaBuilding />
+                            <FaBuilding className="text-xs sm:text-sm" />
                           </div>
-                          {updatingUser === usr.$id && (
-                            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                              <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
-                            </div>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -282,9 +281,6 @@ const AdminUsersPage = () => {
             </div>
           </div>
         )}
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {filteredUsers.length} of {users.length} users
-        </div>
       </div>
     </div>
   );

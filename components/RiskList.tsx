@@ -258,26 +258,32 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs
           defaultValue={viewMode}
           onValueChange={(value) => setViewMode(value as "my" | "all")}
           className="w-full sm:w-auto"
         >
           <TabsList className="grid w-full grid-cols-2 sm:w-[240px] border border-gray-200 rounded">
-            <TabsTrigger value="my" className="text-gray-800">
+            <TabsTrigger
+              value="my"
+              className="text-gray-800 text-xs sm:text-sm py-1.5"
+            >
               My Risks
             </TabsTrigger>
-            <TabsTrigger value="all" className="text-gray-800">
+            <TabsTrigger
+              value="all"
+              className="text-gray-800 text-xs sm:text-sm py-1.5"
+            >
               All Risks
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={filterImpact} onValueChange={setFilterImpact}>
-            <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
               <SelectValue placeholder="Impact Level" />
             </SelectTrigger>
             <SelectContent className="bg-white text-gray-800 border border-gray-200">
@@ -291,8 +297,23 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             </SelectContent>
           </Select>
 
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-white text-gray-800 border border-gray-200">
+              <SelectGroup>
+                <SelectLabel>Filter by Status</SelectLabel>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
           <Select value={filterDueDate} onValueChange={setFilterDueDate}>
-            <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
               <SelectValue placeholder="Due Date" />
             </SelectTrigger>
             <SelectContent className="bg-white text-gray-800 border border-gray-200">
@@ -301,23 +322,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                 <SelectItem value="all">All Due Dates</SelectItem>
                 <SelectItem value="overdue">Overdue</SelectItem>
                 <SelectItem value="today">Due Today</SelectItem>
-                <SelectItem value="week">Due This Week</SelectItem>
-                <SelectItem value="month">Due This Month</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Status</SelectLabel>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -328,7 +334,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
               setSortBy(value as "created" | "impact" | "dueDate")
             }
           >
-            <SelectTrigger className="w-[140px] bg-white text-gray-800 border border-gray-200">
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent className="bg-white text-gray-800 border border-gray-200">
@@ -345,21 +351,23 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
       {loading ? (
         <div className="flex h-[200px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-gray-500" />
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-6">
+        <div className="mt-4 sm:mt-6 grid grid-cols-1 gap-4 sm:gap-6">
           {loading && !risks.length ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="animate-spin mr-2" />
-              <span>Loading risks...</span>
+            <div className="flex items-center justify-center p-4 sm:p-8">
+              <Loader2 className="animate-spin mr-2 w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-sm sm:text-base">Loading risks...</span>
             </div>
           ) : filteredAndSortedRisks().length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-8 text-center text-gray-500 border border-gray-200">
-              <p className="mb-4">No risks found matching your criteria.</p>
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-8 text-center text-gray-500 border border-gray-200">
+              <p className="mb-3 sm:mb-4 text-sm sm:text-base">
+                No risks found matching your criteria.
+              </p>
               <Link
                 href="/risk/new"
-                className="text-blue-600 hover:text-blue-700 underline"
+                className="text-blue-600 hover:text-blue-700 underline text-sm sm:text-base"
               >
                 Create a new risk
               </Link>
@@ -391,7 +399,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         </div>
       )}
 
-      {selectedRisk && isReminderDialogOpen && (
+      {isReminderDialogOpen && selectedRisk && (
         <ReminderDialog
           isOpen={isReminderDialogOpen}
           onClose={() => {
