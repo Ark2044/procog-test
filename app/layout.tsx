@@ -36,7 +36,7 @@ export default function RootLayout({
           <Header />
           <div className="flex-grow overflow-x-hidden">
             <Toaster
-              position="top-right"
+              position="top-center"
               toastOptions={{
                 duration: 3000,
                 style: {
@@ -48,7 +48,7 @@ export default function RootLayout({
                 },
               }}
             />
-            <main className="min-h-[calc(100vh-9rem)]">{children}</main>
+            <main className="min-h-[calc(100vh-9rem)] mt-10">{children}</main>
             <UserGuide position="bottom-right" />
           </div>
           <Footer />

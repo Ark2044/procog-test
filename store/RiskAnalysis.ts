@@ -3,6 +3,7 @@ import { databases } from "@/models/client/config";
 import { db, riskAnalysisCollection } from "@/models/name";
 import { toast } from "react-hot-toast";
 import { Query } from "appwrite";
+import { useAuthStore } from "@/store/Auth";
 
 interface GeminiRiskAnalysis {
   summary: string;
@@ -57,11 +58,18 @@ export const useRiskAnalysisStore = create<RiskAnalysisState>((set, get) => ({
         userId: userId,
       };
 
+      // Get the JWT from the auth store
+      const jwt = useAuthStore.getState().jwt;
+
       // Call the Next.js API route that wraps your Gemini integration
       const res = await fetch("/api/risk-analysis", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwt}`,
+        },
         body: JSON.stringify(risk),
+        credentials: "include",
       });
 
       if (!res.ok) {

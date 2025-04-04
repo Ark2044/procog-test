@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { databases } from "@/models/client/config";
-import { db, riskAnalysisCollection } from "@/models/name";
-import { ID } from "appwrite";
-import { getCurrentUser } from "@/lib/serverAuth";
-import { checkAnalysisRateLimit } from "@/lib/rateLimit";
 
 // Initialize the API client
 const genAI = new GoogleGenAI({
@@ -21,7 +16,7 @@ interface RiskAnalysisInput {
   acceptance?: string;
   transfer?: string;
   avoidance?: string;
-  riskId: string;
+  userId: string;
 }
 
 export interface RiskAnalysis {
@@ -36,86 +31,58 @@ export interface RiskAnalysis {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the current user
-    const user = await getCurrentUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
-
-    // Apply rate limiting
-    const underLimit = await checkAnalysisRateLimit(user.$id);
-    if (!underLimit) {
-      return NextResponse.json(
-        {
-          error:
-            "Rate limit exceeded. Please wait before requesting another analysis.",
-        },
-        { status: 429 }
-      );
-    }
-
     // Parse the request body as JSON
     const riskData = (await request.json()) as RiskAnalysisInput;
-
-    // Validate required fields
-    if (!riskData.riskId) {
-      return NextResponse.json(
-        { error: "Risk ID is required" },
-        { status: 400 }
-      );
-    }
+    // Generate a riskId (you could also use a UUID package)
+    const riskId = crypto.randomUUID();
 
     // Build the prompt
     const prompt = `
-      Analyze this risk assessment with the following details:
-      
-      Title: ${riskData.title}
-      
-      Description: ${riskData.content}
-      
-      Impact: ${riskData.impact}
-      
-      Probability: ${riskData.probability * 20}%
-      
-      Action Strategy: ${riskData.action}
-      
-      ${
-        riskData.action === "mitigate" && riskData.mitigation
-          ? `Mitigation Strategy: ${riskData.mitigation}`
-          : ""
-      }
-      ${
-        riskData.action === "accept" && riskData.acceptance
-          ? `Acceptance Rationale: ${riskData.acceptance}`
-          : ""
-      }
-      ${
-        riskData.action === "transfer" && riskData.transfer
-          ? `Transfer Mechanism: ${riskData.transfer}`
-          : ""
-      }
-      ${
-        riskData.action === "avoid" && riskData.avoidance
-          ? `Avoidance Approach: ${riskData.avoidance}`
-          : ""
-      }
-      
-      Please provide:
-      1. A concise summary of the risk (2-3 sentences)
-      2. 3-5 key concerns based on the details above
-      3. 3-5 specific recommendations to better manage this risk
-      
-      Format your response as JSON with the following structure:
-      {
-        "summary": "Summary text here",
-        "keyConcerns": ["Concern 1", "Concern 2", ...],
-        "recommendations": ["Recommendation 1", "Recommendation 2", ...]
-      }
-    `;
+       Analyze this risk assessment with the following details:
+       
+       Title: ${riskData.title}
+       
+       Description: ${riskData.content}
+       
+       Impact: ${riskData.impact}
+       
+       Probability: ${riskData.probability * 20}%
+       
+       Action Strategy: ${riskData.action}
+       
+       ${
+         riskData.action === "mitigate" && riskData.mitigation
+           ? `Mitigation Strategy: ${riskData.mitigation}`
+           : ""
+       }
+       ${
+         riskData.action === "accept" && riskData.acceptance
+           ? `Acceptance Rationale: ${riskData.acceptance}`
+           : ""
+       }
+       ${
+         riskData.action === "transfer" && riskData.transfer
+           ? `Transfer Mechanism: ${riskData.transfer}`
+           : ""
+       }
+       ${
+         riskData.action === "avoid" && riskData.avoidance
+           ? `Avoidance Approach: ${riskData.avoidance}`
+           : ""
+       }
+       
+       Please provide:
+       1. A concise summary of the risk (2-3 sentences)
+       2. 3-5 key concerns based on the details above
+       3. 3-5 specific recommendations to better manage this risk
+       
+       Format your response as JSON with the following structure:
+       {
+         "summary": "Summary text here",
+         "keyConcerns": ["Concern 1", "Concern 2", ...],
+         "recommendations": ["Recommendation 1", "Recommendation 2", ...]
+       }
+     `;
 
     // Call the Gemini API to generate the risk analysis
     const result = await genAI.models.generateContent({
@@ -140,20 +107,12 @@ export async function POST(request: NextRequest) {
       summary: parsedResponse.summary,
       keyConcerns: parsedResponse.keyConcerns,
       recommendations: parsedResponse.recommendations,
-      userId: user.$id,
-      riskId: riskData.riskId,
+      userId: riskData.userId,
+      riskId: riskId,
       created: new Date().toISOString(),
     };
 
-    // Save to database
-    const savedAnalysis = await databases.createDocument(
-      db,
-      riskAnalysisCollection,
-      ID.unique(),
-      riskAnalysis
-    );
-
-    return NextResponse.json(savedAnalysis);
+    return NextResponse.json(riskAnalysis);
   } catch (error) {
     console.error("Error generating risk analysis:", error);
     return NextResponse.json(

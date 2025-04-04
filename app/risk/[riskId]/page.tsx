@@ -1750,7 +1750,7 @@ const RiskDetail = () => {
               value="analysis"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
             >
-              AI Analysis
+              Risk Analysis
             </TabsTrigger>
           </TabsList>
 
