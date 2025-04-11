@@ -84,6 +84,15 @@ export interface RiskValidationInput {
   resolution?: string;
 }
 
+export const validateDate = (dateString?: string): ValidationResult => {
+  if (!dateString) return { isValid: true };
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return { isValid: false, error: "Invalid date format" };
+  }
+  return { isValid: true };
+};
+
 export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
   if (!risk.title?.trim()) {
     return { isValid: false, error: "Title is required" };
@@ -158,6 +167,33 @@ export const validateRisk = (risk: RiskValidationInput): ValidationResult => {
       error: "Resolution is required when closing a risk",
     };
   }
+
+  // Validate due date format if provided
+  if (risk.dueDate) {
+    const dateValidation = validateDate(risk.dueDate);
+    if (!dateValidation.isValid) return dateValidation;
+  }
+
+  if (risk.status === "closed") {
+    if (!risk.resolution?.trim()) {
+      return {
+        isValid: false,
+        error: "Resolution is required when closing a risk",
+      };
+    }
+    // Validate that dueDate is updated when closing early
+    if (risk.dueDate) {
+      const dueDate = new Date(risk.dueDate);
+      const now = new Date();
+      if (dueDate > now) {
+        return {
+          isValid: false,
+          error: "Due date must be updated to current date when closing early",
+        };
+      }
+    }
+  }
+
   return { isValid: true };
 };
 

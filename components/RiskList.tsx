@@ -24,6 +24,7 @@ import { useAuthStore } from "@/store/Auth";
 import { ReminderDialog } from "./ReminderDialog";
 import { Query } from "appwrite";
 import { useRouter } from "next/navigation";
+import { VALID_ACTIONS } from "@/lib/validation";
 
 interface Risk {
   $id: string;
@@ -61,12 +62,12 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"my" | "all">("my");
-  const [sortBy, setSortBy] = useState<"created" | "impact" | "dueDate">(
-    "created"
-  );
+  const [sortBy, setSortBy] = useState<"created" | "impact" | "dueDate" | "probability" | "updated">("created");
+  const [filterAction, setFilterAction] = useState<string>("all");
   const [filterImpact, setFilterImpact] = useState<string>("all");
-  const [filterDueDate, setFilterDueDate] = useState<string>("all");
+  const [filterProbability, setFilterProbability] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterDueDate, setFilterDueDate] = useState<string>("all");
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>(
@@ -179,19 +180,21 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   }, [fetchRisks]);
 
   const filteredAndSortedRisks = () => {
-    let filtered =
-      viewMode === "my" && currentUserId
-        ? risks.filter((risk) => risk.authorId === currentUserId)
-        : risks;
+    let filtered = viewMode === "my" && currentUserId
+      ? risks.filter((risk) => risk.authorId === currentUserId)
+      : risks;
 
     if (user && user.prefs?.role !== "admin") {
       filtered = filtered.filter(
         (risk) =>
-          risk.department === user.prefs.department &&
           (!risk.isConfidential ||
             risk.authorizedViewers?.includes(user.$id) ||
             risk.authorId === user.$id)
       );
+    }
+
+    if (filterAction !== "all") {
+      filtered = filtered.filter((risk) => risk.action === filterAction);
     }
 
     if (filterImpact !== "all") {
@@ -202,6 +205,13 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
       filtered = filtered.filter((risk) => risk.status === filterStatus);
     }
 
+    if (filterProbability !== "all") {
+      const [min, max] = filterProbability.split("-").map(Number);
+      filtered = filtered.filter(
+        (risk) => risk.probability >= min && risk.probability <= max
+      );
+    }
+
     if (filterDueDate !== "all") {
       const now = new Date();
       filtered = filtered.filter((risk) => {
@@ -209,9 +219,13 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         const dueDate = new Date(risk.dueDate);
         switch (filterDueDate) {
           case "overdue":
-            return dueDate < now;
+            return dueDate < now && risk.status === "active";
           case "today":
             return dueDate.toDateString() === now.toDateString();
+          case "tomorrow":
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
+            return dueDate.toDateString() === tomorrow.toDateString();
           case "week":
             const weekFromNow = new Date(now);
             weekFromNow.setDate(now.getDate() + 7);
@@ -230,9 +244,13 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
       switch (sortBy) {
         case "created":
           return new Date(b.created).getTime() - new Date(a.created).getTime();
+        case "updated":
+          return new Date(b.updated).getTime() - new Date(a.updated).getTime();
         case "impact":
           const impactOrder = { high: 3, medium: 2, low: 1 };
           return impactOrder[b.impact] - impactOrder[a.impact];
+        case "probability":
+          return b.probability - a.probability;
         case "dueDate":
           if (!a.dueDate && !b.dueDate) return 0;
           if (!a.dueDate) return 1;
@@ -282,11 +300,28 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         </Tabs>
 
         <div className="flex flex-wrap gap-2">
-          <Select value={filterImpact} onValueChange={setFilterImpact}>
-            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
-              <SelectValue placeholder="Impact Level" />
+          <Select value={filterAction} onValueChange={setFilterAction}>
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
+              <SelectValue placeholder="Action" />
             </SelectTrigger>
-            <SelectContent className="bg-white text-gray-800 border border-gray-200">
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Filter by Action</SelectLabel>
+                <SelectItem value="all">All Actions</SelectItem>
+                {VALID_ACTIONS.map((action) => (
+                  <SelectItem key={action} value={action}>
+                    {action.charAt(0).toUpperCase() + action.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterImpact} onValueChange={setFilterImpact}>
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
+              <SelectValue placeholder="Impact" />
+            </SelectTrigger>
+            <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filter by Impact</SelectLabel>
                 <SelectItem value="all">All Impacts</SelectItem>
@@ -297,11 +332,26 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             </SelectContent>
           </Select>
 
+          <Select value={filterProbability} onValueChange={setFilterProbability}>
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
+              <SelectValue placeholder="Probability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Filter by Probability</SelectLabel>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="0-1">Very Low (0-1)</SelectItem>
+                <SelectItem value="2-3">Low (2-3)</SelectItem>
+                <SelectItem value="4-5">High (4-5)</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent className="bg-white text-gray-800 border border-gray-200">
+            <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filter by Status</SelectLabel>
                 <SelectItem value="all">All Status</SelectItem>
@@ -313,15 +363,16 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           </Select>
 
           <Select value={filterDueDate} onValueChange={setFilterDueDate}>
-            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
               <SelectValue placeholder="Due Date" />
             </SelectTrigger>
-            <SelectContent className="bg-white text-gray-800 border border-gray-200">
+            <SelectContent>
               <SelectGroup>
                 <SelectLabel>Filter by Due Date</SelectLabel>
                 <SelectItem value="all">All Due Dates</SelectItem>
                 <SelectItem value="overdue">Overdue</SelectItem>
                 <SelectItem value="today">Due Today</SelectItem>
+                <SelectItem value="tomorrow">Due Tomorrow</SelectItem>
                 <SelectItem value="week">This Week</SelectItem>
                 <SelectItem value="month">This Month</SelectItem>
               </SelectGroup>
@@ -331,17 +382,19 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           <Select
             value={sortBy}
             onValueChange={(value) =>
-              setSortBy(value as "created" | "impact" | "dueDate")
+              setSortBy(value as typeof sortBy)
             }
           >
-            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white text-gray-800 border border-gray-200">
+            <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
-            <SelectContent className="bg-white text-gray-800 border border-gray-200">
+            <SelectContent>
               <SelectGroup>
                 <SelectLabel>Sort by</SelectLabel>
                 <SelectItem value="created">Date Created</SelectItem>
+                <SelectItem value="updated">Last Updated</SelectItem>
                 <SelectItem value="impact">Impact Level</SelectItem>
+                <SelectItem value="probability">Probability</SelectItem>
                 <SelectItem value="dueDate">Due Date</SelectItem>
               </SelectGroup>
             </SelectContent>

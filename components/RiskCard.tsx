@@ -315,7 +315,6 @@ const RiskCard: React.FC<RiskCardProps> = ({
       low: 1,
     }[props.impact] || 0;
 
-  // Calculate overall risk priority
   const riskPriority = riskImpactPriority * props.probability;
   const priorityLabel =
     riskPriority >= 10
@@ -357,7 +356,6 @@ const RiskCard: React.FC<RiskCardProps> = ({
             status === "closed" ? "bg-gray-50" : ""
           )}
         >
-          {/* Top-right corner indicators */}
           <div className="absolute top-0 right-0 flex">
             {status !== "active" && (
               <div
@@ -397,7 +395,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
                   <span className="mx-2">•</span>
                   <Clock className="w-3 h-3 mr-1" />
                   {formatTimeAgo(props.created)}
-                  {props.dueDate && (
+                  {props.dueDate && status === "active" && (
                     <>
                       <span className="mx-2">•</span>
                       <Calendar className="w-3 h-3 mr-1" />
@@ -419,7 +417,6 @@ const RiskCard: React.FC<RiskCardProps> = ({
           </CardHeader>
 
           <CardContent className="pt-2">
-            {/* Primary risk information */}
             <div className="flex flex-wrap gap-2 mb-3">
               <Badge variant="outline" className={getImpactColor(props.impact)}>
                 <span className="flex items-center gap-1">
@@ -466,7 +463,6 @@ const RiskCard: React.FC<RiskCardProps> = ({
               )}
             </div>
 
-            {/* Risk content with expansion toggle */}
             <div className="bg-gray-50 p-3 rounded-md border border-gray-100 mb-3">
               <div
                 className={cn(

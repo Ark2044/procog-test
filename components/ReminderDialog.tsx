@@ -29,7 +29,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { toast } from "react-hot-toast"; // Changed import to named import
+import { toast } from "react-hot-toast";
 import { useReminderStore } from "@/store/Reminder";
 import { reminderCollection, db } from "@/models/name";
 import { ID } from "appwrite";
@@ -47,6 +47,7 @@ interface ReminderDialogProps {
   email?: string;
   editingReminder?: Reminder | null;
   onUpdate?: (reminderId: string, data: Partial<Reminder>) => Promise<void>;
+  riskStatus?: string;
 }
 
 const reminderSchema = z.object({
@@ -66,6 +67,7 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
   userId,
   editingReminder,
   onUpdate,
+  riskStatus = 'active'
 }) => {
   const { addReminder } = useReminderStore();
   const { user } = useAuthStore();
@@ -125,6 +127,24 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
       fetchAndMarkReminders();
     }
   }, [isOpen, riskId, userId, markRemindersViewed]);
+
+  if (riskStatus === 'closed') {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Risk Closed</DialogTitle>
+            <DialogDescription>
+              This risk has been closed. You cannot set new reminders for closed risks.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={onClose}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   const onSubmit = async (values: ReminderValues) => {
     setIsSubmitting(true);
