@@ -3,6 +3,7 @@ import { databases } from '@/models/server/config';
 import { Query } from 'node-appwrite';
 import env from '@/app/env';
 import { reminderCollection } from '@/models/name';
+import { sendReminderNotification } from '@/utils/emailService';
 
 // Validation constants
 const VALID_RECURRENCE = ['none', 'daily', 'weekly', 'monthly'] as const;
@@ -55,6 +56,9 @@ function calculateNextReminderDate(currentDate: string, recurrence: typeof VALID
 // Process a single reminder with retries
 async function processReminderWithRetry(reminder: Reminder, attempt = 1): Promise<{ success: boolean; error?: string }> {
     try {
+        // Send due notification before updating status
+        await sendReminderNotification(reminder, "due");
+
         // Update reminder status
         await databases.updateDocument(
             env.appwrite.databaseId,
@@ -84,12 +88,15 @@ async function processReminderWithRetry(reminder: Reminder, attempt = 1): Promis
                 throw new Error(`Invalid next reminder: ${validation.error}`);
             }
 
-            await databases.createDocument(
+            const createdReminder = await databases.createDocument(
                 env.appwrite.databaseId,
                 reminderCollection,
                 'unique()',
                 nextReminder
             );
+
+            // Send notification for the new recurring reminder
+            await sendReminderNotification(createdReminder as unknown as Reminder, "created");
         }
 
         return { success: true };

@@ -9,6 +9,8 @@ import {
 } from "@/lib/apiUtils";
 import { validateComment } from "@/lib/validation";
 import { checkCommentRateLimit, isSpam } from "@/lib/rateLimit";
+import { sendCommentNotification } from "@/utils/emailService";
+import { Comment } from "@/types/Comment";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -121,12 +123,16 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // TODO: If there are mentions, notify mentioned users
+    // Send notifications
+    if (parentId) {
+      // Get parent comment for reply notification
+      const parentComment = await databases.getDocument(db, commentCollection, parentId);
+      await sendCommentNotification(comment as Comment, "reply", parentComment as Comment);
+    }
+
+    // Send mention notifications
     if (mentions.length > 0) {
-      // In a real implementation, you would:
-      // 1. Look up user IDs from usernames
-      // 2. Create notifications for each mentioned user
-      console.log(`Users mentioned: ${mentions.join(", ")}`);
+      await sendCommentNotification(comment as Comment, "mention");
     }
 
     return createSuccessResponse(comment, 201);

@@ -9,7 +9,7 @@ import {
   reminderCollection,
   riskCollection,
 } from "@/models/name";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,10 +27,18 @@ import {
   Shield,
   Tag,
   User,
-  Edit,
   CheckCircle,
   XCircle,
   Pencil,
+  BoldIcon,
+  ItalicIcon,
+  HelpCircleIcon,
+  Link2Icon,
+  ListIcon,
+  QuoteIcon,
+  Sparkles,
+  Reply,
+  Repeat,
 } from "lucide-react";
 import { useAuthStore } from "@/store/Auth";
 import { useRiskStore } from "@/store/Risk";
@@ -51,25 +59,18 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import ReactMarkdown from "react-markdown";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useViewedItemsStore } from "@/store/ViewedItems";
+import { Query } from "appwrite";
+import RiskAnalysisPanel from "@/components/RiskAnalysisPanel";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  BoldIcon,
-  ItalicIcon,
-  Link2Icon,
-  ListIcon,
-  QuoteIcon,
-  HelpCircleIcon,
-} from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useViewedItemsStore } from "@/store/ViewedItems";
-import { Query } from "appwrite";
-import RiskAnalysisPanel from "@/components/RiskAnalysisPanel";
 
+// Risk interface definition
 interface Risk {
   $id: string;
   title: string;
@@ -92,12 +93,14 @@ interface Risk {
   resolution?: string;
 }
 
+// Attachment interface definition
 interface Attachment {
   id: string;
   type: string;
   url: string;
 }
 
+// EditRiskDialogProps interface definition
 interface EditRiskDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -1093,6 +1096,32 @@ const RiskDetail = () => {
   const { markCommentsViewed, markRemindersViewed } = useViewedItemsStore();
   const [commentCount, setCommentCount] = useState(0);
 
+  interface Result {
+    url: string;
+    description: string;
+    score: number;
+  }
+  const [results, setResults] = useState<Result[]>([]);
+
+  const search = async () => {
+    if (!risk) return;
+    try {
+      const response = await fetch("/api/scraper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: risk.title,
+          tags: risk.tags,
+        }),
+      });
+
+      const data = await response.json();
+      setResults(data);
+    } catch (error) {
+      console.error("Error during fetch:", error);
+    }
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -1199,7 +1228,6 @@ const RiskDetail = () => {
 
           await fetchReminders(user.$id);
 
-          // Mark any reminders for this risk as viewed - now with userId
           const userReminders = await databases.listDocuments(
             db,
             reminderCollection,
@@ -1210,7 +1238,6 @@ const RiskDetail = () => {
             markRemindersViewed(user.$id, riskId, userReminders.total);
           }
 
-          // Count comments for this risk
           const commentsData = await databases.listDocuments(
             db,
             commentCollection,
@@ -1256,7 +1283,7 @@ const RiskDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800 ">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-9 w-3/4 rounded-lg bg-gray-200" />
           <div className="flex gap-2">
@@ -1339,14 +1366,14 @@ const RiskDetail = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
               {risk.title}
             </h1>
             {isRiskCreator && (
               <Button
                 variant="outline"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-gray-300 hover:bg-gray-100 shadow-sm self-start"
                 onClick={() => setIsEditDialogOpen(true)}
               >
                 <Pencil size={16} />
@@ -1354,17 +1381,51 @@ const RiskDetail = () => {
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             {risk.tags.map((tag) => (
               <Badge
                 key={tag}
                 variant="outline"
-                className="border-gray-300 bg-gray-100 hover:bg-gray-200"
+                className="border-gray-300 bg-white/80 backdrop-blur-sm hover:bg-gray-100 px-3 py-1 rounded-full shadow-sm"
               >
-                <Tag className="w-4 h-4 mr-2 text-gray-600" />
+                <Tag className="w-3 h-3 mr-2 text-blue-500" />
                 <span className="font-medium text-gray-700">{tag}</span>
               </Badge>
             ))}
+          </div>
+          <div className="flex items-center text-sm text-gray-500 gap-3">
+            <div className="flex items-center">
+              <User className="w-4 h-4 text-gray-400 mr-1.5" />
+              {risk.authorName}
+            </div>
+            <div className="flex items-center">
+              <Calendar className="w-4 h-4 text-gray-400 mr-1.5" />
+              {new Date(risk.created).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </div>
+            {risk.status && (
+              <div
+                className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  risk.status === "active"
+                    ? "bg-blue-100 text-blue-700"
+                    : risk.status === "resolved"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {risk.status === "active" ? (
+                  <AlertCircle className="w-3 h-3 mr-1" />
+                ) : risk.status === "resolved" ? (
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                ) : (
+                  <XCircle className="w-3 h-3 mr-1" />
+                )}
+                {risk.status.charAt(0).toUpperCase() + risk.status.slice(1)}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1484,6 +1545,147 @@ const RiskDetail = () => {
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
                   <Shield className="w-6 h-6 text-blue-500" />
+                  Risk Assessment
+                </h3>
+                <div className="border-t border-gray-200" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm transition hover:shadow">
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
+                      <Activity className="w-4 h-4 text-gray-400" />
+                      Impact Level
+                    </div>
+                    <div className={`flex items-center gap-2 mt-1`}>
+                      <div
+                        className={`text-lg font-bold ${
+                          risk.impact === "high"
+                            ? "text-red-600"
+                            : risk.impact === "medium"
+                            ? "text-yellow-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {risk.impact.charAt(0).toUpperCase() +
+                          risk.impact.slice(1)}
+                      </div>
+                      <div
+                        className={`h-2.5 flex-1 rounded-full ${
+                          risk.impact === "high"
+                            ? "bg-red-200"
+                            : risk.impact === "medium"
+                            ? "bg-yellow-200"
+                            : "bg-green-200"
+                        }`}
+                      >
+                        <div
+                          className={`h-2.5 rounded-full ${
+                            risk.impact === "high"
+                              ? "bg-red-600 w-full"
+                              : risk.impact === "medium"
+                              ? "bg-yellow-600 w-2/3"
+                              : "bg-green-600 w-1/3"
+                          }`}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm transition hover:shadow">
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
+                      <BarChart2 className="w-4 h-4 text-gray-400" />
+                      Probability
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div
+                        className={`text-lg font-bold ${
+                          Number(risk.probability) >= 4
+                            ? "text-red-600"
+                            : Number(risk.probability) >= 2
+                            ? "text-yellow-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {Number(risk.probability) * 20}%
+                      </div>
+                      <div className="h-2.5 flex-1 bg-gray-200 rounded-full">
+                        <div
+                          className={`h-2.5 rounded-full ${
+                            Number(risk.probability) >= 4
+                              ? "bg-red-600"
+                              : Number(risk.probability) >= 2
+                              ? "bg-yellow-600"
+                              : "bg-green-600"
+                          }`}
+                          style={{ width: `${Number(risk.probability) * 20}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm transition hover:shadow">
+                  <div className="flex flex-col gap-2">
+                    <div className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-gray-400" />
+                      Priority
+                    </div>
+                    {(() => {
+                      const impactValue =
+                        risk.impact === "high"
+                          ? 3
+                          : risk.impact === "medium"
+                          ? 2
+                          : 1;
+
+                      const probabilityValue = Number(risk.probability);
+                      const priorityScore = impactValue * probabilityValue;
+
+                      let priorityText = "Low";
+                      let colorClass = "text-green-600";
+                      let bgClass = "bg-green-600";
+                      let width = "w-1/4";
+
+                      if (priorityScore >= 10) {
+                        priorityText = "Critical";
+                        colorClass = "text-red-700";
+                        bgClass = "bg-red-700";
+                        width = "w-full";
+                      } else if (priorityScore >= 6) {
+                        priorityText = "High";
+                        colorClass = "text-red-600";
+                        bgClass = "bg-red-600";
+                        width = "w-3/4";
+                      } else if (priorityScore >= 3) {
+                        priorityText = "Medium";
+                        colorClass = "text-yellow-600";
+                        bgClass = "bg-yellow-600";
+                        width = "w-2/4";
+                      }
+
+                      return (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className={`text-lg font-bold ${colorClass}`}>
+                            {priorityText}
+                          </div>
+                          <div className="h-2.5 flex-1 bg-gray-200 rounded-full">
+                            <div
+                              className={`h-2.5 rounded-full ${bgClass} ${width}`}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                  <Shield className="w-6 h-6 text-blue-500" />
                   Response Plan
                 </h3>
                 <div className="border-t border-gray-200" />
@@ -1588,83 +1790,6 @@ const RiskDetail = () => {
           </CardContent>
         </Card>
 
-        {user && (
-          <Card className="border-gray-200 bg-white">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <Bell className="w-5 h-5 text-blue-500" />
-                  Review Reminders
-                </h3>
-                {isRiskCreator && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditingReminder(null);
-                      setIsReminderDialogOpen(true);
-                    }}
-                  >
-                    Set New Reminder
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {userRiskReminders.length === 0 ? (
-                <p className="text-gray-500">
-                  {isRiskCreator
-                    ? "No reminders set"
-                    : "Only the risk creator can set reminders"}
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {userRiskReminders.map((reminder) => (
-                    <div
-                      key={reminder.$id}
-                      className="flex justify-between items-start p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div className="space-y-2">
-                        <div>
-                          <h4 className="font-medium text-gray-800">
-                            {reminder.title}
-                          </h4>
-                          <p className="text-sm text-gray-500">
-                            {new Date(reminder.datetime).toLocaleString()}
-                          </p>
-                        </div>
-                        <p className="text-gray-700">{reminder.description}</p>
-                        {reminder.recurrence !== "none" && (
-                          <Badge variant="outline" className="mt-1">
-                            Repeats {reminder.recurrence}
-                          </Badge>
-                        )}
-                      </div>
-                      {isRiskCreator && (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditReminder(reminder)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => deleteReminder(reminder.$id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         {isRiskCreator && risk && (
           <ReminderDialog
             isOpen={isReminderDialogOpen}
@@ -1675,20 +1800,6 @@ const RiskDetail = () => {
             editingReminder={editingReminder}
             onUpdate={updateReminder}
           />
-        )}
-
-        {user && riskId && (
-          <Card className="border-gray-200 bg-white">
-            <CardContent className="p-6">
-              <CommentSection
-                riskId={riskId as string}
-                entityType="risk"
-                onCommentsCountChange={(count: number) =>
-                  setCommentCount(count)
-                }
-              />
-            </CardContent>
-          </Card>
         )}
 
         <Dialog open={isCloseDialogOpen} onOpenChange={setIsCloseDialogOpen}>
@@ -1729,32 +1840,61 @@ const RiskDetail = () => {
         )}
 
         <Tabs defaultValue="discussion" className="w-full mt-8">
-          <TabsList className="w-full justify-start border-b rounded-none p-0 h-auto">
+          <TabsList className="w-full border-b rounded-none p-0 h-auto bg-transparent gap-2">
             <TabsTrigger
               value="discussion"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
             >
-              Discussion {commentCount > 0 && `(${commentCount})`}
+              <div className="flex items-center gap-2">
+                <Reply className="w-4 h-4 text-blue-500" />
+                Discussion{" "}
+                {commentCount > 0 && (
+                  <span className="bg-blue-100 text-blue-600 rounded-full text-xs px-2 py-0.5 font-medium">
+                    {commentCount}
+                  </span>
+                )}
+              </div>
             </TabsTrigger>
             {isRiskCreator && (
               <TabsTrigger
                 value="reminders"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+                className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
               >
-                Reminders{" "}
-                {userRiskReminders.length > 0 &&
-                  `(${userRiskReminders.length})`}
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-yellow-500" />
+                  Reminders{" "}
+                  {userRiskReminders.length > 0 && (
+                    <span className="bg-yellow-100 text-yellow-600 rounded-full text-xs px-2 py-0.5 font-medium">
+                      {userRiskReminders.length}
+                    </span>
+                  )}
+                </div>
               </TabsTrigger>
             )}
             <TabsTrigger
               value="analysis"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-transparent"
+              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
             >
-              Risk Analysis
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500" />
+                Risk Analysis
+              </div>
+            </TabsTrigger>
+            <TabsTrigger
+              value="web-search"
+              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <ArrowUpRight className="w-4 h-4 text-green-500" />
+                Web Search
+              </div>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="discussion" className="mt-6">
+          <TabsContent
+            value="discussion"
+            className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+          >
             <CommentSection
               riskId={risk.$id}
               entityType="risk"
@@ -1763,90 +1903,110 @@ const RiskDetail = () => {
           </TabsContent>
 
           {isRiskCreator && (
-            <TabsContent value="reminders" className="mt-6">
+            <TabsContent
+              value="reminders"
+              className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+            >
               <div className="space-y-4">
                 {userRiskReminders.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Bell className="mx-auto h-12 w-12 text-gray-300" />
+                  <div className="text-center py-12 flex flex-col items-center">
+                    <div className="bg-yellow-50 p-4 rounded-full">
+                      <Bell className="h-12 w-12 text-yellow-400" />
+                    </div>
                     <h3 className="mt-4 text-lg font-medium text-gray-900">
-                      No reminders yet
+                      No reminders set
                     </h3>
                     <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-                      Set reminders for this risk to notify yourself or the team
-                      about important deadlines or follow-up tasks.
+                      Set reminders for this risk to get notifications about
+                      important deadlines or follow-up tasks.
                     </p>
                     <Button
                       onClick={() => {
                         setEditingReminder(null);
                         setIsReminderDialogOpen(true);
                       }}
-                      className="mt-4"
-                      size="sm"
+                      className="mt-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600"
                     >
                       <Bell className="mr-2 h-4 w-4" />
-                      Set a Reminder
+                      Create Reminder
                     </Button>
                   </div>
                 ) : (
                   <>
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        Reminders
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <Bell className="h-5 w-5 text-yellow-500" />
+                        Your Reminders
                       </h3>
                       <Button
                         onClick={() => {
                           setEditingReminder(null);
                           setIsReminderDialogOpen(true);
                         }}
+                        className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600"
                         size="sm"
-                        variant="outline"
                       >
                         <Bell className="mr-2 h-4 w-4" />
                         Add Reminder
                       </Button>
                     </div>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {userRiskReminders.map((reminder) => (
                         <div
                           key={reminder.$id}
-                          className="flex justify-between items-start p-4 bg-gray-50 rounded-lg"
+                          className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow relative"
                         >
-                          <div className="space-y-2">
-                            <div>
-                              <h4 className="font-medium text-gray-800">
+                          <div className="absolute top-4 right-4 flex gap-2">
+                            <button
+                              onClick={() => handleEditReminder(reminder)}
+                              className="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700"
+                              title="Edit reminder"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteReminder(reminder.$id)}
+                              className="p-1 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600"
+                              title="Delete reminder"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="mb-3">
+                              <h4 className="font-medium text-gray-800 text-lg">
                                 {reminder.title}
                               </h4>
-                              <p className="text-sm text-gray-500">
-                                {new Date(reminder.datetime).toLocaleString()}
-                              </p>
+                              <div className="flex items-center text-sm text-gray-500 mt-1">
+                                <Calendar className="w-3.5 h-3.5 mr-1" />
+                                {new Date(reminder.datetime).toLocaleString(
+                                  "en-US",
+                                  {
+                                    weekday: "short",
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                              </div>
                             </div>
-                            <p className="text-gray-700">
+                            <p className="text-gray-700 text-sm">
                               {reminder.description}
                             </p>
                             {reminder.recurrence !== "none" && (
-                              <Badge variant="outline" className="mt-1">
-                                Repeats {reminder.recurrence}
-                              </Badge>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1"
+                                >
+                                  <Repeat className="h-3 w-3" />
+                                  Repeats {reminder.recurrence}
+                                </Badge>
+                              </div>
                             )}
                           </div>
-                          {isRiskCreator && (
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditReminder(reminder)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => deleteReminder(reminder.$id)}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -1856,18 +2016,200 @@ const RiskDetail = () => {
             </TabsContent>
           )}
 
-          <TabsContent value="analysis" className="mt-6">
+          <TabsContent
+            value="analysis"
+            className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+          >
             {user ? (
               <RiskAnalysisPanel riskId={risk.$id} userId={user.$id} />
             ) : (
-              <Card className="border-yellow-200 bg-yellow-50">
-                <CardContent className="p-4">
-                  <p className="text-yellow-800">
-                    Please log in to use the AI analysis feature.
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="text-center py-12 flex flex-col items-center">
+                <div className="bg-yellow-50 p-4 rounded-full">
+                  <AlertCircle className="h-12 w-12 text-yellow-400" />
+                </div>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">
+                  Authentication Required
+                </h3>
+                <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+                  Please log in to use the Risk Analysis feature.
+                </p>
+                <Button
+                  onClick={() => router.push("/login")}
+                  className="mt-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                >
+                  Go to Login
+                </Button>
+              </div>
             )}
+          </TabsContent>
+
+          <TabsContent
+            value="web-search"
+            className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+          >
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-1">
+                    <ArrowUpRight className="h-5 w-5 text-green-500" />
+                    Web Research
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Find external resources related to{" "}
+                    <span className="font-medium">&quot;{risk.title}&quot;</span>
+                    {risk.tags.length > 0 && (
+                      <span>
+                        {" "}
+                        with tags:{" "}
+                        <span className="font-medium">
+                          {risk.tags.join(", ")}
+                        </span>
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={search}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                    disabled={loading}
+                  >
+                    {results.length === 0 ? (
+                      <>
+                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                        Search Resources
+                      </>
+                    ) : (
+                      <>
+                        <ArrowUpRight className="mr-2 h-4 w-4" />
+                        Refresh Results
+                      </>
+                    )}
+                  </Button>
+                  {results.length > 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setResults([])}
+                      className="text-gray-600 border-gray-300"
+                    >
+                      Clear Results
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {loading && (
+                <div className="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-5 w-[60%]" />
+                      <Skeleton className="h-4 w-[40%]" />
+                    </div>
+                    <Skeleton className="h-8 w-16 rounded-md" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-5 w-[70%]" />
+                      <Skeleton className="h-4 w-[50%]" />
+                    </div>
+                    <Skeleton className="h-8 w-16 rounded-md" />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-5 w-[65%]" />
+                      <Skeleton className="h-4 w-[45%]" />
+                    </div>
+                    <Skeleton className="h-8 w-16 rounded-md" />
+                  </div>
+                </div>
+              )}
+
+              {results.length > 0 && !loading && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4">
+                    {results.map((item, index) => (
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        key={index}
+                        className="group p-4 sm:p-5 rounded-lg border border-gray-200 hover:border-green-300 bg-white hover:bg-green-50 transition-colors flex flex-col sm:flex-row gap-4 items-start sm:items-center"
+                      >
+                        <div className="bg-green-100 p-3 rounded-full text-green-700 flex-shrink-0">
+                          <ArrowUpRight className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="font-medium text-gray-900 group-hover:text-green-700 flex items-center text-base sm:text-lg">
+                            {new URL(item.url).hostname.replace("www.", "")}
+                            <ArrowUpRight className="h-3 w-3 ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </p>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center bg-gray-50 group-hover:bg-green-100 px-3 py-1.5 rounded-full transition-colors self-end sm:self-center">
+                          <div className="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
+                            <div
+                              className="bg-green-600 h-1.5 rounded-full"
+                              style={{ width: `${item.score * 100}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs font-medium text-gray-700 group-hover:text-green-800">
+                            {(item.score * 100).toFixed(0)}% match
+                          </span>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+
+                  <p className="text-xs text-center text-gray-500">
+                    Results are ranked by relevance to the risk description and
+                    tags
+                  </p>
+                </div>
+              )}
+
+              {results.length === 0 && !loading && (
+                <div className="bg-gray-50 rounded-lg p-8 sm:p-10 text-center flex flex-col items-center">
+                  <div className="bg-gray-100 p-4 rounded-full mb-4">
+                    <ArrowUpRight className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    No search results yet
+                  </h3>
+                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+                    Search for external resources to find articles, guides, and
+                    solutions related to this risk.
+                  </p>
+                  <div className="bg-gray-100 p-4 rounded-lg max-w-md w-full">
+                    <p className="text-xs text-gray-600 font-medium uppercase mb-2 tracking-wider">
+                      What you&apos;ll find
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                      <div className="flex items-center gap-1.5">
+                        <ArrowUpRight className="h-3 w-3 text-green-600" />
+                        Best practices
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <ArrowUpRight className="h-3 w-3 text-green-600" />
+                        Expert insights
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <ArrowUpRight className="h-3 w-3 text-green-600" />
+                        Case studies
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <ArrowUpRight className="h-3 w-3 text-green-600" />
+                        Solution options
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

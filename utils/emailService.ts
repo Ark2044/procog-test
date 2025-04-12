@@ -3,6 +3,8 @@ import sgMail from "@sendgrid/mail";
 import { users } from "@/models/server/config";
 import { Query } from "appwrite";
 import { Risk } from "@/types/Risk";
+import { Comment } from "@/types/Comment";
+import { Reminder } from "@/types/Reminder";
 
 const MAX_USERS_PER_PAGE = 100;
 
@@ -176,5 +178,193 @@ The risk has been successfully addressed and closed in the risk management syste
         );
       }
     }
+  }
+};
+
+// Send comment notification
+export const sendCommentNotification = async (
+  comment: Comment,
+  action: "reply" | "mention",
+  parentComment?: Comment
+): Promise<void> => {
+  if (!process.env.SENDGRID_FROM_EMAIL) {
+    console.log("No sender email configured");
+    return;
+  }
+
+  try {
+    let subject = "";
+    let textContent = "";
+    let htmlContent = "";
+    let recipientEmail = "";
+
+    switch (action) {
+      case "reply":
+        if (!parentComment?.authorId) return;
+        
+        // Get parent comment author's email
+        const parentAuthor = await users.get(parentComment.authorId);
+        recipientEmail = parentAuthor.email;
+        
+        subject = `New reply to your comment`;
+        textContent = `
+${comment.authorName} replied to your comment:
+
+Original comment:
+${parentComment.content}
+
+Reply:
+${comment.content}
+
+View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.riskId}
+        `;
+        htmlContent = `
+<h2>New Reply to Your Comment</h2>
+<p><strong>${comment.authorName}</strong> replied to your comment:</p>
+<div style="background-color: #f5f5f5; padding: 15px; margin: 10px 0; border-left: 4px solid #ddd;">
+  <p><em>Your comment:</em></p>
+  <p>${parentComment.content}</p>
+</div>
+<div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
+  <p><em>Their reply:</em></p>
+  <p>${comment.content}</p>
+</div>
+<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.riskId}">View the discussion</a></p>
+        `;
+        break;
+
+      case "mention":
+        // Handle mentions (implementation depends on how mentions are stored)
+        // This is a basic example
+        const mentions = comment.mentions || [];
+        for (const username of mentions) {
+          try {
+            const mentionedUser = await users.list([Query.equal("name", username)]);
+            if (mentionedUser.users[0]?.email) {
+              const msg = {
+                to: mentionedUser.users[0].email,
+                from: process.env.SENDGRID_FROM_EMAIL,
+                subject: `You were mentioned in a comment`,
+                text: `${comment.authorName} mentioned you in a comment:\n\n${comment.content}`,
+                html: `
+<h2>You Were Mentioned in a Comment</h2>
+<p><strong>${comment.authorName}</strong> mentioned you:</p>
+<div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
+  <p>${comment.content}</p>
+</div>
+<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.riskId}">View the discussion</a></p>
+                `,
+              };
+              await sgMail.send(msg);
+            }
+          } catch (err) {
+            console.error(`Failed to send mention notification to ${username}:`, err);
+          }
+        }
+        return;
+    }
+
+    if (recipientEmail) {
+      const msg = {
+        to: recipientEmail,
+        from: process.env.SENDGRID_FROM_EMAIL,
+        subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await sgMail.send(msg);
+      console.log(`Comment ${action} email sent to ${recipientEmail}`);
+    }
+  } catch (error) {
+    console.error(`Failed to send comment ${action} email:`, error);
+  }
+};
+
+// Send reminder notification
+export const sendReminderNotification = async (
+  reminder: Reminder,
+  action: "due" | "created" | "updated"
+): Promise<void> => {
+  if (!process.env.SENDGRID_FROM_EMAIL) {
+    console.log("No sender email configured");
+    return;
+  }
+
+  try {
+    const user = await users.get(reminder.userId);
+    if (!user.email) {
+      console.log("No recipient email found");
+      return;
+    }
+
+    let subject = "";
+    let textContent = "";
+    let htmlContent = "";
+
+    switch (action) {
+      case "due":
+        subject = `Reminder: ${reminder.title}`;
+        textContent = `
+Your reminder "${reminder.title}" is due soon.
+
+Description: ${reminder.description || "No description provided"}
+Due: ${new Date(reminder.datetime).toLocaleString()}
+${reminder.recurrence !== "none" ? `\nRecurrence: ${reminder.recurrence}` : ""}
+
+View your reminder: ${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}
+        `;
+        htmlContent = `
+<h2>Reminder Due Soon</h2>
+<p>Your reminder "<strong>${reminder.title}</strong>" is due soon.</p>
+<div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
+  <p><strong>Description:</strong> ${reminder.description || "No description provided"}</p>
+  <p><strong>Due:</strong> ${new Date(reminder.datetime).toLocaleString()}</p>
+  ${reminder.recurrence !== "none" ? `<p><strong>Recurrence:</strong> ${reminder.recurrence}</p>` : ""}
+</div>
+<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}">View your reminder</a></p>
+        `;
+        break;
+
+      case "created":
+      case "updated":
+        const action_text = action === "created" ? "created" : "updated";
+        subject = `Reminder ${action_text}: ${reminder.title}`;
+        textContent = `
+Your reminder has been ${action_text}:
+
+Title: ${reminder.title}
+Description: ${reminder.description || "No description provided"}
+Due: ${new Date(reminder.datetime).toLocaleString()}
+${reminder.recurrence !== "none" ? `Recurrence: ${reminder.recurrence}` : "One-time reminder"}
+
+View your reminder: ${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}
+        `;
+        htmlContent = `
+<h2>Reminder ${action_text.charAt(0).toUpperCase() + action_text.slice(1)}</h2>
+<p>Your reminder has been ${action_text}:</p>
+<div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
+  <p><strong>Title:</strong> ${reminder.title}</p>
+  <p><strong>Description:</strong> ${reminder.description || "No description provided"}</p>
+  <p><strong>Due:</strong> ${new Date(reminder.datetime).toLocaleString()}</p>
+  ${reminder.recurrence !== "none" ? `<p><strong>Recurrence:</strong> ${reminder.recurrence}</p>` : "<p><em>One-time reminder</em></p>"}
+</div>
+<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}">View your reminder</a></p>
+        `;
+        break;
+    }
+
+    const msg = {
+      to: user.email,
+      from: process.env.SENDGRID_FROM_EMAIL,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    };
+
+    await sgMail.send(msg);
+    console.log(`Reminder ${action} email sent to ${user.email}`);
+  } catch (error) {
+    console.error(`Failed to send reminder ${action} email:`, error);
   }
 };
