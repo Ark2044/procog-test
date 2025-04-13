@@ -25,6 +25,7 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +51,10 @@ import { format, isAfter, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import {
+  generateRiskReportHTML,
+  downloadRiskReportAsPDF,
+} from "@/utils/reportGenerator";
 
 interface RiskCardProps {
   title: string;
@@ -72,11 +77,12 @@ interface RiskCardProps {
   currentUserId?: string;
   riskId: string;
   dueDate?: string;
-  status?: "active" | "closed" | "resolved";
+  status?: "active" | "closed";
   resolution?: string;
   commentCount?: number;
   reminderCount?: number;
   onAnalyze?: () => void;
+  department?: string;
 }
 
 const getImpactColor = (impact: "low" | "medium" | "high") => {
@@ -294,6 +300,40 @@ const RiskCard: React.FC<RiskCardProps> = ({
     setIsCloseDialogOpen(false);
   };
 
+  const handleDownloadReport = () => {
+    // Determine which action strategy to use
+    const actionStrategy = {
+      mitigate: props.mitigation,
+      accept: props.acceptance,
+      transfer: props.transfer,
+      avoid: props.avoidance,
+    }[props.action];
+
+    // Prepare data for the report
+    const reportData = {
+      riskId,
+      title: props.title,
+      content: props.content,
+      authorName: props.authorName,
+      impact: props.impact,
+      probability: props.probability,
+      action: props.action,
+      actionDetails: actionStrategy,
+      tags: props.tags || [],
+      created: props.created,
+      closed: props.updated, // Using updated date as the closed date
+      resolution: props.resolution || "",
+      department: props.department,
+      attachmentId: props.attachmentId,
+    };
+
+    // Generate HTML report
+    const reportHTML = generateRiskReportHTML(reportData);
+
+    // Download as PDF
+    downloadRiskReportAsPDF(reportHTML, `risk-report-${riskId}.pdf`);
+  };
+
   const actionStrategy = {
     mitigate: props.mitigation,
     accept: props.acceptance,
@@ -341,10 +381,11 @@ const RiskCard: React.FC<RiskCardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3 }}
+        className="group"
       >
         <Card
           className={cn(
-            "w-full bg-white hover:shadow-md transition-shadow duration-200 border relative overflow-hidden",
+            "w-full bg-white hover:shadow-md transition-all duration-300 border relative overflow-hidden group-hover:border-gray-300",
             props.isConfidential ? "border-red-200" : "border-gray-200",
             isOverdue(props.dueDate) && status === "active"
               ? "border-l-4 border-l-red-500"
@@ -352,21 +393,13 @@ const RiskCard: React.FC<RiskCardProps> = ({
             isDueSoon(props.dueDate) && status === "active"
               ? "border-l-4 border-l-yellow-500"
               : "",
-            status === "resolved" ? "bg-green-50" : "",
             status === "closed" ? "bg-gray-50" : ""
           )}
         >
           <div className="absolute top-0 right-0 flex">
             {status !== "active" && (
-              <div
-                className={cn(
-                  "py-1 px-3 text-xs font-medium",
-                  status === "resolved"
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-500 text-white"
-                )}
-              >
-                {status === "resolved" ? "Resolved" : "Closed"}
+              <div className="py-1 px-3 text-xs font-medium bg-gray-500 text-white">
+                Closed
               </div>
             )}
             {props.isConfidential && (
@@ -379,31 +412,37 @@ const RiskCard: React.FC<RiskCardProps> = ({
           <CardHeader className="pb-1 pt-3">
             <div className="flex justify-between items-start">
               <div className="flex flex-col">
-                <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2 group">
+                <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2 group/link">
                   <Link
                     href={`/risk/${riskId}`}
-                    className="hover:text-blue-600 hover:underline flex items-center"
+                    className="hover:text-blue-600 hover:underline flex items-center group-hover/link:text-blue-600 transition-colors duration-200"
                   >
                     {props.title}
-                    <ExternalLink className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ExternalLink className="w-3 h-3 ml-1 opacity-0 group-hover/link:opacity-100 transition-opacity" />
                   </Link>
                 </CardTitle>
 
-                <CardDescription className="mt-1 text-sm text-gray-500 flex items-center">
-                  <User className="w-3 h-3 mr-1" />
-                  {props.authorName}
-                  <span className="mx-2">•</span>
-                  <Clock className="w-3 h-3 mr-1" />
-                  {formatTimeAgo(props.created)}
+                <CardDescription className="mt-1 text-sm text-gray-500 flex flex-wrap items-center">
+                  <span className="inline-flex items-center mr-3">
+                    <User className="w-3 h-3 mr-1" />
+                    {props.authorName}
+                  </span>
+                  <span className="inline-flex items-center mr-3">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {formatTimeAgo(props.created)}
+                  </span>
                   {props.dueDate && status === "active" && (
-                    <>
-                      <span className="mx-2">•</span>
+                    <span
+                      className={`inline-flex items-center ${getDueStatusColor(
+                        props.dueDate
+                      )}`}
+                    >
                       <Calendar className="w-3 h-3 mr-1" />
-                      <span className={getDueStatusColor(props.dueDate)}>
+                      <span className="font-medium">
                         {getDueStatusText(props.dueDate)}:
                       </span>{" "}
                       {formatDate(props.dueDate)}
-                    </>
+                    </span>
                   )}
                 </CardDescription>
               </div>
@@ -463,7 +502,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
               )}
             </div>
 
-            <div className="bg-gray-50 p-3 rounded-md border border-gray-100 mb-3">
+            <div className="bg-gray-50 p-3 rounded-md border border-gray-100 mb-3 shadow-sm hover:border-gray-200 transition-colors duration-200">
               <div
                 className={cn(
                   "text-gray-700 prose-sm",
@@ -475,7 +514,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
 
               <button
                 onClick={toggleExpand}
-                className="flex items-center justify-center w-full mt-2 text-blue-500 hover:text-blue-600 text-sm font-medium"
+                className="flex items-center justify-center w-full mt-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 py-1 rounded-md text-sm font-medium transition-all duration-200"
               >
                 {isExpanded ? (
                   <>
@@ -499,7 +538,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
                   className="space-y-4 overflow-hidden"
                 >
                   {actionStrategy[props.action] && (
-                    <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="p-3 bg-gray-50 rounded-md border border-gray-200 shadow-sm">
                       <h4 className="font-medium text-gray-700 flex items-center">
                         {getActionIcon(props.action)}
                         <span className="ml-2">
@@ -515,7 +554,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
                   )}
 
                   {props.resolution && (
-                    <div className="p-3 bg-green-50 rounded-md border border-green-200">
+                    <div className="p-3 bg-green-50 rounded-md border border-green-200 shadow-sm">
                       <h4 className="font-medium text-gray-700 flex items-center">
                         <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                         Resolution
@@ -565,20 +604,40 @@ const RiskCard: React.FC<RiskCardProps> = ({
           <CardFooter className="pt-0 border-t border-gray-100 mt-2 flex flex-wrap justify-between items-center gap-2">
             <Link
               href={`/risk/${riskId}`}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center hover:underline"
             >
               <Reply className="w-3 h-3 mr-1" />
               {props.commentCount || 0} Comments
             </Link>
 
             <div className="flex items-center gap-2">
+              {status === "closed" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 px-3 border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-colors duration-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadReport();
+                      }}
+                    >
+                      <Download className="h-3 w-3 mr-1" />
+                      Download Report
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Download risk report as PDF</TooltipContent>
+                </Tooltip>
+              )}
+
               {status === "active" && onSetReminder && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 px-3"
+                      className="h-8 px-3 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors duration-200"
                       onClick={(e) => {
                         e.stopPropagation();
                         onSetReminder();
@@ -598,7 +657,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 px-3 border-purple-200 text-purple-600 hover:bg-purple-50"
+                      className="h-8 px-3 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-colors duration-200"
                       onClick={(e) => {
                         e.stopPropagation();
                         onAnalyze();
@@ -618,7 +677,7 @@ const RiskCard: React.FC<RiskCardProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 px-3 border-red-200 text-red-600 hover:bg-red-50"
+                      className="h-8 px-3 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors duration-200"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsCloseDialogOpen(true);

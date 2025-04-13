@@ -39,6 +39,7 @@ import {
   Sparkles,
   Reply,
   Repeat,
+  Download,
 } from "lucide-react";
 import { useAuthStore } from "@/store/Auth";
 import { useRiskStore } from "@/store/Risk";
@@ -69,6 +70,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  generateRiskReportHTML,
+  downloadRiskReportAsPDF,
+} from "@/utils/reportGenerator";
 
 // Risk interface definition
 interface Risk {
@@ -91,6 +96,7 @@ interface Risk {
   dueDate?: string;
   status?: string;
   resolution?: string;
+  department?: string; // Added department property
 }
 
 // Attachment interface definition
@@ -1179,6 +1185,7 @@ const RiskDetail = () => {
             dueDate: response.dueDate,
             status: response.status || "active",
             resolution: response.resolution,
+            department: response.department, // Added department property
           };
 
           const validation = validateRiskDetail(
@@ -1281,6 +1288,112 @@ const RiskDetail = () => {
     router.refresh();
   };
 
+  const handleDownloadReport = async () => {
+    if (!risk || !riskId) return;
+
+    setLoading(true);
+    try {
+      // Determine which action strategy to use based on the risk action
+      const actionStrategy = {
+        mitigate: risk.mitigation,
+        accept: risk.acceptance,
+        transfer: risk.transfer,
+        avoid: risk.avoidance,
+      }[risk.action];
+
+      // 1. Fetch all comments related to this risk
+      const commentsResponse = await databases.listDocuments(
+        db,
+        commentCollection,
+        [Query.equal("riskId", riskId), Query.orderDesc("$createdAt")]
+      );
+
+      const comments = commentsResponse.documents.map((doc) => ({
+        id: doc.$id,
+        author: doc.authorName,
+        content: doc.content,
+        created: doc.$createdAt,
+        votes: doc.upvotes - doc.downvotes,
+      }));
+
+      // 2. Fetch risk analysis data if available
+      let analysisData:
+        | {
+            summary: string;
+            keyConcerns: string[];
+            recommendations: string[];
+          }
+        | undefined = undefined;
+
+      try {
+        const analysisResponse = await fetch(
+          `/api/risk-analysis?riskId=${riskId}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        if (analysisResponse.ok) {
+          const analysisResult = await analysisResponse.json();
+          if (analysisResult && analysisResult.summary) {
+            analysisData = {
+              summary: analysisResult.summary,
+              keyConcerns: analysisResult.keyConcerns || [],
+              recommendations: analysisResult.recommendations || [],
+            };
+          }
+        }
+      } catch (analysisError) {
+        console.error("Error fetching analysis data:", analysisError);
+        // Continue without analysis data
+      }
+
+      // 3. Include web references if available
+      const webReferences =
+        results.length > 0
+          ? results.map((item) => ({
+              url: item.url,
+              description: item.description,
+              score: item.score,
+            }))
+          : [];
+
+      // Prepare complete data for the report
+      const reportData = {
+        riskId: risk.$id,
+        title: risk.title,
+        content: risk.content,
+        authorName: risk.authorName,
+        impact: risk.impact as "low" | "medium" | "high",
+        probability: Number(risk.probability),
+        action: risk.action as "mitigate" | "accept" | "transfer" | "avoid",
+        actionDetails: actionStrategy || "",
+        tags: risk.tags || [],
+        created: risk.created,
+        closed: risk.updated, // Using updated date as the closed date
+        resolution: risk.resolution || "No specific resolution provided",
+        department: risk.department || "General",
+        attachmentId: risk.attachmentId,
+        // New comprehensive fields
+        comments: comments,
+        webReferences: webReferences.length > 0 ? webReferences : undefined,
+        analysis: analysisData,
+      };
+
+      // Generate HTML report
+      const reportHTML = generateRiskReportHTML(reportData);
+
+      // Download as PDF
+      downloadRiskReportAsPDF(reportHTML, `risk-report-${risk.$id}.pdf`);
+    } catch (error) {
+      console.error("Error generating risk report:", error);
+      alert("Error generating risk report. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
@@ -1370,7 +1483,7 @@ const RiskDetail = () => {
             <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
               {risk.title}
             </h1>
-            {isRiskCreator && (
+            {isRiskCreator && risk.status !== "closed" ? (
               <Button
                 variant="outline"
                 className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-gray-300 hover:bg-gray-100 shadow-sm self-start"
@@ -1379,6 +1492,17 @@ const RiskDetail = () => {
                 <Pencil size={16} />
                 Edit Risk
               </Button>
+            ) : (
+              risk.status === "closed" && (
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 shadow-sm self-start"
+                  onClick={() => handleDownloadReport()}
+                >
+                  <Download size={16} />
+                  Download Risk Report
+                </Button>
+              )
             )}
           </div>
           <div className="flex flex-wrap gap-2 items-center">
@@ -2056,7 +2180,9 @@ const RiskDetail = () => {
                   </h3>
                   <p className="text-sm text-gray-600">
                     Find external resources related to{" "}
-                    <span className="font-medium">&quot;{risk.title}&quot;</span>
+                    <span className="font-medium">
+                      &quot;{risk.title}&quot;
+                    </span>
                     {risk.tags.length > 0 && (
                       <span>
                         {" "}

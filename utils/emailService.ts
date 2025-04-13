@@ -103,7 +103,7 @@ Please review this risk in the risk management system.
 <p><strong>Probability:</strong> ${risk.probability}</p>
 <p><strong>Action:</strong> ${risk.action}</p>
 <p><strong>Description:</strong> ${risk.content}</p>
-<p>Please <a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${risk.$id}">review this risk</a> in the risk management system.</p>
+<p>Please <a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${risk.$id}">review this risk</a> in the risk management system.</p>
         `;
         break;
 
@@ -128,7 +128,7 @@ Please review the updated risk in the risk management system.
 <p><strong>Probability:</strong> ${risk.probability}</p>
 <p><strong>Action:</strong> ${risk.action}</p>
 <p><strong>Description:</strong> ${risk.content}</p>
-<p>Please <a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${risk.$id}">review the updated risk</a> in the risk management system.</p>
+<p>Please <a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${risk.$id}">review the updated risk</a> in the risk management system.</p>
         `;
         break;
 
@@ -148,7 +148,7 @@ The risk has been successfully addressed and closed in the risk management syste
 <p><strong>Title:</strong> ${risk.title}</p>
 <p><strong>Resolution:</strong> ${risk.resolution}</p>
 <p>The risk has been successfully addressed and closed in the risk management system.</p>
-<p>You can <a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${risk.$id}">view the details here</a>.</p>
+<p>You can <a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${risk.$id}">view the details here</a>.</p>
         `;
         break;
     }
@@ -216,7 +216,7 @@ ${parentComment.content}
 Reply:
 ${comment.content}
 
-View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.riskId}
+View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.riskId}
         `;
         htmlContent = `
 <h2>New Reply to Your Comment</h2>
@@ -229,7 +229,7 @@ View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.ris
   <p><em>Their reply:</em></p>
   <p>${comment.content}</p>
 </div>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.riskId}">View the discussion</a></p>
+<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.riskId}">View the discussion</a></p>
         `;
         break;
 
@@ -252,7 +252,7 @@ View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.ris
 <div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
   <p>${comment.content}</p>
 </div>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risks/${comment.riskId}">View the discussion</a></p>
+<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.riskId}">View the discussion</a></p>
                 `,
               };
               await sgMail.send(msg);
