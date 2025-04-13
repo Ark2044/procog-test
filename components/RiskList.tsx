@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import Link from "next/link";
 import { useAuthStore } from "@/store/Auth";
 import { ReminderDialog } from "./ReminderDialog";
 import { Query } from "appwrite";
@@ -62,7 +61,9 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"my" | "all">("my");
-  const [sortBy, setSortBy] = useState<"created" | "impact" | "dueDate" | "probability" | "updated">("created");
+  const [sortBy, setSortBy] = useState<
+    "created" | "impact" | "dueDate" | "probability" | "updated"
+  >("created");
   const [filterAction, setFilterAction] = useState<string>("all");
   const [filterImpact, setFilterImpact] = useState<string>("all");
   const [filterProbability, setFilterProbability] = useState<string>("all");
@@ -180,16 +181,17 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   }, [fetchRisks]);
 
   const filteredAndSortedRisks = () => {
-    let filtered = viewMode === "my" && currentUserId
-      ? risks.filter((risk) => risk.authorId === currentUserId)
-      : risks;
+    let filtered =
+      viewMode === "my" && currentUserId
+        ? risks.filter((risk) => risk.authorId === currentUserId)
+        : risks;
 
     if (user && user.prefs?.role !== "admin") {
       filtered = filtered.filter(
         (risk) =>
-          (!risk.isConfidential ||
-            risk.authorizedViewers?.includes(user.$id) ||
-            risk.authorId === user.$id)
+          !risk.isConfidential ||
+          risk.authorizedViewers?.includes(user.$id) ||
+          risk.authorId === user.$id
       );
     }
 
@@ -332,7 +334,10 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
             </SelectContent>
           </Select>
 
-          <Select value={filterProbability} onValueChange={setFilterProbability}>
+          <Select
+            value={filterProbability}
+            onValueChange={setFilterProbability}
+          >
             <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
               <SelectValue placeholder="Probability" />
             </SelectTrigger>
@@ -381,9 +386,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
 
           <Select
             value={sortBy}
-            onValueChange={(value) =>
-              setSortBy(value as typeof sortBy)
-            }
+            onValueChange={(value) => setSortBy(value as typeof sortBy)}
           >
             <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
               <SelectValue placeholder="Sort by" />
@@ -418,12 +421,9 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
               <p className="mb-3 sm:mb-4 text-sm sm:text-base">
                 No risks found matching your criteria.
               </p>
-              <Link
-                href="/risk/new"
-                className="text-blue-600 hover:text-blue-700 underline text-sm sm:text-base"
-              >
+              <div className="text-blue-600 hover:text-blue-700 underline text-sm sm:text-base">
                 Create a new risk
-              </Link>
+              </div>
             </div>
           ) : (
             filteredAndSortedRisks().map((risk) => (

@@ -9,7 +9,6 @@ import {
   FaUserCog,
   FaSignOutAlt,
   FaTable,
-  FaBell,
   FaQuestionCircle,
 } from "react-icons/fa";
 
@@ -197,20 +196,7 @@ export default function Header() {
                       </Link>
                     )}
                   </li>
-                  <li className="w-full lg:w-auto">
-                    <Link
-                      href="/reminders"
-                      onClick={handleLinkClick}
-                      className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
-                        isScrolled
-                          ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                          : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
-                      }`}
-                    >
-                      <FaBell className="mr-2 text-lg" />
-                      Reminders
-                    </Link>
-                  </li>
+                  
                   <li className="w-full lg:w-auto">
                     <Link
                       href={`/profile/${session.userId}`}

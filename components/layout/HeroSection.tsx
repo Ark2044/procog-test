@@ -92,24 +92,6 @@ const HeroSection: FC = () => (
             <ArrowRight className="ml-2 h-5 w-5" />
           </span>
         </motion.button>
-
-        <motion.button
-          className="group relative px-6 sm:px-8 py-3 sm:py-4 rounded-xl overflow-hidden shadow-md w-full sm:w-auto"
-          style={{
-            background: "rgba(255,255,255,0.7)",
-            border: "2px solid #E0E7FF",
-          }}
-          whileHover={{
-            scale: 1.05,
-            borderColor: "#6366F1",
-            boxShadow: "0 0 20px rgba(99,102,241,0.2)",
-          }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <span className="relative flex items-center justify-center font-bold text-indigo-700 text-lg">
-            <Link href="/demo">Watch Demo</Link>
-          </span>
-        </motion.button>
       </motion.div>
 
       <motion.div
