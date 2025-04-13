@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/Auth";
@@ -16,6 +16,7 @@ import {
   LucideShare2,
   LucideXCircle,
   LucideRefreshCw,
+  LucideSearch,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { account } from "@/models/client/config";
@@ -31,6 +32,130 @@ type ActionCount = {
   accept: number;
   transfer: number;
   avoid: number;
+};
+
+// SearchRisk component for searching through risks
+const SearchRisk = ({ risks }: { risks: Risk[] }) => {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [filteredRisks, setFilteredRisks] = useState<Risk[]>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim() === "") {
+      setFilteredRisks([]);
+      setIsDropdownOpen(false);
+      return;
+    }
+
+    const filtered = risks.filter(
+      (risk) =>
+        risk.title.toLowerCase().includes(query.toLowerCase()) ||
+        risk.content.toLowerCase().includes(query.toLowerCase()) ||
+        risk.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase()))
+    );
+
+    setFilteredRisks(filtered);
+    setIsDropdownOpen(true);
+  };
+
+  const handleRiskClick = (riskId: string) => {
+    router.push(`/risk/${riskId}`);
+    setIsDropdownOpen(false);
+    setSearchQuery("");
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={searchRef}>
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search risks..."
+          value={searchQuery}
+          onChange={handleSearch}
+          className="w-full px-4 py-2 pl-10 pr-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        />
+        <LucideSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      </div>
+
+      {isDropdownOpen && filteredRisks.length > 0 && (
+        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {filteredRisks.map((risk) => (
+            <div
+              key={risk.$id}
+              onClick={() => handleRiskClick(risk.$id)}
+              className="p-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+            >
+              <div className="font-medium text-gray-800 truncate">
+                {risk.title}
+              </div>
+              <div className="flex items-center mt-1 text-xs">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    risk.impact === "high"
+                      ? "bg-red-100 text-red-700"
+                      : risk.impact === "medium"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {risk.impact}
+                </span>
+                <span className="mx-2 text-gray-400">•</span>
+                <span className="text-gray-500 truncate">
+                  {risk.content.substring(0, 50)}...
+                </span>
+              </div>
+              {risk.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {risk.tags.slice(0, 2).map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {risk.tags.length > 2 && (
+                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
+                      +{risk.tags.length - 2} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isDropdownOpen && searchQuery && filteredRisks.length === 0 && (
+        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg p-3 text-center">
+          <p className="text-gray-500">
+            No risks found matching &quot;{searchQuery}&quot;
+          </p>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const DashboardSkeleton = () => (
@@ -342,6 +467,11 @@ const Dashboard = () => {
               <CreateRisk onRiskCreated={handleRiskCreated} />
             </div>
           )}
+
+          {/* Search risk */}
+          <div className="mb-4 sm:mb-6">
+            <SearchRisk risks={risks} />
+          </div>
 
           {/* Action count cards */}
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
