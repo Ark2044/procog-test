@@ -1,15 +1,40 @@
 // Common validation constants and functions
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const NAME_REGEX = /^[a-zA-Z\s'-]{2,50}$/;
+export const DEPARTMENT_REGEX = /^[a-zA-Z0-9\s'-]{2,50}$/;
 
 // Department and role constants
-export const VALID_DEPARTMENTS = [
+export const DEFAULT_DEPARTMENTS = [
   "general",
   "engineering",
   "sales",
   "marketing",
   "hr",
+  "it",
+  "finance",
+  "operations",
 ] as const;
+
+// Instead of VALID_DEPARTMENTS, we'll use getDepartments() function that can be updated dynamically
+export let CUSTOM_DEPARTMENTS: string[] = [];
+
+// Function to add a custom department
+export const addCustomDepartment = (department: string): void => {
+  if (!CUSTOM_DEPARTMENTS.includes(department)) {
+    CUSTOM_DEPARTMENTS.push(department);
+  }
+};
+
+// Function to remove a custom department
+export const removeCustomDepartment = (department: string): void => {
+  CUSTOM_DEPARTMENTS = CUSTOM_DEPARTMENTS.filter((dept) => dept !== department);
+};
+
+// Function to get all valid departments
+export const getAllDepartments = (): string[] => {
+  return [...DEFAULT_DEPARTMENTS, ...CUSTOM_DEPARTMENTS];
+};
+
 export const VALID_ROLES = ["user", "admin"] as const;
 export const VALID_IMPACTS = ["low", "medium", "high"] as const;
 export const VALID_ACTIONS = [
@@ -47,13 +72,30 @@ export const validateName = (name: string): ValidationResult => {
 
 export const validateDepartment = (department: string): ValidationResult => {
   if (!department) return { isValid: false, error: "Department is required" };
-  if (
-    !VALID_DEPARTMENTS.includes(
-      department as (typeof VALID_DEPARTMENTS)[number]
-    )
-  ) {
+
+  // Check if department is in the list of valid departments
+  if (!getAllDepartments().includes(department)) {
     return { isValid: false, error: "Invalid department" };
   }
+
+  return { isValid: true };
+};
+
+export const validateNewDepartment = (department: string): ValidationResult => {
+  if (!department)
+    return { isValid: false, error: "Department name is required" };
+
+  if (!DEPARTMENT_REGEX.test(department))
+    return {
+      isValid: false,
+      error:
+        "Department name must be 2-50 characters and contain only letters, numbers, spaces, hyphens and apostrophes",
+    };
+
+  if (getAllDepartments().includes(department)) {
+    return { isValid: false, error: "Department already exists" };
+  }
+
   return { isValid: true };
 };
 
