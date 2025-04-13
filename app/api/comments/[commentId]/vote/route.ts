@@ -28,30 +28,28 @@ export async function POST(
     let downvotes = comment.downvotes || 0;
     let voters = Array.isArray(comment.voters) ? [...comment.voters] : [];
 
-    const existingVote = voters.find((v) => v.userId === userId);
+    // Format: "userId:voteType"
+    const voterKey = `${userId}:${voteType}`;
+    const oppositeVoteKey = `${userId}:${voteType === "up" ? "down" : "up"}`;
 
-    if (existingVote) {
-      if (existingVote.vote === voteType) {
-        // Remove vote
-        voters = voters.filter((v) => v.userId !== userId);
-        if (voteType === "up") upvotes--;
-        else downvotes--;
-      } else {
-        // Change vote
-        voters = voters.map((v) =>
-          v.userId === userId ? { userId, vote: voteType } : v
-        );
+    if (voters.includes(voterKey)) {
+      // Remove vote if the same type exists
+      voters = voters.filter((v) => v !== voterKey);
+      if (voteType === "up") upvotes--;
+      else downvotes--;
+    } else {
+      // Check if opposite vote exists and remove it
+      if (voters.includes(oppositeVoteKey)) {
+        voters = voters.filter((v) => v !== oppositeVoteKey);
         if (voteType === "up") {
-          upvotes++;
           downvotes--;
         } else {
           upvotes--;
-          downvotes++;
         }
       }
-    } else {
+
       // Add new vote
-      voters.push({ userId, vote: voteType });
+      voters.push(voterKey);
       if (voteType === "up") upvotes++;
       else downvotes++;
     }
