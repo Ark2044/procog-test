@@ -74,6 +74,8 @@ interface RiskState {
   isPreviewingTransfer: boolean;
   isPreviewingAvoidance: boolean;
   titleCharCount: number;
+  reminderTitle: string;
+  reminderDescription: string;
 }
 
 // Initial state
@@ -105,6 +107,8 @@ const initialState: RiskState = {
   isPreviewingTransfer: false,
   isPreviewingAvoidance: false,
   titleCharCount: 0,
+  reminderTitle: "",
+  reminderDescription: "",
 };
 
 // Action types
@@ -144,6 +148,8 @@ type Action =
   | { type: "SET_IS_PREVIEWING_TRANSFER"; payload: boolean }
   | { type: "SET_IS_PREVIEWING_AVOIDANCE"; payload: boolean }
   | { type: "SET_TITLE_CHAR_COUNT"; payload: number }
+  | { type: "SET_REMINDER_TITLE"; payload: string }
+  | { type: "SET_REMINDER_DESCRIPTION"; payload: string }
   | { type: "RESET" };
 
 // Reducer function
@@ -209,6 +215,10 @@ const riskReducer = (state: RiskState, action: Action): RiskState => {
       return { ...state, isPreviewingAvoidance: action.payload };
     case "SET_TITLE_CHAR_COUNT":
       return { ...state, titleCharCount: action.payload };
+    case "SET_REMINDER_TITLE":
+      return { ...state, reminderTitle: action.payload };
+    case "SET_REMINDER_DESCRIPTION":
+      return { ...state, reminderDescription: action.payload };
     case "RESET":
       return initialState;
     default:
@@ -363,8 +373,9 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       });
       if (state.includeReminder) {
         await addReminder({
-          title: `Risk Review: ${state.title}`,
-          description: `Time to review risk: ${state.title}`,
+          title: state.reminderTitle || `Risk Review: ${state.title}`,
+          description:
+            state.reminderDescription || `Time to review risk: ${state.title}`,
           datetime: state.reminderDate.toISOString(),
           userId: user.$id,
           riskId: risk.$id,
@@ -1076,37 +1087,46 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <h4 className="font-medium text-gray-800">Access Control</h4>
         </div>
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative inline-flex items-center">
-            <input
-              type="checkbox"
-              id="confidential"
-              checked={state.isConfidential}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_IS_CONFIDENTIAL",
-                  payload: e.target.checked,
-                })
-              }
-              className="sr-only peer"
-            />
-            <div
-              className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors duration-200 ease-in-out"
-              role="switch"
-              aria-checked={state.isConfidential}
-            >
-              <div
-                className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
-                  state.isConfidential ? "translate-x-5" : "translate-x-1"
-                }`}
-              />
-            </div>
-          </div>
-          <label
-            htmlFor="confidential"
-            className="text-gray-800 cursor-pointer"
+          <button
+            type="button"
+            onClick={() =>
+              dispatch({
+                type: "SET_IS_CONFIDENTIAL",
+                payload: !state.isConfidential,
+              })
+            }
+            className="flex items-center gap-3 focus:outline-none"
+            aria-pressed={state.isConfidential}
           >
-            Mark as Confidential
-          </label>
+            <div className="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                id="confidential"
+                checked={state.isConfidential}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_IS_CONFIDENTIAL",
+                    payload: e.target.checked,
+                  })
+                }
+                className="sr-only peer"
+              />
+              <div
+                className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors duration-200 ease-in-out cursor-pointer"
+                role="switch"
+                aria-checked={state.isConfidential}
+              >
+                <div
+                  className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
+                    state.isConfidential ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </div>
+            </div>
+            <span className="text-gray-800 cursor-pointer">
+              Mark as Confidential
+            </span>
+          </button>
         </div>
         {state.isConfidential && (
           <div className="ml-10 p-4 bg-gray-50 rounded-md border border-gray-200">
@@ -1166,40 +1186,101 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           <h4 className="font-medium text-gray-800">Reminder Settings</h4>
         </div>
         <div className="flex items-center gap-3 mb-4">
-          <div className="relative inline-flex items-center">
-            <input
-              type="checkbox"
-              id="includeReminder"
-              checked={state.includeReminder}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_INCLUDE_REMINDER",
-                  payload: e.target.checked,
-                })
-              }
-              className="sr-only peer"
-            />
-            <div
-              className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors duration-200 ease-in-out"
-              role="switch"
-              aria-checked={state.includeReminder}
-            >
-              <div
-                className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
-                  state.includeReminder ? "translate-x-5" : "translate-x-1"
-                }`}
-              />
-            </div>
-          </div>
-          <label
-            htmlFor="includeReminder"
-            className="text-gray-800 cursor-pointer"
+          <button
+            type="button"
+            onClick={() =>
+              dispatch({
+                type: "SET_INCLUDE_REMINDER",
+                payload: !state.includeReminder,
+              })
+            }
+            className="flex items-center gap-3 focus:outline-none"
+            aria-pressed={state.includeReminder}
           >
-            Set Review Reminder
-          </label>
+            <div className="relative inline-flex items-center">
+              <input
+                type="checkbox"
+                id="includeReminder"
+                checked={state.includeReminder}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_INCLUDE_REMINDER",
+                    payload: e.target.checked,
+                  })
+                }
+                className="sr-only peer"
+              />
+              <div
+                className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors duration-200 ease-in-out cursor-pointer"
+                role="switch"
+                aria-checked={state.includeReminder}
+              >
+                <div
+                  className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
+                    state.includeReminder ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </div>
+            </div>
+            <span className="text-gray-800 cursor-pointer">
+              Set Review Reminder
+            </span>
+          </button>
         </div>
         {state.includeReminder && (
           <div className="ml-10 p-4 bg-gray-50 rounded-md border border-gray-200 space-y-4">
+            <div>
+              <label
+                htmlFor="reminderTitle"
+                className="text-gray-800 font-medium mb-2 flex items-center"
+              >
+                <FileText
+                  className="mr-2 text-gray-500"
+                  size={16}
+                  aria-hidden="true"
+                />{" "}
+                Reminder Title
+              </label>
+              <input
+                type="text"
+                id="reminderTitle"
+                value={state.reminderTitle}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_REMINDER_TITLE",
+                    payload: e.target.value,
+                  })
+                }
+                className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                placeholder="Enter reminder title"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="reminderDescription"
+                className="text-gray-800 font-medium mb-2 flex items-center"
+              >
+                <FileDigit
+                  className="mr-2 text-gray-500"
+                  size={16}
+                  aria-hidden="true"
+                />{" "}
+                Reminder Description
+              </label>
+              <textarea
+                id="reminderDescription"
+                value={state.reminderDescription}
+                onChange={(e) =>
+                  dispatch({
+                    type: "SET_REMINDER_DESCRIPTION",
+                    payload: e.target.value,
+                  })
+                }
+                className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm resize-none"
+                placeholder="Enter reminder description"
+                rows={3}
+              />
+            </div>
             <div>
               <label
                 htmlFor="reminderDate"
