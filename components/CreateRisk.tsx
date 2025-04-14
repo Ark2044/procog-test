@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useRiskStore } from "@/store/Risk";
 
-// Define state interface
+// State interface
 interface RiskState {
   title: string;
   content: string;
@@ -73,6 +73,7 @@ interface RiskState {
   isPreviewingAcceptance: boolean;
   isPreviewingTransfer: boolean;
   isPreviewingAvoidance: boolean;
+  titleCharCount: number;
 }
 
 // Initial state
@@ -103,9 +104,10 @@ const initialState: RiskState = {
   isPreviewingAcceptance: false,
   isPreviewingTransfer: false,
   isPreviewingAvoidance: false,
+  titleCharCount: 0,
 };
 
-// Define action types
+// Action types
 type Action =
   | { type: "SET_TITLE"; payload: string }
   | { type: "SET_CONTENT"; payload: string }
@@ -141,13 +143,18 @@ type Action =
   | { type: "SET_IS_PREVIEWING_ACCEPTANCE"; payload: boolean }
   | { type: "SET_IS_PREVIEWING_TRANSFER"; payload: boolean }
   | { type: "SET_IS_PREVIEWING_AVOIDANCE"; payload: boolean }
+  | { type: "SET_TITLE_CHAR_COUNT"; payload: number }
   | { type: "RESET" };
 
 // Reducer function
 const riskReducer = (state: RiskState, action: Action): RiskState => {
   switch (action.type) {
     case "SET_TITLE":
-      return { ...state, title: action.payload };
+      return {
+        ...state,
+        title: action.payload,
+        titleCharCount: action.payload.length,
+      };
     case "SET_CONTENT":
       return {
         ...state,
@@ -200,6 +207,8 @@ const riskReducer = (state: RiskState, action: Action): RiskState => {
       return { ...state, isPreviewingTransfer: action.payload };
     case "SET_IS_PREVIEWING_AVOIDANCE":
       return { ...state, isPreviewingAvoidance: action.payload };
+    case "SET_TITLE_CHAR_COUNT":
+      return { ...state, titleCharCount: action.payload };
     case "RESET":
       return initialState;
     default:
@@ -220,7 +229,37 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const transferTextareaRef = useRef<HTMLTextAreaElement>(null);
   const avoidanceTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch available users when isConfidential changes
+  // Define the steps array
+  const steps = ["basic", "assessment", "settings"] as const;
+
+  // Compute step completion status
+  const stepCompletion = {
+    basic: state.title.trim() !== "" && state.content.trim() !== "",
+    assessment:
+      !!state.impact &&
+      !!state.action &&
+      ((state.action === "mitigate" && state.mitigation.trim() !== "") ||
+        (state.action === "accept" && state.acceptance.trim() !== "") ||
+        (state.action === "transfer" && state.transfer.trim() !== "") ||
+        (state.action === "avoid" && state.avoidance.trim() !== "")),
+    settings:
+      !state.isConfidential ||
+      (state.isConfidential && state.authorizedViewers.length > 0),
+  };
+
+  // Determine if a step is clickable (can navigate to it)
+  const isStepClickable = (step: (typeof steps)[number]): boolean => {
+    const stepIndex = steps.indexOf(step);
+    return (
+      stepIndex === 0 ||
+      steps.slice(0, stepIndex).every((s) => stepCompletion[s])
+    );
+  };
+
+  // Check if all steps are complete for submission
+  const allStepsComplete = steps.every((step) => stepCompletion[step]);
+
+  // Fetch available users when confidentiality is toggled
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -242,7 +281,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     dispatch({ type: "SET_FILE", payload: selectedFile });
   };
 
-  // Validate form fields
+  // Validate form fields before submission
   const validateFields = (): boolean => {
     if (!state.title.trim() || !state.content.trim()) {
       toast.error("Title and Description are required");
@@ -272,10 +311,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       toast.error("Please provide avoidance approach");
       return false;
     }
-    if (
-      state.isConfidential &&
-      (!state.authorizedViewers || state.authorizedViewers.length === 0)
-    ) {
+    if (state.isConfidential && state.authorizedViewers.length === 0) {
       toast.error("Authorized viewers are required for confidential risks");
       return false;
     }
@@ -284,14 +320,23 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
 
   // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
+    // Always prevent default form submission behavior
     e.preventDefault();
-    if (state.activeTab !== "settings") {
+
+    // Only proceed with form submission if this was triggered by the submit button
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as
+      | HTMLButtonElement
+      | HTMLInputElement;
+    if (submitter?.type !== "submit") {
       return;
     }
+
+    // Validate form before submission
     dispatch({ type: "SET_ERROR", payload: null });
     if (!validateFields()) {
       return;
     }
+
     try {
       if (!user) {
         toast.error("User is not logged in");
@@ -345,7 +390,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     }
   };
 
-  // Insert markdown utility function
+  // Utility function to insert markdown
   const insertMarkdown = (
     markdownSyntax: string,
     content: string,
@@ -388,7 +433,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     }, 0);
   };
 
-  // Markdown insertion functions for strategies
+  // Markdown insertion functions for each strategy
   const insertMitigationMarkdown = (
     markdownSyntax: string,
     selectionReplacement: string | null = null
@@ -467,17 +512,22 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
       <label
         htmlFor={label.toLowerCase().replace(/\s+/g, "-")}
-        className="text-gray-800 font-semibold mb-2 block"
+        className="text-gray-800 font-semibold mb-2 flex items-center"
       >
-        {label} <span className="text-red-500">*</span>
+        {label}{" "}
+        <span className="text-red-500 ml-1" aria-hidden="true">
+          *
+        </span>
+        <span className="sr-only"> (required)</span>
       </label>
-      <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-        <div className="flex justify-between items-center border-b p-2">
+      <div className="bg-white border border-gray-300 rounded-md overflow-hidden shadow-sm">
+        <div className="flex justify-between items-center border-b border-gray-200 p-2 bg-gray-50">
           <div className="flex gap-2">
             <Button
               variant={isPreviewingStrategy ? "outline" : "default"}
               size="sm"
               onClick={() => setIsPreviewingStrategy(false)}
+              aria-label="Write mode"
             >
               Write
             </Button>
@@ -485,98 +535,98 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               variant={isPreviewingStrategy ? "default" : "outline"}
               size="sm"
               onClick={() => setIsPreviewingStrategy(true)}
+              aria-label="Preview mode"
             >
               Preview
             </Button>
           </div>
           {!isPreviewingStrategy && (
-            <div className="flex gap-1 bg-gray-50 p-2 border-b">
-              <div className="flex space-x-1 mr-4">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertStrategyMarkdown("**$1**")}
-                        className="rounded-md h-8 w-8 p-0 flex items-center justify-center"
-                      >
-                        <BoldIcon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Bold</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertStrategyMarkdown("*$1*")}
-                        className="rounded-md h-8 w-8 p-0 flex items-center justify-center"
-                      >
-                        <ItalicIcon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Italic</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="flex space-x-1 mr-4">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertStrategyMarkdown("[$1](url)")}
-                        className="rounded-md h-8 w-8 p-0 flex items-center justify-center"
-                      >
-                        <Link2Icon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Link</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="flex space-x-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertStrategyMarkdown("- $1")}
-                        className="rounded-md h-8 w-8 p-0 flex items-center justify-center"
-                      >
-                        <ListIcon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>List</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertStrategyMarkdown("> $1")}
-                        className="rounded-md h-8 w-8 p-0 flex items-center justify-center"
-                      >
-                        <QuoteIcon className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Quote</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+            <div className="flex gap-1 p-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertStrategyMarkdown("**$1**")}
+                      className="h-8 w-8 p-0"
+                      aria-label="Bold text"
+                    >
+                      <BoldIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Bold</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertStrategyMarkdown("*$1*")}
+                      className="h-8 w-8 p-0"
+                      aria-label="Italic text"
+                    >
+                      <ItalicIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Italic</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertStrategyMarkdown("[$1](url)")}
+                      className="h-8 w-8 p-0"
+                      aria-label="Insert link"
+                    >
+                      <Link2Icon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Link</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertStrategyMarkdown("- $1")}
+                      className="h-8 w-8 p-0"
+                      aria-label="Insert list"
+                    >
+                      <ListIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>List</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertStrategyMarkdown("> $1")}
+                      className="h-8 w-8 p-0"
+                      aria-label="Insert quote"
+                    >
+                      <QuoteIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Quote</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           )}
         </div>
         {isPreviewingStrategy ? (
-          <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50 rounded-md">
+          <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50">
             {strategy ? (
               <ReactMarkdown>{strategy}</ReactMarkdown>
             ) : (
@@ -590,28 +640,32 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             value={strategy}
             onChange={(e) => setStrategy(e.target.value)}
             placeholder={placeholder}
-            rows={3}
-            className="border-0 focus:ring-0"
+            rows={4}
+            className="border-0 focus:ring-0 resize-none text-gray-800"
+            required
+            aria-required="true"
           />
         )}
       </div>
       <p className="text-xs text-gray-600 mt-1">
-        Detail specific {label.toLowerCase()} approach. Markdown formatting is
-        supported.
+        Supports Markdown formatting for rich text
       </p>
     </div>
   );
 
   // Render Basic Form
   const renderBasicForm = () => (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <label
           htmlFor="title"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <FileText className="mr-2 text-gray-500" /> Title{" "}
-          <span className="text-red-500 ml-1">*</span>
+          <FileText className="mr-2 text-gray-500" aria-hidden="true" /> Title
+          <span className="text-red-500 ml-1" aria-hidden="true">
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <input
           type="text"
@@ -621,19 +675,31 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             dispatch({ type: "SET_TITLE", payload: e.target.value })
           }
           required
-          className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          className="border border-gray-300 p-3 w-full rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
           placeholder="Enter risk title"
           maxLength={100}
+          aria-describedby="title-char-count"
         />
-        <p className="text-xs text-gray-500 mt-1">Max 100 characters</p>
+        <p
+          id="title-char-count"
+          className={`text-xs mt-1 ${
+            state.titleCharCount > 80 ? "text-red-500" : "text-gray-500"
+          }`}
+        >
+          {state.titleCharCount}/100 characters
+        </p>
       </div>
       <div>
         <label
           htmlFor="content"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <FileDigit className="mr-2 text-gray-500" /> Description{" "}
-          <span className="text-red-500 ml-1">*</span>
+          <FileDigit className="mr-2 text-gray-500" aria-hidden="true" />{" "}
+          Description
+          <span className="text-red-500 ml-1" aria-hidden="true">
+            *
+          </span>
+          <span className="sr-only"> (required)</span>
         </label>
         <textarea
           id="content"
@@ -642,71 +708,95 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             dispatch({ type: "SET_CONTENT", payload: e.target.value })
           }
           required
-          className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Enter risk description"
+          className="border border-gray-300 p-3 w-full rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm resize-none"
+          placeholder="Describe the risk in detail"
           maxLength={500}
-          rows={4}
+          rows={5}
+          aria-describedby="content-char-count"
         />
         <p
+          id="content-char-count"
           className={`text-xs mt-1 ${
             state.remainingChars < 50 ? "text-red-500" : "text-gray-500"
           }`}
         >
-          {state.remainingChars} characters remaining
+          {state.remainingChars}/500 characters remaining
         </p>
       </div>
       <div>
         <label
           htmlFor="tags"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <Tag className="mr-2 text-gray-500" /> Tags
+          <Tag className="mr-2 text-gray-500" aria-hidden="true" /> Tags
         </label>
         <input
           type="text"
           id="tags"
-          value={state.tags.join(",")}
+          value={state.tags.join(", ")}
           onChange={(e) =>
             dispatch({
               type: "SET_TAGS",
-              payload: e.target.value.split(",").map((tag) => tag.trim()),
+              payload: e.target.value
+                .split(",")
+                .map((tag) => tag.trim())
+                .filter(Boolean),
             })
           }
-          className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Enter tags separated by commas"
+          className="border border-gray-300 p-3 w-full rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+          placeholder="e.g., security, compliance, technical"
+          aria-describedby="tags-help"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          E.g., security, compliance, technical
+        <p id="tags-help" className="text-xs text-gray-500 mt-1">
+          Separate tags with commas
         </p>
       </div>
       <div>
         <label
           htmlFor="file"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <Upload className="mr-2 text-gray-500" /> Attachment (optional)
+          <Upload className="mr-2 text-gray-500" aria-hidden="true" />{" "}
+          Attachment
+          <span className="text-gray-500 ml-1">(optional)</span>
         </label>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <input
             type="file"
             id="file"
             onChange={handleFileChange}
-            className="border border-gray-300 p-2 w-full rounded bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="border border-gray-300 p-2 w-full rounded-md bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+            aria-describedby="file-status"
           />
-          {state.file && <CheckCircle className="ml-2 text-green-500" />}
+          {state.file && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => dispatch({ type: "SET_FILE", payload: null })}
+              className="text-red-500 hover:text-red-700 p-1"
+              aria-label="Remove attachment"
+            >
+              <X size={16} />
+            </Button>
+          )}
         </div>
         {state.file && (
-          <p className="text-xs text-gray-500 mt-1">
-            Selected: {state.file.name}
+          <p
+            id="file-status"
+            className="text-xs text-gray-500 mt-1 flex items-center"
+          >
+            <CheckCircle className="mr-1 text-green-500" size={12} />{" "}
+            {state.file.name}
           </p>
         )}
       </div>
       <div>
         <label
           htmlFor="dueDate"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <Calendar className="mr-2 text-gray-500" /> Due Date
+          <Calendar className="mr-2 text-gray-500" aria-hidden="true" /> Due
+          Date
         </label>
         <DatePicker
           selected={state.dueDate}
@@ -715,7 +805,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           timeFormat="HH:mm"
           timeIntervals={15}
           dateFormat="MMMM d, yyyy h:mm aa"
-          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
           minDate={new Date()}
           placeholderText="Select due date and time"
         />
@@ -729,21 +819,27 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       <div>
         <label
           htmlFor="impact"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <Activity className="mr-2 text-gray-500" /> Impact
+          <Activity className="mr-2 text-gray-500" aria-hidden="true" /> Impact
         </label>
-        <div className="flex gap-2 mt-2">
+        <div className="grid grid-cols-3 gap-3 mt-2">
           {[
             {
               value: "low",
               color: "bg-green-100 border-green-500 text-green-700",
+              label: "Low",
             },
             {
               value: "medium",
               color: "bg-yellow-100 border-yellow-500 text-yellow-700",
+              label: "Medium",
             },
-            { value: "high", color: "bg-red-100 border-red-500 text-red-700" },
+            {
+              value: "high",
+              color: "bg-red-100 border-red-500 text-red-700",
+              label: "High",
+            },
           ].map((option) => (
             <button
               key={option.value}
@@ -754,17 +850,18 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                   payload: option.value as "low" | "medium" | "high",
                 })
               }
-              className={`flex-1 py-2 px-4 border-2 rounded-lg flex items-center justify-center font-medium transition-all
+              className={`py-3 px-4 border-2 rounded-md flex items-center justify-center font-medium transition-all shadow-sm
                 ${
                   state.impact === option.value
                     ? option.color + " border-2"
-                    : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
                 }`}
+              aria-pressed={state.impact === option.value}
             >
-              {option.value === "low" && <span className="mr-1">●</span>}
-              {option.value === "medium" && <span className="mr-1">●●</span>}
-              {option.value === "high" && <span className="mr-1">●●●</span>}
-              {option.value.charAt(0).toUpperCase() + option.value.slice(1)}
+              {option.value === "low" && <span className="mr-2">●</span>}
+              {option.value === "medium" && <span className="mr-2">●●</span>}
+              {option.value === "high" && <span className="mr-2">●●●</span>}
+              {option.label}
             </button>
           ))}
         </div>
@@ -772,9 +869,10 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       <div>
         <label
           htmlFor="probability"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <AlertTriangle className="mr-2 text-gray-500" /> Probability
+          <AlertTriangle className="mr-2 text-gray-500" aria-hidden="true" />{" "}
+          Probability
         </label>
         <div className="mt-2">
           <div className="flex items-center gap-4">
@@ -791,9 +889,13 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                     payload: Number(e.target.value),
                   })
                 }
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-valuemin={0}
+                aria-valuemax={5}
+                aria-valuenow={state.probability}
+                aria-label="Probability slider (0% to 100%)"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1 px-1">
+              <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
                 <span>0%</span>
                 <span>20%</span>
                 <span>40%</span>
@@ -803,13 +905,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               </div>
             </div>
             <div
-              className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg ${
-                state.probability <= 1
-                  ? "bg-green-100 text-green-700"
-                  : state.probability <= 3
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-700"
-              }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold text-base shadow-sm
+                ${
+                  state.probability <= 1
+                    ? "bg-green-100 text-green-700"
+                    : state.probability <= 3
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+                }`}
             >
               {state.probability * 20}%
             </div>
@@ -819,11 +922,12 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       <div>
         <label
           htmlFor="action"
-          className="text-gray-800 font-semibold mb-2 inline-flex items-center"
+          className="text-gray-800 font-semibold mb-2 flex items-center"
         >
-          <Shield className="mr-2 text-gray-500" /> Risk Response
+          <Shield className="mr-2 text-gray-500" aria-hidden="true" /> Risk
+          Response
         </label>
-        <div className="grid grid-cols-2 gap-3 mt-2">
+        <div className="grid grid-cols-2 gap-4 mt-2">
           {[
             {
               value: "mitigate",
@@ -863,12 +967,13 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                     | "avoid",
                 })
               }
-              className={`p-3 border-2 rounded-lg flex flex-col items-center text-center transition-all
+              className={`p-4 border-2 rounded-md flex flex-col items-center text-center transition-all shadow-sm
                 ${
                   state.action === option.value
                     ? "bg-blue-50 border-blue-500 text-blue-700"
                     : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                 }`}
+              aria-pressed={state.action === option.value}
             >
               <div
                 className={`p-2 rounded-full ${
@@ -914,7 +1019,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           textareaRef={acceptanceTextareaRef}
           insertStrategyMarkdown={insertAcceptanceMarkdown}
           label="Acceptance Rationale"
-          placeholder="Document the rationale for accepting this risk, including thresholds and monitoring approach"
+          placeholder="Explain why accepting this risk is appropriate"
         />
       )}
       {state.action === "transfer" && (
@@ -930,7 +1035,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           textareaRef={transferTextareaRef}
           insertStrategyMarkdown={insertTransferMarkdown}
           label="Transfer Mechanism"
-          placeholder="Detail how the risk will be transferred (insurance, contracts, third parties)"
+          placeholder="Detail how the risk will be transferred"
         />
       )}
       {state.action === "avoid" && (
@@ -946,7 +1051,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           textareaRef={avoidanceTextareaRef}
           insertStrategyMarkdown={insertAvoidanceMarkdown}
           label="Avoidance Approach"
-          placeholder="Describe how you will eliminate this risk (process changes, activity termination)"
+          placeholder="Describe how you will eliminate this risk"
         />
       )}
     </div>
@@ -955,23 +1060,22 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   // Render Settings Form
   const renderSettingsForm = () => (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border-l-4 border-blue-500">
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-md border-l-4 border-blue-500 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-800 mb-1">
-          Complete Your Risk Entry
+          Finalize Your Risk Entry
         </h3>
         <p className="text-sm text-gray-600">
-          Configure final access control and reminder settings before creating
-          your risk.
+          Set access control and reminders before submission
         </p>
       </div>
-      <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white p-6 rounded-md shadow-sm border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
           <div className="bg-indigo-100 p-2 rounded-full">
-            <Lock className="text-indigo-600" size={18} />
+            <Lock className="text-indigo-600" size={18} aria-hidden="true" />
           </div>
           <h4 className="font-medium text-gray-800">Access Control</h4>
         </div>
-        <div className="flex items-center gap-3 mb-4 ml-2">
+        <div className="flex items-center gap-3 mb-4">
           <div className="relative inline-flex items-center">
             <input
               type="checkbox"
@@ -983,17 +1087,17 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                   payload: e.target.checked,
                 })
               }
-              className="sr-only"
+              className="sr-only peer"
             />
             <div
-              className={`w-10 h-5 rounded-full transition-colors ${
-                state.isConfidential ? "bg-blue-500" : "bg-gray-300"
-              }`}
+              className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors duration-200 ease-in-out"
+              role="switch"
+              aria-checked={state.isConfidential}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transform transition-transform ${
+                className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
                   state.isConfidential ? "translate-x-5" : "translate-x-1"
-                } shadow-sm`}
+                }`}
               />
             </div>
           </div>
@@ -1005,14 +1109,26 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           </label>
         </div>
         {state.isConfidential && (
-          <div className="ml-10 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <label className="text-gray-800 font-medium mb-2 inline-flex items-center">
-              <Users className="mr-2 text-gray-500" size={16} /> Authorized
-              Viewers <span className="text-red-500 ml-1">*</span>
+          <div className="ml-10 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <label
+              htmlFor="authorizedViewers"
+              className="text-gray-800 font-medium mb-2 flex items-center"
+            >
+              <Users
+                className="mr-2 text-gray-500"
+                size={16}
+                aria-hidden="true"
+              />{" "}
+              Authorized Viewers
+              <span className="text-red-500 ml-1" aria-hidden="true">
+                *
+              </span>
+              <span className="sr-only"> (required)</span>
             </label>
             <select
+              id="authorizedViewers"
               multiple
-              className="w-full bg-white border border-gray-300 rounded-md p-2 text-gray-800 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-white border border-gray-300 rounded-md p-2 text-gray-800 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               value={state.authorizedViewers}
               onChange={(e) => {
                 const selected = Array.from(
@@ -1022,6 +1138,9 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 dispatch({ type: "SET_AUTHORIZED_VIEWERS", payload: selected });
               }}
               size={4}
+              required={state.isConfidential}
+              aria-required={state.isConfidential}
+              aria-describedby="authorized-viewers-help"
             >
               {state.availableUsers.map((user) => (
                 <option key={user.$id} value={user.$id}>
@@ -1029,21 +1148,24 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1 flex items-center">
-              <Info size={12} className="mr-1" /> Hold Ctrl/Cmd to select
-              multiple users
+            <p
+              id="authorized-viewers-help"
+              className="text-xs text-gray-500 mt-1 flex items-center"
+            >
+              <Info size={12} className="mr-1" aria-hidden="true" /> Use
+              Ctrl/Cmd to select multiple users
             </p>
           </div>
         )}
       </div>
-      <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white p-6 rounded-md shadow-sm border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
           <div className="bg-amber-100 p-2 rounded-full">
-            <Bell className="text-amber-600" size={18} />
+            <Bell className="text-amber-600" size={18} aria-hidden="true" />
           </div>
           <h4 className="font-medium text-gray-800">Reminder Settings</h4>
         </div>
-        <div className="flex items-center gap-3 mb-4 ml-2">
+        <div className="flex items-center gap-3 mb-4">
           <div className="relative inline-flex items-center">
             <input
               type="checkbox"
@@ -1055,17 +1177,17 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                   payload: e.target.checked,
                 })
               }
-              className="sr-only"
+              className="sr-only peer"
             />
             <div
-              className={`w-10 h-5 rounded-full transition-colors ${
-                state.includeReminder ? "bg-blue-500" : "bg-gray-300"
-              }`}
+              className="w-10 h-5 bg-gray-300 rounded-full peer-checked:bg-blue-500 transition-colors duration-200 ease-in-out"
+              role="switch"
+              aria-checked={state.includeReminder}
             >
               <div
-                className={`w-4 h-4 rounded-full bg-white transform transition-transform ${
+                className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out ${
                   state.includeReminder ? "translate-x-5" : "translate-x-1"
-                } shadow-sm`}
+                }`}
               />
             </div>
           </div>
@@ -1077,13 +1199,21 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
           </label>
         </div>
         {state.includeReminder && (
-          <div className="ml-10 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4">
+          <div className="ml-10 p-4 bg-gray-50 rounded-md border border-gray-200 space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1 items-center">
-                <Calendar className="mr-2 text-gray-500 inline" size={16} />{" "}
+              <label
+                htmlFor="reminderDate"
+                className="text-gray-800 font-medium mb-2 flex items-center"
+              >
+                <Calendar
+                  className="mr-2 text-gray-500"
+                  size={16}
+                  aria-hidden="true"
+                />{" "}
                 Review Date
               </label>
               <DatePicker
+                id="reminderDate"
                 selected={state.reminderDate}
                 onChange={(date) =>
                   dispatch({
@@ -1095,16 +1225,18 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 timeFormat="HH:mm"
                 timeIntervals={15}
                 dateFormat="MMMM d, yyyy h:mm aa"
-                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                 minDate={new Date()}
-                customInput={
-                  <input className="w-full p-2 bg-white border border-gray-300 rounded-md" />
-                }
+                placeholderText="Select reminder date and time"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1 items-center">
-                <Repeat className="mr-2 text-gray-500 inline" size={16} />{" "}
+              <label className="text-gray-800 font-medium mb-2 flex items-center">
+                <Repeat
+                  className="mr-2 text-gray-500"
+                  size={16}
+                  aria-hidden="true"
+                />{" "}
                 Recurrence
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -1127,11 +1259,13 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                           | "monthly",
                       })
                     }
-                    className={`py-2 px-3 text-sm text-center rounded ${
-                      state.reminderRecurrence === option.value
-                        ? "bg-blue-100 text-blue-700 border border-blue-300"
-                        : "bg-white border border-gray-300 text-gray-700"
-                    }`}
+                    className={`py-2 px-3 text-sm rounded-md transition-all shadow-sm
+                      ${
+                        state.reminderRecurrence === option.value
+                          ? "bg-blue-100 text-blue-700 border border-blue-300"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    aria-pressed={state.reminderRecurrence === option.value}
                   >
                     {option.label}
                   </button>
@@ -1150,34 +1284,53 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-2xl mb-8 border border-gray-200 relative"
+      className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-100"
     >
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <AlertTriangle className="mr-3 text-yellow-500" />
-          <h2 className="text-2xl font-bold text-gray-800">Create Risk</h2>
+        <div className="flex items-center gap-3">
+          <AlertTriangle
+            className="text-yellow-500"
+            size={24}
+            aria-hidden="true"
+          />
+          <h2 className="text-2xl font-bold text-gray-800">
+            Create Risk Entry
+          </h2>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            dispatch({ type: "SET_SHOW_TOOLTIP", payload: !state.showTooltip })
-          }
-          className="text-gray-500 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100"
-        >
-          <Info size={20} />
-        </button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch({
+                    type: "SET_SHOW_TOOLTIP",
+                    payload: !state.showTooltip,
+                  })
+                }
+                className="text-gray-500 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Toggle information tooltip"
+              >
+                <Info size={20} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              Create a detailed risk entry with assessment and strategies
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <AnimatePresence>
         {state.showTooltip && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute top-16 right-6 bg-white text-gray-800 p-4 rounded-lg shadow-lg z-10 w-64 border border-gray-200"
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="absolute top-16 right-6 bg-white text-gray-800 p-4 rounded-lg shadow-lg z-10 w-72 border border-gray-200"
           >
             <p className="text-sm">
-              Create a comprehensive risk entry with detailed information,
-              impact assessment, and mitigation strategies.
+              Document risks with detailed information, impact assessment, and
+              response strategies.
             </p>
             <button
               type="button"
@@ -1185,75 +1338,79 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
                 dispatch({ type: "SET_SHOW_TOOLTIP", payload: false })
               }
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+              aria-label="Close tooltip"
             >
               <X size={16} />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
-      <form onSubmit={handleSubmit}>
-        <AnimatePresence>
-          {state.error && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg mb-4 flex items-center"
+
+      <AnimatePresence>
+        {state.error && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="bg-red-50 border-l-4 border-red-500 text-red-800 p-4 rounded-md mb-6 flex items-center gap-2"
+          >
+            <X className="text-red-500" size={18} aria-hidden="true" />
+            <span>{state.error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          {steps.map((tab, index) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() =>
+                isStepClickable(tab) &&
+                dispatch({ type: "SET_ACTIVE_TAB", payload: tab })
+              }
+              disabled={!isStepClickable(tab)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all
+                ${
+                  stepCompletion[tab]
+                    ? "bg-green-500 text-white"
+                    : tab === state.activeTab
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-300 text-gray-600"
+                }
+                ${
+                  !isStepClickable(tab)
+                    ? "cursor-not-allowed"
+                    : "cursor-pointer"
+                }`}
+              aria-label={`Step ${index + 1}: ${
+                tab.charAt(0).toUpperCase() + tab.slice(1)
+              }, ${stepCompletion[tab] ? "complete" : "incomplete"}`}
+              aria-current={tab === state.activeTab ? "step" : undefined}
             >
-              <X className="mr-2 text-red-500" />
-              {state.error}
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            {["basic", "assessment", "settings"].map((tab, index) => (
-              <div key={tab} className="flex flex-col items-center w-1/3">
-                <div
-                  onClick={() =>
-                    dispatch({
-                      type: "SET_ACTIVE_TAB",
-                      payload: tab as "basic" | "assessment" | "settings",
-                    })
-                  }
-                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 cursor-pointer
-                    ${
-                      state.activeTab === tab
-                        ? "bg-blue-600 text-white"
-                        : index <
-                          ["basic", "assessment", "settings"].indexOf(
-                            state.activeTab
-                          )
-                        ? "bg-blue-100 text-blue-600 border-2 border-blue-600"
-                        : "bg-gray-100 text-gray-400"
-                    }`}
-                >
-                  {index + 1}
-                </div>
-                <span
-                  className={`text-xs font-medium ${
-                    state.activeTab === tab ? "text-blue-600" : "text-gray-500"
-                  }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="relative w-full h-1 bg-gray-200 rounded-full">
-            <div
-              className="absolute top-0 left-0 h-1 bg-blue-500 rounded-full transition-all duration-300"
-              style={{
-                width:
-                  state.activeTab === "basic"
-                    ? "33%"
-                    : state.activeTab === "assessment"
-                    ? "66%"
-                    : "100%",
-              }}
-            />
-          </div>
+              {stepCompletion[tab] ? <CheckCircle size={20} /> : index + 1}
+            </button>
+          ))}
         </div>
+        <div className="relative w-full h-2 bg-gray-200 rounded-full">
+          <div
+            className="absolute top-0 left-0 h-2 bg-blue-500 rounded-full transition-all duration-300"
+            style={{
+              width:
+                state.activeTab === "basic"
+                  ? "33%"
+                  : state.activeTab === "assessment"
+                  ? "66%"
+                  : "100%",
+            }}
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      {/* Use a div instead of a form to prevent automatic form submissions */}
+      <div>
         <AnimatePresence mode="wait">
           <motion.div
             key={state.activeTab}
@@ -1261,64 +1418,69 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
+            className="min-h-[400px]"
           >
             {state.activeTab === "basic" && renderBasicForm()}
             {state.activeTab === "assessment" && renderAssessmentForm()}
             {state.activeTab === "settings" && renderSettingsForm()}
           </motion.div>
         </AnimatePresence>
-        <div className="flex justify-between mt-6">
+
+        <div className="flex justify-between mt-8 gap-4">
           {state.activeTab !== "basic" && (
-            <button
+            <Button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
+              onClick={() =>
                 dispatch({
                   type: "SET_ACTIVE_TAB",
                   payload:
                     state.activeTab === "assessment" ? "basic" : "assessment",
-                });
-              }}
-              className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors"
+                })
+              }
+              variant="outline"
+              className="w-32"
             >
               Previous
-            </button>
+            </Button>
           )}
+
           {state.activeTab !== "settings" ? (
-            <button
+            <Button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
+              onClick={() =>
                 dispatch({
                   type: "SET_ACTIVE_TAB",
                   payload:
                     state.activeTab === "basic" ? "assessment" : "settings",
-                });
-              }}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors ml-auto"
+                })
+              }
+              className="w-32 ml-auto"
+              disabled={!stepCompletion[state.activeTab]}
             >
               Next
-            </button>
+            </Button>
           ) : (
-            <button
-              type="submit"
-              className={`px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors ml-auto flex items-center gap-2 ${
-                isCreating ? "opacity-70 cursor-not-allowed" : ""
-              }`}
-              disabled={isCreating}
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSubmit(e as unknown as FormEvent);
+              }}
+              className="w-32 ml-auto"
+              disabled={!allStepsComplete || isCreating}
             >
               {isCreating ? (
-                <>
-                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                  <span>Creating...</span>
-                </>
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></span>
+                  Creating
+                </span>
               ) : (
                 "Create Risk"
               )}
-            </button>
+            </Button>
           )}
         </div>
-      </form>
+      </div>
     </motion.div>
   );
 };

@@ -38,8 +38,8 @@ import {
   QuoteIcon,
   Sparkles,
   Reply,
-  Repeat,
   Download,
+  Trash,
 } from "lucide-react";
 import { useAuthStore } from "@/store/Auth";
 import { useRiskStore } from "@/store/Risk";
@@ -1396,7 +1396,7 @@ const RiskDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pt-24 sm:pt-28 p-4 sm:p-8 text-gray-800">
         <div className="max-w-4xl mx-auto space-y-6">
           <Skeleton className="h-9 w-3/4 rounded-lg bg-gray-200" />
           <div className="flex gap-2">
@@ -1422,7 +1422,7 @@ const RiskDetail = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pt-24 sm:pt-28 p-4 sm:p-8">
         <Alert
           variant="destructive"
           className="max-w-4xl mx-auto border border-red-200 bg-red-50"
@@ -1436,7 +1436,7 @@ const RiskDetail = () => {
 
   if (!risk) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pt-24 sm:pt-28 p-4 sm:p-8">
         <Alert className="max-w-4xl mx-auto border border-gray-200 bg-white">
           <AlertCircle className="h-4 w-4 text-gray-500" />
           <AlertDescription className="text-gray-800">
@@ -1476,90 +1476,101 @@ const RiskDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pt-24 sm:pt-28 pb-12 px-4 sm:px-8 text-gray-800">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-              {risk.title}
-            </h1>
-            {isRiskCreator && risk.status !== "closed" ? (
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-gray-300 hover:bg-gray-100 shadow-sm self-start"
-                onClick={() => setIsEditDialogOpen(true)}
-              >
-                <Pencil size={16} />
-                Edit Risk
-              </Button>
-            ) : (
-              risk.status === "closed" && (
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 shadow-sm self-start"
-                  onClick={() => handleDownloadReport()}
-                >
-                  <Download size={16} />
-                  Download Risk Report
-                </Button>
-              )
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2 items-center">
-            {risk.tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="border-gray-300 bg-white/80 backdrop-blur-sm hover:bg-gray-100 px-3 py-1 rounded-full shadow-sm"
-              >
-                <Tag className="w-3 h-3 mr-2 text-blue-500" />
-                <span className="font-medium text-gray-700">{tag}</span>
-              </Badge>
-            ))}
-          </div>
-          <div className="flex items-center text-sm text-gray-500 gap-3">
-            <div className="flex items-center">
-              <User className="w-4 h-4 text-gray-400 mr-1.5" />
-              {risk.authorName}
-            </div>
-            <div className="flex items-center">
-              <Calendar className="w-4 h-4 text-gray-400 mr-1.5" />
-              {new Date(risk.created).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </div>
-            {risk.status && (
-              <div
-                className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                  risk.status === "active"
-                    ? "bg-blue-100 text-blue-700"
-                    : risk.status === "resolved"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {risk.status === "active" ? (
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                ) : risk.status === "resolved" ? (
-                  <CheckCircle className="w-3 h-3 mr-1" />
+        {/* Title section with improved mobile layout and visual hierarchy */}
+        <div className="relative bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-indigo-100 p-5 sm:p-8">
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-700 bg-clip-text text-transparent leading-tight">
+                {risk.title}
+              </h1>
+              <div className="flex-shrink-0 self-start">
+                {isRiskCreator && risk.status !== "closed" ? (
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm border-gray-300 hover:bg-gray-100 shadow-sm h-9 px-3 sm:px-4"
+                    onClick={() => setIsEditDialogOpen(true)}
+                  >
+                    <Pencil size={16} />
+                    <span className="hidden sm:inline">Edit Risk</span>
+                    <span className="sm:hidden">Edit</span>
+                  </Button>
                 ) : (
-                  <XCircle className="w-3 h-3 mr-1" />
+                  risk.status === "closed" && (
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 bg-white/90 backdrop-blur-sm border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800 shadow-sm h-9 px-3 sm:px-4"
+                      onClick={() => handleDownloadReport()}
+                    >
+                      <Download size={16} />
+                      <span className="hidden sm:inline">Download Report</span>
+                      <span className="sm:hidden">Download</span>
+                    </Button>
+                  )
                 )}
-                {risk.status.charAt(0).toUpperCase() + risk.status.slice(1)}
               </div>
-            )}
+            </div>
+
+            {/* Risk metadata with improved mobile layout */}
+            <div className="flex flex-wrap gap-y-3 gap-x-4 items-center text-sm text-gray-500">
+              <div className="flex items-center">
+                <User className="w-4 h-4 text-gray-400 mr-1.5" />
+                {risk.authorName}
+              </div>
+              <div className="flex items-center">
+                <Calendar className="w-4 h-4 text-gray-400 mr-1.5" />
+                {new Date(risk.created).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </div>
+              {risk.status && (
+                <div
+                  className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    risk.status === "active"
+                      ? "bg-blue-100 text-blue-700"
+                      : risk.status === "resolved"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  {risk.status === "active" ? (
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                  ) : risk.status === "resolved" ? (
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                  ) : (
+                    <XCircle className="w-3 h-3 mr-1" />
+                  )}
+                  {risk.status.charAt(0).toUpperCase() + risk.status.slice(1)}
+                </div>
+              )}
+            </div>
+
+            {/* Tags with horizontal scrolling on mobile */}
+            <div className="flex flex-wrap gap-2 items-center mt-1 overflow-x-auto pb-1">
+              {risk.tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="border-gray-300 bg-white/80 backdrop-blur-sm hover:bg-gray-100 px-3 py-1 rounded-full shadow-sm whitespace-nowrap"
+                >
+                  <Tag className="w-3 h-3 mr-2 text-blue-500" />
+                  <span className="font-medium text-gray-700">{tag}</span>
+                </Badge>
+              ))}
+            </div>
           </div>
         </div>
 
-        <Card className="border-gray-200 bg-white">
-          <CardContent className="p-6 space-y-6">
+        <Card className="border-gray-200 bg-white shadow-sm">
+          <CardContent className="p-4 sm:p-6 space-y-6">
             <p className="text-gray-700 leading-relaxed">{risk.content}</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <User className="w-5 h-5 text-blue-500" />
                   <div>
                     <p className="text-xs text-gray-500">Reported by</p>
@@ -1569,42 +1580,42 @@ const RiskDetail = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <Activity className="w-5 h-5 text-purple-500" />
                   <div>
                     <p className="text-xs text-gray-500">Impact</p>
                     <p
                       className={`${getRiskLevelColor(
                         risk.impact
-                      )} font-semibold px-2 py-1 rounded`}
+                      )} font-semibold px-2 py-1 rounded text-sm`}
                     >
                       {risk.impact}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <BarChart2 className="w-5 h-5 text-green-500" />
                   <div>
                     <p className="text-xs text-gray-500">Probability</p>
                     <p
                       className={`${getRiskLevelColor(
                         risk.probability
-                      )} font-semibold px-2 py-1 rounded`}
+                      )} font-semibold px-2 py-1 rounded text-sm`}
                     >
                       {risk.probability}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <AlertCircle className="w-5 h-5 text-orange-500" />
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
                     <p
                       className={`${getStatusColor(
                         risk.status
-                      )} font-semibold px-2 py-1 rounded`}
+                      )} font-semibold px-2 py-1 rounded text-sm`}
                     >
                       {risk.status || "active"}
                     </p>
@@ -1612,12 +1623,12 @@ const RiskDetail = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <Calendar className="w-5 h-5 text-yellow-500" />
                   <div>
                     <p className="text-xs text-gray-500">Created</p>
-                    <p className="text-gray-800 font-medium">
+                    <p className="text-gray-800 font-medium text-sm">
                       {new Date(risk.created).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
@@ -1629,11 +1640,11 @@ const RiskDetail = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <Calendar className="w-5 h-5 text-pink-500" />
                   <div>
                     <p className="text-xs text-gray-500">Last Updated</p>
-                    <p className="text-gray-800 font-medium">
+                    <p className="text-gray-800 font-medium text-sm">
                       {new Date(risk.updated).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
@@ -1646,11 +1657,11 @@ const RiskDetail = () => {
                 </div>
 
                 {risk.dueDate && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                     <Calendar className="w-5 h-5 text-red-500" />
                     <div>
                       <p className="text-xs text-gray-500">Due Date</p>
-                      <p className="text-red-600 font-medium">
+                      <p className="text-red-600 font-medium text-sm">
                         {new Date(risk.dueDate).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
@@ -1668,13 +1679,13 @@ const RiskDetail = () => {
             <div className="space-y-6">
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <Shield className="w-6 h-6 text-blue-500" />
+                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                   Risk Assessment
                 </h3>
                 <div className="border-t border-gray-200" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 shadow-sm transition hover:shadow">
                   <div className="flex flex-col gap-2">
                     <div className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
@@ -1706,12 +1717,12 @@ const RiskDetail = () => {
                         <div
                           className={`h-2.5 rounded-full ${
                             risk.impact === "high"
-                              ? "bg-red-600 w-full"
+                              ? "bg-red-500 w-full"
                               : risk.impact === "medium"
-                              ? "bg-yellow-600 w-2/3"
-                              : "bg-green-600 w-1/3"
+                              ? "bg-yellow-500 w-2/3"
+                              : "bg-green-500 w-1/3"
                           }`}
-                        ></div>
+                        />
                       </div>
                     </div>
                   </div>
@@ -1739,13 +1750,13 @@ const RiskDetail = () => {
                         <div
                           className={`h-2.5 rounded-full ${
                             Number(risk.probability) >= 4
-                              ? "bg-red-600"
+                              ? "bg-red-500"
                               : Number(risk.probability) >= 2
-                              ? "bg-yellow-600"
-                              : "bg-green-600"
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
                           }`}
                           style={{ width: `${Number(risk.probability) * 20}%` }}
-                        ></div>
+                        />
                       </div>
                     </div>
                   </div>
@@ -1764,41 +1775,42 @@ const RiskDetail = () => {
                           : risk.impact === "medium"
                           ? 2
                           : 1;
-
                       const probabilityValue = Number(risk.probability);
-                      const priorityScore = impactValue * probabilityValue;
-
-                      let priorityText = "Low";
-                      let colorClass = "text-green-600";
-                      let bgClass = "bg-green-600";
-                      let width = "w-1/4";
-
-                      if (priorityScore >= 10) {
-                        priorityText = "Critical";
-                        colorClass = "text-red-700";
-                        bgClass = "bg-red-700";
-                        width = "w-full";
-                      } else if (priorityScore >= 6) {
-                        priorityText = "High";
-                        colorClass = "text-red-600";
-                        bgClass = "bg-red-600";
-                        width = "w-3/4";
-                      } else if (priorityScore >= 3) {
-                        priorityText = "Medium";
-                        colorClass = "text-yellow-600";
-                        bgClass = "bg-yellow-600";
-                        width = "w-2/4";
-                      }
+                      const priority = impactValue * probabilityValue;
+                      const priorityLabel =
+                        priority >= 10
+                          ? "Critical"
+                          : priority >= 6
+                          ? "High"
+                          : priority >= 3
+                          ? "Medium"
+                          : "Low";
+                      const priorityColor =
+                        priority >= 10
+                          ? "text-red-600"
+                          : priority >= 6
+                          ? "text-orange-600"
+                          : priority >= 3
+                          ? "text-yellow-600"
+                          : "text-green-600";
 
                       return (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className={`text-lg font-bold ${colorClass}`}>
-                            {priorityText}
+                        <div className="flex items-center justify-between mt-1">
+                          <div className={`text-lg font-bold ${priorityColor}`}>
+                            {priorityLabel}
                           </div>
-                          <div className="h-2.5 flex-1 bg-gray-200 rounded-full">
-                            <div
-                              className={`h-2.5 rounded-full ${bgClass} ${width}`}
-                            ></div>
+                          <div
+                            className={`px-2 py-0.5 rounded text-xs ${
+                              priority >= 10
+                                ? "bg-red-100 text-red-800"
+                                : priority >= 6
+                                ? "bg-orange-100 text-orange-800"
+                                : priority >= 3
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            Score: {priority}
                           </div>
                         </div>
                       );
@@ -1809,20 +1821,20 @@ const RiskDetail = () => {
 
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                  <Shield className="w-6 h-6 text-blue-500" />
+                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                   Response Plan
                 </h3>
                 <div className="border-t border-gray-200" />
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-gray-500">
                     Immediate Action
                   </h4>
-                  <p className="text-gray-700 bg-gray-100 p-4 rounded-lg">
+                  <div className="text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-100 capitalize">
                     {risk.action}
-                  </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -1832,19 +1844,11 @@ const RiskDetail = () => {
                     {risk.action === "transfer" && "Transfer Mechanism"}
                     {risk.action === "avoid" && "Avoidance Approach"}
                   </h4>
-                  <div className="text-gray-700 bg-gray-100 p-4 rounded-lg prose max-w-none">
-                    {risk.action === "mitigate" && (
-                      <ReactMarkdown>{risk.mitigation}</ReactMarkdown>
-                    )}
-                    {risk.action === "accept" && (
-                      <ReactMarkdown>{risk.acceptance || ""}</ReactMarkdown>
-                    )}
-                    {risk.action === "transfer" && (
-                      <ReactMarkdown>{risk.transfer || ""}</ReactMarkdown>
-                    )}
-                    {risk.action === "avoid" && (
-                      <ReactMarkdown>{risk.avoidance || ""}</ReactMarkdown>
-                    )}
+                  <div className="text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-100 prose max-w-none">
+                    {risk.action === "mitigate" && risk.mitigation}
+                    {risk.action === "accept" && risk.acceptance}
+                    {risk.action === "transfer" && risk.transfer}
+                    {risk.action === "avoid" && risk.avoidance}
                   </div>
                 </div>
               </div>
@@ -1863,12 +1867,12 @@ const RiskDetail = () => {
               )}
 
               {risk?.resolution && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
                   <h4 className="font-medium text-gray-700 flex items-center">
-                    <XCircle className="mr-2 h-4 w-4 text-gray-500" />
+                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                     Resolution
                   </h4>
-                  <p className="mt-1 text-gray-600">{risk.resolution}</p>
+                  <p className="mt-2 text-gray-600">{risk.resolution}</p>
                 </div>
               )}
             </div>
@@ -1877,7 +1881,7 @@ const RiskDetail = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                    <File className="w-6 h-6 text-blue-500" />
+                    <File className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
                     Attachment
                   </h3>
                   <div className="border-t border-gray-200" />
@@ -1897,16 +1901,18 @@ const RiskDetail = () => {
                     href={attachment.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
                   >
                     <File className="w-6 h-6 text-gray-600" />
-                    <div>
-                      <p className="text-gray-700 font-medium">
-                        View Attachment
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        {attachment.id.substring(
+                          attachment.id.lastIndexOf("/") + 1
+                        )}
                       </p>
-                      <p className="text-xs text-gray-600">{attachment.type}</p>
+                      <p className="text-xs text-gray-500">{attachment.type}</p>
                     </div>
-                    <ArrowUpRight className="w-4 h-4 ml-auto text-gray-600" />
+                    <ArrowUpRight className="w-4 h-4 text-gray-600" />
                   </a>
                 )}
               </div>
@@ -1964,16 +1970,16 @@ const RiskDetail = () => {
         )}
 
         <Tabs defaultValue="discussion" className="w-full mt-8">
-          <TabsList className="w-full border-b rounded-none p-0 h-auto bg-transparent gap-2">
+          <TabsList className="w-full border-b rounded-none p-0 h-auto bg-transparent flex overflow-x-auto hide-scrollbar pb-1 mb-1 gap-1.5">
             <TabsTrigger
               value="discussion"
-              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
+              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-3 py-2 text-sm font-medium min-w-max flex-shrink-0"
             >
-              <div className="flex items-center gap-2">
-                <Reply className="w-4 h-4 text-blue-500" />
-                Discussion{" "}
+              <div className="flex items-center gap-1.5">
+                <Reply className="w-3.5 h-3.5 text-blue-500" />
+                <span>Discussion</span>
                 {commentCount > 0 && (
-                  <span className="bg-blue-100 text-blue-600 rounded-full text-xs px-2 py-0.5 font-medium">
+                  <span className="bg-blue-100 text-blue-700 text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {commentCount}
                   </span>
                 )}
@@ -1982,13 +1988,13 @@ const RiskDetail = () => {
             {isRiskCreator && (
               <TabsTrigger
                 value="reminders"
-                className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
+                className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-3 py-2 text-sm font-medium min-w-max flex-shrink-0"
               >
-                <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-yellow-500" />
-                  Reminders{" "}
+                <div className="flex items-center gap-1.5">
+                  <Bell className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Reminders</span>
                   {userRiskReminders.length > 0 && (
-                    <span className="bg-yellow-100 text-yellow-600 rounded-full text-xs px-2 py-0.5 font-medium">
+                    <span className="bg-amber-100 text-amber-700 text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {userRiskReminders.length}
                     </span>
                   )}
@@ -1997,27 +2003,27 @@ const RiskDetail = () => {
             )}
             <TabsTrigger
               value="analysis"
-              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
+              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-3 py-2 text-sm font-medium min-w-max flex-shrink-0"
             >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-500" />
-                Risk Analysis
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                <span>Analysis</span>
               </div>
             </TabsTrigger>
             <TabsTrigger
               value="web-search"
-              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 py-2.5 text-sm font-medium"
+              className="rounded-t-lg border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:bg-white data-[state=active]:shadow-sm px-3 py-2 text-sm font-medium min-w-max flex-shrink-0"
             >
-              <div className="flex items-center gap-2">
-                <ArrowUpRight className="w-4 h-4 text-green-500" />
-                Web Search
+              <div className="flex items-center gap-1.5">
+                <ArrowUpRight className="w-3.5 h-3.5 text-green-500" />
+                <span>Web</span>
               </div>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent
             value="discussion"
-            className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+            className="mt-4 p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
           >
             <CommentSection
               riskId={risk.$id}
@@ -2029,112 +2035,82 @@ const RiskDetail = () => {
           {isRiskCreator && (
             <TabsContent
               value="reminders"
-              className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+              className="mt-4 p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
             >
               <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-lg flex items-center gap-1.5">
+                    <Bell className="h-4 w-4 text-amber-500" />
+                    Your Reminders
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsReminderDialogOpen(true)}
+                    className="text-sm border-blue-500 text-blue-600"
+                  >
+                    <Bell className="h-3.5 w-3.5 mr-1" />
+                    Add Reminder
+                  </Button>
+                </div>
+
                 {userRiskReminders.length === 0 ? (
-                  <div className="text-center py-12 flex flex-col items-center">
-                    <div className="bg-yellow-50 p-4 rounded-full">
-                      <Bell className="h-12 w-12 text-yellow-400" />
-                    </div>
-                    <h3 className="mt-4 text-lg font-medium text-gray-900">
-                      No reminders set
-                    </h3>
-                    <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-                      Set reminders for this risk to get notifications about
-                      important deadlines or follow-up tasks.
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <p className="text-gray-500">
+                      You don&apos;t have any reminders set for this risk yet.
                     </p>
-                    <Button
-                      onClick={() => {
-                        setEditingReminder(null);
-                        setIsReminderDialogOpen(true);
-                      }}
-                      className="mt-4 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600"
-                    >
-                      <Bell className="mr-2 h-4 w-4" />
-                      Create Reminder
-                    </Button>
                   </div>
                 ) : (
-                  <>
-                    <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-                        <Bell className="h-5 w-5 text-yellow-500" />
-                        Your Reminders
-                      </h3>
-                      <Button
-                        onClick={() => {
-                          setEditingReminder(null);
-                          setIsReminderDialogOpen(true);
-                        }}
-                        className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600"
-                        size="sm"
+                  <div className="space-y-3">
+                    {userRiskReminders.map((reminder) => (
+                      <div
+                        key={reminder.$id}
+                        className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-4 justify-between"
                       >
-                        <Bell className="mr-2 h-4 w-4" />
-                        Add Reminder
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {userRiskReminders.map((reminder) => (
-                        <div
-                          key={reminder.$id}
-                          className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow relative"
-                        >
-                          <div className="absolute top-4 right-4 flex gap-2">
-                            <button
-                              onClick={() => handleEditReminder(reminder)}
-                              className="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700"
-                              title="Edit reminder"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => deleteReminder(reminder.$id)}
-                              className="p-1 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600"
-                              title="Delete reminder"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
+                        <div className="space-y-1.5">
+                          <div className="font-medium text-gray-800">
+                            {reminder.title}
                           </div>
-                          <div className="space-y-3">
-                            <div className="mb-3">
-                              <h4 className="font-medium text-gray-800 text-lg">
-                                {reminder.title}
-                              </h4>
-                              <div className="flex items-center text-sm text-gray-500 mt-1">
-                                <Calendar className="w-3.5 h-3.5 mr-1" />
-                                {new Date(reminder.datetime).toLocaleString(
-                                  "en-US",
-                                  {
-                                    weekday: "short",
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )}
-                              </div>
-                            </div>
-                            <p className="text-gray-700 text-sm">
-                              {reminder.description}
-                            </p>
-                            {reminder.recurrence !== "none" && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge
-                                  variant="outline"
-                                  className="bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1"
-                                >
-                                  <Repeat className="h-3 w-3" />
-                                  Repeats {reminder.recurrence}
-                                </Badge>
-                              </div>
+                          <div className="text-sm text-gray-600">
+                            {reminder.description}
+                          </div>
+                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(reminder.reminderDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
                             )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditReminder(reminder)}
+                            className="h-8 px-2 text-xs"
+                          >
+                            <Pencil className="h-3 w-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteReminder(reminder.$id)}
+                            className="h-8 px-2 text-xs border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash className="h-3 w-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </TabsContent>
@@ -2142,197 +2118,67 @@ const RiskDetail = () => {
 
           <TabsContent
             value="analysis"
-            className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+            className="mt-4 p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
           >
-            {user ? (
-              <RiskAnalysisPanel riskId={risk.$id} userId={user.$id} />
-            ) : (
-              <div className="text-center py-12 flex flex-col items-center">
-                <div className="bg-yellow-50 p-4 rounded-full">
-                  <AlertCircle className="h-12 w-12 text-yellow-400" />
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  Authentication Required
-                </h3>
-                <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-                  Please log in to use the Risk Analysis feature.
-                </p>
-                <Button
-                  onClick={() => router.push("/login")}
-                  className="mt-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                >
-                  Go to Login
-                </Button>
-              </div>
+            {user && (
+              <RiskAnalysisPanel riskId={riskId as string} userId={user.$id} />
             )}
           </TabsContent>
 
           <TabsContent
             value="web-search"
-            className="mt-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
+            className="mt-4 p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm"
           >
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2 mb-1">
-                    <ArrowUpRight className="h-5 w-5 text-green-500" />
-                    Web Research
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Find external resources related to{" "}
-                    <span className="font-medium">
-                      &quot;{risk.title}&quot;
-                    </span>
-                    {risk.tags.length > 0 && (
-                      <span>
-                        {" "}
-                        with tags:{" "}
-                        <span className="font-medium">
-                          {risk.tags.join(", ")}
-                        </span>
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    onClick={search}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                    disabled={loading}
-                  >
-                    {results.length === 0 ? (
-                      <>
-                        <ArrowUpRight className="mr-2 h-4 w-4" />
-                        Search Resources
-                      </>
-                    ) : (
-                      <>
-                        <ArrowUpRight className="mr-2 h-4 w-4" />
-                        Refresh Results
-                      </>
-                    )}
-                  </Button>
-                  {results.length > 0 && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setResults([])}
-                      className="text-gray-600 border-gray-300"
-                    >
-                      Clear Results
-                    </Button>
-                  )}
-                </div>
+                <h3 className="font-semibold text-lg flex items-center gap-1.5">
+                  <ArrowUpRight className="h-4 w-4 text-green-500" />
+                  Related Web Results
+                </h3>
+                <Button
+                  onClick={search}
+                  className="h-9 bg-green-600 hover:bg-green-700"
+                >
+                  <ArrowUpRight className="h-4 w-4 mr-2" />
+                  Search Web
+                </Button>
               </div>
 
-              {loading && (
-                <div className="space-y-4 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-5 w-[60%]" />
-                      <Skeleton className="h-4 w-[40%]" />
-                    </div>
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-5 w-[70%]" />
-                      <Skeleton className="h-4 w-[50%]" />
-                    </div>
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-5 w-[65%]" />
-                      <Skeleton className="h-4 w-[45%]" />
-                    </div>
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                  </div>
-                </div>
-              )}
-
-              {results.length > 0 && !loading && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 gap-4">
-                    {results.map((item, index) => (
+              {results.length > 0 ? (
+                <div className="space-y-3 mt-4">
+                  {results.map((result, index) => (
+                    <div
+                      key={index}
+                      className="border border-gray-200 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
+                    >
                       <a
-                        href={item.url}
+                        href={result.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        key={index}
-                        className="group p-4 sm:p-5 rounded-lg border border-gray-200 hover:border-green-300 bg-white hover:bg-green-50 transition-colors flex flex-col sm:flex-row gap-4 items-start sm:items-center"
+                        className="flex flex-col"
                       >
-                        <div className="bg-green-100 p-3 rounded-full text-green-700 flex-shrink-0">
-                          <ArrowUpRight className="h-6 w-6" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <p className="font-medium text-gray-900 group-hover:text-green-700 flex items-center text-base sm:text-lg">
-                            {new URL(item.url).hostname.replace("www.", "")}
-                            <ArrowUpRight className="h-3 w-3 ml-1.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </p>
-                          <p className="text-sm text-gray-600 line-clamp-2">
-                            {item.description}
-                          </p>
-                        </div>
-                        <div className="flex items-center bg-gray-50 group-hover:bg-green-100 px-3 py-1.5 rounded-full transition-colors self-end sm:self-center">
-                          <div className="w-16 bg-gray-200 rounded-full h-1.5 mr-2">
-                            <div
-                              className="bg-green-600 h-1.5 rounded-full"
-                              style={{ width: `${item.score * 100}%` }}
-                            ></div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-blue-600 hover:underline text-sm font-medium mb-1 flex items-center">
+                            {new URL(result.url).hostname}
+                            <ArrowUpRight className="h-3 w-3 ml-1" />
+                          </h4>
+                          <div className="bg-green-100 text-green-800 text-xs rounded px-2 py-0.5">
+                            Score: {result.score.toFixed(2)}
                           </div>
-                          <span className="text-xs font-medium text-gray-700 group-hover:text-green-800">
-                            {(item.score * 100).toFixed(0)}% match
-                          </span>
                         </div>
+                        <p className="text-gray-600 text-sm">
+                          {result.description}
+                        </p>
                       </a>
-                    ))}
-                  </div>
-
-                  <p className="text-xs text-center text-gray-500">
-                    Results are ranked by relevance to the risk description and
-                    tags
-                  </p>
-                </div>
-              )}
-
-              {results.length === 0 && !loading && (
-                <div className="bg-gray-50 rounded-lg p-8 sm:p-10 text-center flex flex-col items-center">
-                  <div className="bg-gray-100 p-4 rounded-full mb-4">
-                    <ArrowUpRight className="h-10 w-10 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">
-                    No search results yet
-                  </h3>
-                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-                    Search for external resources to find articles, guides, and
-                    solutions related to this risk.
-                  </p>
-                  <div className="bg-gray-100 p-4 rounded-lg max-w-md w-full">
-                    <p className="text-xs text-gray-600 font-medium uppercase mb-2 tracking-wider">
-                      What you&apos;ll find
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                      <div className="flex items-center gap-1.5">
-                        <ArrowUpRight className="h-3 w-3 text-green-600" />
-                        Best practices
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <ArrowUpRight className="h-3 w-3 text-green-600" />
-                        Expert insights
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <ArrowUpRight className="h-3 w-3 text-green-600" />
-                        Case studies
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <ArrowUpRight className="h-3 w-3 text-green-600" />
-                        Solution options
-                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center mt-4">
+                  <p className="text-gray-500">
+                    Click &ldquo;Search Web&rdquo; to find related information
+                    for this risk.
+                  </p>
                 </div>
               )}
             </div>
