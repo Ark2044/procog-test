@@ -457,8 +457,8 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const filteredCount = filteredRisks.length;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+    <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm">
         <Tabs
           defaultValue={viewMode}
           onValueChange={(value) => setViewMode(value as "my" | "all")}
@@ -480,19 +480,19 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
           </TabsList>
         </Tabs>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
           <Collapsible
             open={isFilterExpanded}
             onOpenChange={setIsFilterExpanded}
             className="w-full"
           >
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 <CollapsibleTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className={`h-9 flex items-center gap-1 ${
+                    className={`h-9 flex items-center gap-1 w-full sm:w-auto ${
                       activeFilterCount > 0
                         ? "border-indigo-300 bg-indigo-50 text-indigo-700"
                         : ""
@@ -512,7 +512,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                   value={sortBy}
                   onValueChange={(value) => setSortBy(value as typeof sortBy)}
                 >
-                  <SelectTrigger className="w-[110px] sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
+                  <SelectTrigger className="w-full sm:w-[140px] h-9 text-xs sm:text-sm bg-white">
                     <div className="flex items-center">
                       <SortDesc className="h-3.5 w-3.5 mr-1.5" />
                       <SelectValue placeholder="Sort by" />
@@ -532,7 +532,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
               </div>
 
               {filteredRisks.length > 0 && (
-                <div className="text-sm text-gray-500">
+                <div className="text-xs sm:text-sm text-gray-500 w-full sm:w-auto text-right">
                   {filteredCount === totalRisks
                     ? `Showing all ${totalRisks} risks`
                     : `Showing ${filteredCount} of ${totalRisks} risks`}
@@ -546,13 +546,13 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="p-4 border border-gray-200 rounded-md bg-gray-50"
+                className="p-3 sm:p-4 border border-gray-200 rounded-md bg-gray-50 overflow-hidden"
               >
                 <div className="flex flex-wrap gap-2 mb-3">
                   {renderFilterBadges()}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
                   <Select value={filterAction} onValueChange={setFilterAction}>
                     <SelectTrigger className="w-full h-9 text-xs sm:text-sm bg-white">
                       <SelectValue placeholder="Action" />
@@ -664,12 +664,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         </div>
       ) : (
         <div className="mt-4 sm:mt-6 grid grid-cols-1 gap-4 sm:gap-6">
-          {loading && !risks.length ? (
-            <div className="flex items-center justify-center p-4 sm:p-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-              <Loader2 className="animate-spin mr-2 w-4 h-4 sm:w-5 sm:h-5 text-indigo-500" />
-              <span className="text-sm sm:text-base">Loading risks...</span>
-            </div>
-          ) : filteredRisks.length === 0 ? (
+          {filteredRisks.length === 0 ? (
             <div className="bg-white rounded-lg p-6 sm:p-8 text-center border border-gray-200 shadow-sm">
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Filter className="w-6 h-6 text-gray-400" />

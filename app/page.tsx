@@ -1,8 +1,8 @@
 "use client";
 import React, { useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import HeroSection from "@/components/layout/HeroSection";
+import Link from "next/link";
 import {
   BarChart3,
   Shield,
@@ -10,10 +10,31 @@ import {
   CheckCircle,
   Briefcase,
   Clipboard,
+  ArrowRight,
 } from "lucide-react";
 
 const HomePage = () => {
   const router = useRouter();
+
+  // Define consistent card styling
+  const cardBgColor = "bg-white/80 backdrop-blur-sm"; // Semi-transparent white with blur
+  const cardBorderColor = "border-blue-200";
+  const cardTextColor = "text-slate-600"; // Use a neutral dark color for description
+  const cardTitleColor = "text-gray-800"; // Keep titles dark
+
+  // FIXED: Use a single blue gradient for the entire page
+  const pageBackgroundStyle = {
+    background:
+      "linear-gradient(135deg, #EFF6FF 30%, #E0F2FE 70%, #CFFAFE 100%)", // Light Blue -> Lighter Sky -> Lightest Cyan
+  };
+
+  // Button styles
+  const buttonBackgroundStyle = {
+    background: "linear-gradient(to right, #3B82F6, #0EA5E9)", // Blue-500 to Sky-500
+  };
+  const buttonShadowStyle = {
+    boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)", // Blue shadow
+  };
 
   const features = useMemo(
     () => [
@@ -22,33 +43,33 @@ const HomePage = () => {
         title: "Advanced Analytics",
         description:
           "Gain deep, actionable insights with our powerful analytics engine.",
-        bgColor: "bg-gradient-to-br from-indigo-50 to-indigo-100",
-        textColor: "text-indigo-700",
-        borderColor: "border-indigo-200",
-        iconColor: "#6366F1",
+        bgColor: cardBgColor,
+        textColor: cardTextColor,
+        borderColor: cardBorderColor,
+        iconColor: "#3B82F6", // Blue
       },
       {
         icon: Shield,
         title: "Risk Mitigation",
         description:
           "Proactively identify and mitigate potential risks before they escalate.",
-        bgColor: "bg-gradient-to-br from-purple-50 to-purple-100",
-        textColor: "text-purple-700",
-        borderColor: "border-purple-200",
-        iconColor: "#8B5CF6",
+        bgColor: cardBgColor,
+        textColor: cardTextColor,
+        borderColor: cardBorderColor,
+        iconColor: "#0EA5E9", // Sky Blue
       },
       {
         icon: Settings,
         title: "Customizable Platform",
         description:
           "Tailor the platform to your unique business needs and workflows.",
-        bgColor: "bg-gradient-to-br from-blue-50 to-blue-100",
-        textColor: "text-blue-700",
-        borderColor: "border-blue-200",
-        iconColor: "#3B82F6",
+        bgColor: cardBgColor,
+        textColor: cardTextColor,
+        borderColor: cardBorderColor,
+        iconColor: "#06B6D4", // Cyan
       },
     ],
-    []
+    [cardBgColor, cardTextColor, cardBorderColor]
   );
 
   const benefits = useMemo(
@@ -58,172 +79,156 @@ const HomePage = () => {
         title: "Streamlined Compliance",
         description:
           "Ensure regulatory compliance with automated tracking and reporting.",
-        bgColor: "bg-gradient-to-br from-rose-50 to-pink-50",
-        textColor: "text-rose-700",
-        borderColor: "border-rose-200",
-        iconColor: "#F43F5E",
+        bgColor: cardBgColor,
+        textColor: cardTextColor,
+        borderColor: cardBorderColor,
+        iconColor: "#22C55E", // Green
       },
       {
         icon: Briefcase,
         title: "Enhanced Decision-Making",
         description:
           "Leverage data-driven insights for strategic business decisions.",
-        bgColor: "bg-gradient-to-br from-amber-50 to-yellow-50",
-        textColor: "text-amber-700",
-        borderColor: "border-amber-200",
-        iconColor: "#F59E0B",
+        bgColor: cardBgColor,
+        textColor: cardTextColor,
+        borderColor: cardBorderColor,
+        iconColor: "#0EA5E9", // Sky Blue
       },
       {
         icon: Clipboard,
         title: "Centralized Management",
         description:
           "Consolidate and manage all your risk information in one platform.",
-        bgColor: "bg-gradient-to-br from-cyan-50 to-sky-50",
-        textColor: "text-cyan-700",
-        borderColor: "border-cyan-200",
-        iconColor: "#06B6D4",
+        bgColor: cardBgColor,
+        textColor: cardTextColor,
+        borderColor: cardBorderColor,
+        iconColor: "#06B6D4", // Cyan
       },
     ],
-    []
+    [cardBgColor, cardTextColor, cardBorderColor]
   );
 
   return (
-    <motion.div
-      className="min-h-screen overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      style={{
-        background: "linear-gradient(to bottom, #F9FAFB, #F3F4F6)",
-      }}
-    >
-      <HeroSection />
+    // FIXED: Apply the blue gradient to the entire page
+    <div className="min-h-screen" style={pageBackgroundStyle}>
+      <div className="container mx-auto px-4 pt-16 pb-8">
+        {/* Hero Section - No background color/style needed since parent has blue background */}
+        <div className="max-w-4xl mx-auto text-center relative mb-16">
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6"
+            style={{ textShadow: "0 2px 8px rgba(59, 130, 246, 0.15)" }}
+          >
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-sky-600">
+              Effortlessly Manage Your Risks
+            </span>
+          </h1>
 
-      {/* Features Section */}
-      <motion.section
-        className="py-16 sm:py-24 md:py-32 container mx-auto px-4"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-      >
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-8 sm:mb-12 md:mb-16 text-gray-800">
-          Key Features
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-          <AnimatePresence>
+          <p className="text-lg sm:text-xl mb-6 sm:mb-8 text-gray-700 max-w-3xl mx-auto">
+            Our platform empowers you to identify, assess, and mitigate risks
+            with ease. Get started today and take control of your
+            organization&apos;s future.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
+            <motion.button
+              className="group relative px-6 sm:px-8 py-3 rounded-xl overflow-hidden shadow-lg w-full sm:w-auto"
+              style={{ ...buttonBackgroundStyle, ...buttonShadowStyle }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
+              <span className="relative flex items-center justify-center font-bold text-white text-lg">
+                <Link href="/register" className="block w-full text-center">
+                  Get Started
+                </Link>
+                <ArrowRight className="ml-2 h-5 w-5 flex-shrink-0" />
+              </span>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Features Section - Use card styling for visual separation without changing page background */}
+        <section className="mb-16">
+          <h2
+            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 sm:mb-8 ${cardTitleColor}`}
+          >
+            Key Features
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.95, rotate: -2 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                whileHover={{
-                  scale: 1.03,
-                  boxShadow: "0 0 15px rgba(0, 0, 0, 0.05)",
-                }}
+                whileHover={{ y: -4, scale: 1.02 }}
+                className={`p-4 sm:p-5 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col ${feature.bgColor} ${feature.borderColor}`}
               >
-                <div
-                  className={`p-4 sm:p-6 rounded-xl ${feature.bgColor} border ${feature.borderColor} shadow-sm hover:shadow-md transition-shadow duration-300`}
-                >
-                  <feature.icon
-                    className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4"
-                    style={{ color: feature.iconColor }}
-                  />
-                  <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gray-800">
-                    {feature.title}
-                  </h3>
-                  <p className={`${feature.textColor} text-sm sm:text-base`}>
-                    {feature.description}
-                  </p>
-                </div>
+                <feature.icon
+                  className="w-7 h-7 sm:w-8 sm:h-8 mb-3 flex-shrink-0"
+                  style={{ color: feature.iconColor }}
+                />
+                <h3 className={`text-lg font-bold mb-2 ${cardTitleColor}`}>
+                  {feature.title}
+                </h3>
+                <p className={`${feature.textColor} text-sm leading-relaxed`}>
+                  {feature.description}
+                </p>
               </motion.div>
             ))}
-          </AnimatePresence>
-        </div>
-      </motion.section>
+          </div>
+        </section>
 
-      {/* Benefits Section */}
-      <motion.section
-        className="py-16 sm:py-24 md:py-32 container mx-auto px-4 bg-white shadow-inner"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-      >
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-8 sm:mb-12 md:mb-16 text-gray-800">
-          Key Benefits
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-          <AnimatePresence>
+        {/* Benefits Section */}
+        <section className="mb-16">
+          <h2
+            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 sm:mb-8 ${cardTitleColor}`}
+          >
+            Key Benefits
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                whileHover={{
-                  scale: 1.03,
-                  boxShadow: "0 0 15px rgba(0, 0, 0, 0.05)",
-                }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className={`p-4 sm:p-6 rounded-xl ${benefit.bgColor} shadow-md border ${benefit.borderColor}`}
+                whileHover={{ y: -4, scale: 1.02 }}
+                className={`p-4 sm:p-5 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col ${benefit.bgColor} ${benefit.borderColor}`}
               >
                 <benefit.icon
-                  className="w-10 h-10 sm:w-12 sm:h-12 mb-3 sm:mb-4"
+                  className="w-7 h-7 sm:w-8 sm:h-8 mb-3 flex-shrink-0"
                   style={{ color: benefit.iconColor }}
                 />
-                <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gray-800">
+                <h3 className={`text-lg font-bold mb-2 ${cardTitleColor}`}>
                   {benefit.title}
                 </h3>
-                <p className={`${benefit.textColor} text-sm sm:text-base`}>
+                <p className={`${benefit.textColor} text-sm leading-relaxed`}>
                   {benefit.description}
                 </p>
               </motion.div>
             ))}
-          </AnimatePresence>
-        </div>
-      </motion.section>
+          </div>
+        </section>
 
-      {/* Call to Action */}
-      <motion.section
-        className="py-12 sm:py-16 md:py-20 text-center"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-      >
-        <div
-          className="py-10 sm:py-16 px-4 sm:px-8 rounded-3xl mx-auto max-w-4xl shadow-lg border border-indigo-100"
-          style={{
-            background: "linear-gradient(135deg, #F5F3FF, #EFF6FF, #EEF2FF)",
-          }}
-        >
-          <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 text-gray-800 px-2">
-            Ready to Elevate Your Experience?
-          </h3>
-          <p className="text-lg sm:text-xl mb-6 sm:mb-8 text-gray-600 px-2">
-            Join us today and unlock the full potential of our platform.
-          </p>
-          <motion.button
-            onClick={() => router.push("/register")}
-            className="px-6 sm:px-10 py-3 sm:py-5 rounded-xl font-bold text-base sm:text-lg text-white shadow-md focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 w-full sm:w-auto"
-            style={{
-              background: "linear-gradient(to right, #6366F1, #8B5CF6)",
-            }}
-            whileHover={{
-              scale: 1.05,
-              boxShadow: "0 0 25px rgba(99,102,241,0.4)",
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-          >
-            Sign Up Now
-          </motion.button>
-        </div>
-      </motion.section>
-    </motion.div>
+        {/* Call to Action */}
+        <section className="pb-16 text-center">
+          <div className="py-6 sm:py-8 px-4 sm:px-6 rounded-xl mx-auto max-w-3xl shadow-md bg-white/80 backdrop-blur-sm border border-blue-200">
+            <h3
+              className={`text-xl sm:text-2xl font-bold mb-2 sm:mb-3 ${cardTitleColor}`}
+            >
+              Ready to Elevate Your Experience?
+            </h3>
+            <p className="text-base mb-4 sm:mb-6 text-gray-600 max-w-xl mx-auto">
+              Join us today and unlock the full potential of our platform.
+            </p>
+            <motion.button
+              onClick={() => router.push("/register")}
+              className="px-6 py-3 rounded-xl font-bold text-base text-white shadow-md focus:outline-none focus-visible:ring focus-visible:ring-blue-500 w-full sm:w-auto inline-block"
+              style={buttonBackgroundStyle}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Sign Up Now
+            </motion.button>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 };
 

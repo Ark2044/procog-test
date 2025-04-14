@@ -22,63 +22,65 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-gradient-to-b from-gray-50 to-indigo-50 text-gray-700 pt-16 pb-8 border-t border-indigo-100 relative z-20">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+    <footer className="bg-gradient-to-b from-gray-50 to-indigo-50 text-gray-700 pt-10 pb-6 border-t border-indigo-100 relative z-20">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {/* Brand Section */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center">
-              <div className="mr-2 rounded-lg w-8 h-8 flex items-center justify-center bg-indigo-600 text-white text-xl font-bold">
+              <div className="mr-1.5 rounded-lg w-6 h-6 flex items-center justify-center bg-indigo-600 text-white text-base font-bold">
                 P
               </div>
-              <h3 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              <h3 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
                 PROCOG
               </h3>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-xs text-gray-500 leading-relaxed">
               Empowering risk management collaboration through innovative
               solutions and data-driven insights.
             </p>
-            <div className="flex space-x-4 pt-2">
+            <div className="flex space-x-3 pt-1">
               <a
                 href="#"
                 className="text-gray-400 hover:text-indigo-600 transition-colors"
                 aria-label="Facebook"
               >
-                <FaFacebookF size={18} />
+                <FaFacebookF size={16} />
               </a>
               <a
                 href="#"
                 className="text-gray-400 hover:text-indigo-600 transition-colors"
                 aria-label="Twitter"
               >
-                <FaTwitter size={18} />
+                <FaTwitter size={16} />
               </a>
               <a
                 href="#"
                 className="text-gray-400 hover:text-indigo-600 transition-colors"
                 aria-label="LinkedIn"
               >
-                <FaLinkedinIn size={18} />
+                <FaLinkedinIn size={16} />
               </a>
               <a
                 href="#"
                 className="text-gray-400 hover:text-indigo-600 transition-colors"
                 aria-label="GitHub"
               >
-                <FaGithub size={18} />
+                <FaGithub size={16} />
               </a>
             </div>
           </div>
 
           {/* Product Links */}
           <div>
-            <h4 className="font-bold text-lg mb-4 text-gray-800">Product</h4>
-            <ul className="space-y-3">
+            <h4 className="font-bold text-base mb-2.5 text-gray-800">
+              Product
+            </h4>
+            <ul className="space-y-1.5">
               <li>
                 <Link
                   href="/guide"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   User Guide
                 </Link>
@@ -86,7 +88,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Features
                 </a>
@@ -94,7 +96,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Pricing
                 </a>
@@ -102,7 +104,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Integrations
                 </a>
@@ -110,7 +112,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   API Documentation
                 </a>
@@ -120,12 +122,14 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-bold text-lg mb-4 text-gray-800">Company</h4>
-            <ul className="space-y-3">
+            <h4 className="font-bold text-base mb-2.5 text-gray-800">
+              Company
+            </h4>
+            <ul className="space-y-1.5">
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   About Us
                 </a>
@@ -133,7 +137,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Careers
                 </a>
@@ -141,7 +145,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Blog
                 </a>
@@ -149,7 +153,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Press Kit
                 </a>
@@ -157,7 +161,7 @@ export default function Footer() {
               <li>
                 <a
                   href="#"
-                  className="text-gray-600 hover:text-indigo-600 transition-colors text-sm"
+                  className="text-gray-600 hover:text-indigo-600 transition-colors text-xs"
                 >
                   Contact
                 </a>
@@ -167,14 +171,14 @@ export default function Footer() {
 
           {/* Newsletter Section */}
           <div>
-            <h4 className="font-bold text-lg mb-4 text-gray-800">
+            <h4 className="font-bold text-base mb-2.5 text-gray-800">
               Stay Updated
             </h4>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-xs text-gray-500 mb-2.5">
               Subscribe to our newsletter to get the latest updates on risk
               management.
             </p>
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-2">
               <div>
                 <label htmlFor="email" className="sr-only">
                   Email address
@@ -185,13 +189,13 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
+                  className="w-full px-2.5 py-1.5 rounded-md border border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-transparent outline-none text-xs"
                   placeholder="Enter your email"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors text-sm font-medium"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-1.5 px-3 rounded-md transition-colors text-xs font-medium"
               >
                 Subscribe
               </button>
@@ -200,27 +204,31 @@ export default function Footer() {
         </div>
 
         {/* Trust indicators */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-8 border-t border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 border-t border-b border-gray-200">
           <div className="flex items-center justify-center md:justify-start">
-            <FaShieldAlt className="text-indigo-600 mr-3 text-xl" />
+            <FaShieldAlt className="text-indigo-600 mr-2 text-base" />
             <div>
-              <h5 className="font-semibold text-gray-800">
+              <h5 className="font-semibold text-sm text-gray-800">
                 Enterprise Grade Security
               </h5>
               <p className="text-xs text-gray-500">SOC 2 Type II Compliant</p>
             </div>
           </div>
           <div className="flex items-center justify-center">
-            <FaLock className="text-indigo-600 mr-3 text-xl" />
+            <FaLock className="text-indigo-600 mr-2 text-base" />
             <div>
-              <h5 className="font-semibold text-gray-800">Data Privacy</h5>
+              <h5 className="font-semibold text-sm text-gray-800">
+                Data Privacy
+              </h5>
               <p className="text-xs text-gray-500">GDPR and CCPA Compliant</p>
             </div>
           </div>
           <div className="flex items-center justify-center md:justify-end">
-            <FaHeadset className="text-indigo-600 mr-3 text-xl" />
+            <FaHeadset className="text-indigo-600 mr-2 text-base" />
             <div>
-              <h5 className="font-semibold text-gray-800">24/7 Support</h5>
+              <h5 className="font-semibold text-sm text-gray-800">
+                24/7 Support
+              </h5>
               <p className="text-xs text-gray-500">
                 Available for Enterprise Plans
               </p>
@@ -229,12 +237,12 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-8 text-sm">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="mt-5 text-xs">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
             <p className="text-gray-500">
               &copy; {new Date().getFullYear()} Procog. All rights reserved.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 text-gray-500">
+            <div className="flex flex-wrap justify-center gap-3 text-gray-500">
               <a href="#" className="hover:text-indigo-600 transition-colors">
                 Terms of Service
               </a>

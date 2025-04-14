@@ -361,16 +361,16 @@ const Dashboard = () => {
   const totalRisks = risks.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16 sm:pt-20">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-14 sm:pt-16">
       {/* Main grid layout */}
-      <div className="grid lg:grid-cols-[280px_1fr] gap-0">
+      <div className="grid lg:grid-cols-[260px_1fr] gap-0">
         {/* Sidebar */}
-        <aside className="bg-white border-b lg:border-r border-gray-200 lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 lg:overflow-y-auto">
+        <aside className="bg-white border-b lg:border-r border-gray-200 lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 lg:overflow-y-auto">
           {/* User profile section */}
-          <div className="p-3 sm:p-4 md:p-6 border-b border-gray-200 flex justify-between items-center">
+          <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
             <div className="overflow-hidden">
-              <div className="flex items-center mb-1 sm:mb-2">
-                <LucideUser className="mr-2 text-blue-500 w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <div className="flex items-center mb-1">
+                <LucideUser className="mr-2 text-blue-500 w-4 h-4 flex-shrink-0" />
                 <p className="text-sm font-medium text-gray-800 truncate">
                   {user?.name || "User"}
                 </p>
@@ -393,32 +393,32 @@ const Dashboard = () => {
           </div>
 
           {/* Stats section */}
-          <div className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
+          <div className="p-3 sm:p-4 space-y-3">
             {/* Total risks card */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200 w-full"
+              className="bg-white p-3 rounded-lg shadow border border-gray-200 w-full"
             >
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500">
                     Total Risks
                   </p>
-                  <p className="text-xl sm:text-2xl font-semibold text-gray-800">
+                  <p className="text-xl font-semibold text-gray-800">
                     {totalRisks}
                   </p>
                 </div>
-                <LucideCheckCircle className="text-green-500 w-6 h-6 sm:w-8 sm:h-8" />
+                <LucideCheckCircle className="text-green-500 w-6 h-6" />
               </div>
             </motion.div>
 
             {/* Impact distribution card */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="bg-white p-3 sm:p-4 rounded-lg shadow border border-gray-200 w-full"
+              className="bg-white p-3 rounded-lg shadow border border-gray-200 w-full"
             >
               <h3 className="text-xs font-semibold text-gray-500 uppercase flex items-center mb-2">
-                <LucideAlertTriangle className="mr-1 text-yellow-500 w-3 h-3 sm:w-4 sm:h-4" />
+                <LucideAlertTriangle className="mr-1 text-yellow-500 w-3 h-3" />
                 Impact Distribution
               </h3>
               {["high", "medium", "low"].map((level) => (
@@ -426,11 +426,11 @@ const Dashboard = () => {
                   className="flex justify-between items-center py-0.5"
                   key={level}
                 >
-                  <span className="text-xs sm:text-sm text-gray-600">
+                  <span className="text-xs text-gray-600">
                     {level.charAt(0).toUpperCase() + level.slice(1)}
                   </span>
                   <span
-                    className={`text-xs sm:text-sm font-medium ${
+                    className={`text-xs font-medium ${
                       level === "high"
                         ? "text-red-500"
                         : level === "medium"
@@ -447,10 +447,10 @@ const Dashboard = () => {
         </aside>
 
         {/* Main content */}
-        <main className="p-3 sm:p-4 md:p-6 pb-16">
+        <main className="p-3 sm:p-4 pb-12">
           {/* Header section */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3 sm:gap-0">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 sm:gap-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
               Risk Dashboard
             </h2>
             <button
@@ -463,46 +463,44 @@ const Dashboard = () => {
 
           {/* Create risk form */}
           {showCreateRisk && (
-            <div className="bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 shadow border border-gray-200 overflow-x-auto">
+            <div className="bg-white rounded-lg p-3 sm:p-4 mb-4 shadow border border-gray-200 overflow-x-auto">
               <CreateRisk onRiskCreated={handleRiskCreated} />
             </div>
           )}
 
           {/* Search risk */}
-          <div className="mb-4 sm:mb-6">
+          <div className="mb-4">
             <SearchRisk risks={risks} />
           </div>
 
           {/* Action count cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {Object.entries(actionCount).map(([action, count]) => {
               const iconMap = {
                 mitigate: (
-                  <LucideCheckCircle className="mr-2 sm:mr-3 text-green-500 w-4 h-4 sm:w-5 sm:h-5" />
+                  <LucideCheckCircle className="mr-2 text-green-500 w-4 h-4" />
                 ),
                 accept: (
-                  <LucideHandHeart className="mr-2 sm:mr-3 text-yellow-500 w-4 h-4 sm:w-5 sm:h-5" />
+                  <LucideHandHeart className="mr-2 text-yellow-500 w-4 h-4" />
                 ),
                 transfer: (
-                  <LucideShare2 className="mr-2 sm:mr-3 text-blue-500 w-4 h-4 sm:w-5 sm:h-5" />
+                  <LucideShare2 className="mr-2 text-blue-500 w-4 h-4" />
                 ),
-                avoid: (
-                  <LucideXCircle className="mr-2 sm:mr-3 text-red-500 w-4 h-4 sm:w-5 sm:h-5" />
-                ),
+                avoid: <LucideXCircle className="mr-2 text-red-500 w-4 h-4" />,
               };
 
               return (
                 <motion.div
                   key={action}
                   whileHover={{ scale: 1.02 }}
-                  className="flex items-center bg-white p-2 sm:p-3 md:p-4 rounded-lg shadow border border-gray-200"
+                  className="flex items-center bg-white p-2 sm:p-3 rounded-lg shadow border border-gray-200"
                 >
                   {iconMap[action as keyof ActionCount]}
                   <div>
-                    <p className="text-xs sm:text-sm text-gray-600">
+                    <p className="text-xs text-gray-600">
                       {action.charAt(0).toUpperCase() + action.slice(1)}
                     </p>
-                    <p className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+                    <p className="text-base font-semibold text-gray-800">
                       {count}
                     </p>
                   </div>

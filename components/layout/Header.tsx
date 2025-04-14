@@ -81,29 +81,29 @@ export default function Header() {
       {/* Overlay to hide content when mobile menu is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-10 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           aria-hidden="true"
         />
       )}
       <header
         ref={headerRef}
-        className={`fixed w-full top-0 z-20 transition-all duration-300 ${
+        className={`fixed w-full top-0 z-30 transition-all duration-300 ${
           isScrolled
-            ? "bg-white shadow-md py-2"
-            : "bg-gradient-to-r from-indigo-50 to-purple-50 backdrop-blur-sm py-3 sm:py-4"
+            ? "bg-white shadow-md py-1.5"
+            : "bg-gradient-to-r from-indigo-50 to-purple-50 backdrop-blur-sm py-2"
         }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-10">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex items-center justify-between">
             <Link
               href="/"
-              className={`text-xl sm:text-2xl lg:text-3xl font-extrabold transition duration-300 flex items-center ${
+              className={`text-lg sm:text-xl lg:text-2xl font-extrabold transition duration-300 flex items-center ${
                 isScrolled
                   ? "text-indigo-700"
                   : "text-indigo-600 hover:text-indigo-800"
               }`}
             >
-              <div className="mr-2 rounded-lg px-1.5 py-1 bg-indigo-600 text-white">
+              <div className="mr-1.5 rounded-lg px-1 py-0.5 bg-indigo-600 text-white">
                 P
               </div>
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
@@ -122,7 +122,7 @@ export default function Header() {
               aria-expanded={isOpen}
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -146,26 +146,26 @@ export default function Header() {
             </button>
 
             <nav
-              className={`lg:flex lg:items-center lg:space-x-6 ${
+              className={`lg:flex lg:items-center lg:space-x-4 ${
                 isOpen ? "block" : "hidden"
-              } transition-all duration-300 ease-in-out absolute lg:relative top-full left-0 w-full lg:w-auto ${
+              } transition-all duration-300 ease-in-out fixed lg:static top-[calc(100%)] left-0 right-0 max-h-[calc(100vh-100%)] overflow-y-auto lg:overflow-visible w-full lg:w-auto lg:h-auto ${
                 isScrolled
                   ? "bg-white shadow-md"
                   : "bg-white/95 lg:bg-transparent backdrop-blur-md"
-              } rounded-b-lg z-10`}
+              } rounded-b-lg z-30`}
             >
-              <ul className="flex flex-col lg:flex-row items-center lg:space-x-4 lg:space-y-0 space-y-3 py-4 lg:py-0 px-4 lg:px-0">
+              <ul className="flex flex-col lg:flex-row items-center lg:space-x-3 lg:space-y-0 space-y-2 py-3 lg:py-0 px-3 lg:px-0">
                 <li className="w-full lg:w-auto">
                   <Link
                     href="/guide"
                     onClick={handleLinkClick}
-                    className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
+                    className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
                       isScrolled
                         ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                         : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                     }`}
                   >
-                    <FaQuestionCircle className="mr-2 text-lg" />
+                    <FaQuestionCircle className="mr-1.5 text-sm" />
                     User Guide
                   </Link>
                 </li>
@@ -176,13 +176,13 @@ export default function Header() {
                       <Link
                         href="/login"
                         onClick={handleLinkClick}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                         }`}
                       >
-                        <FaSignInAlt className="mr-2 text-lg" />
+                        <FaSignInAlt className="mr-1.5 text-sm" />
                         Login
                       </Link>
                     </li>
@@ -190,9 +190,9 @@ export default function Header() {
                       <Link
                         href="/register"
                         onClick={handleLinkClick}
-                        className="flex items-center justify-center lg:justify-start bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto"
+                        className="flex items-center justify-center lg:justify-start bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto"
                       >
-                        <FaUserPlus className="mr-2 text-lg" />
+                        <FaUserPlus className="mr-1.5 text-sm" />
                         Sign Up
                       </Link>
                     </li>
@@ -204,26 +204,26 @@ export default function Header() {
                         <Link
                           href="/admin/users"
                           onClick={handleLinkClick}
-                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
+                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
                             isScrolled
                               ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                               : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                           }`}
                         >
-                          <FaUserCog className="mr-2 text-lg" />
+                          <FaUserCog className="mr-1.5 text-sm" />
                           Admin
                         </Link>
                       ) : (
                         <Link
                           href={user ? `/dashboard/${user.$id}` : "#"}
                           onClick={handleLinkClick}
-                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
+                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
                             isScrolled
                               ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                               : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                           }`}
                         >
-                          <FaTable className="mr-2 text-lg" />
+                          <FaTable className="mr-1.5 text-sm" />
                           Dashboard
                         </Link>
                       )}
@@ -233,13 +233,13 @@ export default function Header() {
                       <Link
                         href={`/profile/${session.userId}`}
                         onClick={handleLinkClick}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                         }`}
                       >
-                        <FaUser className="mr-2 text-lg" />
+                        <FaUser className="mr-1.5 text-sm" />
                         Profile
                       </Link>
                     </li>
@@ -249,13 +249,13 @@ export default function Header() {
                           logout();
                           handleLinkClick();
                         }}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-4 py-2 rounded-lg text-sm font-medium border w-full lg:w-auto ${
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                         }`}
                       >
-                        <FaSignOutAlt className="mr-2 text-lg" />
+                        <FaSignOutAlt className="mr-1.5 text-sm" />
                         Logout
                       </button>
                     </li>

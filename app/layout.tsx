@@ -48,7 +48,7 @@ export default function RootLayout({
                 },
               }}
             />
-            <main className="min-h-[calc(100vh-9rem)] mt-10">{children}</main>
+            <main>{children}</main>
             <UserGuide position="bottom-right" />
           </div>
           <Footer />

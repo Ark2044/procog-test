@@ -116,10 +116,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
   if (comment.isFlagged) {
     if (isAdmin) {
       return (
-        <div className={`pl-${depth * 4} py-2`}>
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-300">
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
+        <div className={`py-2 ${depth > 0 ? "ml-3 sm:ml-6" : ""}`}>
+          <div className="bg-amber-50 rounded-lg p-3 sm:p-4 border border-amber-300">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
                 <span className="font-medium">{authorName}</span>
                 <span className="text-gray-500 text-sm">
@@ -133,8 +133,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
               </div>
             </div>
 
-            <div className="prose max-w-none">
-              <ReactMarkdown>{comment.content}</ReactMarkdown>
+            <div className="prose max-w-none prose-sm sm:prose-base break-words">
+              <ReactMarkdown>
+                {comment.content}
+              </ReactMarkdown>
             </div>
 
             <div className="flex gap-2 mt-4 justify-end">
@@ -162,8 +164,8 @@ export const CommentItem: React.FC<CommentItemProps> = ({
       );
     } else {
       return (
-        <div className={`pl-${depth * 4} py-2`}>
-          <div className="text-gray-500 bg-gray-50 p-4 rounded-lg border border-gray-200 italic flex items-center gap-2">
+        <div className={`py-2 ${depth > 0 ? "ml-3 sm:ml-6" : ""}`}>
+          <div className="text-gray-500 bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-200 italic flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-600" />
             This comment has been flagged for review
           </div>
@@ -173,10 +175,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
   }
 
   return (
-    <div className={`pl-${depth * 4} py-2`}>
-      <div className="bg-white rounded-lg p-4 border border-gray-200">
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex items-center gap-2">
+    <div className={`py-2 ${depth > 0 ? "ml-3 sm:ml-6" : ""}`}>
+      <div className="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium">{authorName}</span>
             <span className="text-gray-500 text-sm">
               {formatDistanceToNow(new Date(comment.created), {
@@ -210,7 +212,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                 {parentAuthorName || "another comment"}
               </span>
             </div>
-            <div className="bg-gray-50 px-3 py-2 rounded border-l-2 border-gray-300 text-sm text-gray-600 line-clamp-2 italic">
+            <div className="bg-gray-50 px-3 py-2 rounded border-l-2 border-gray-300 text-sm text-gray-600 line-clamp-2 italic overflow-hidden">
               {parentContent
                 ? parentContent.substring(0, 150) +
                   (parentContent.length > 150 ? "..." : "")
@@ -227,12 +229,14 @@ export const CommentItem: React.FC<CommentItemProps> = ({
             submitLabel="Save"
           />
         ) : (
-          <div className="prose max-w-none">
-            <ReactMarkdown>{comment.content}</ReactMarkdown>
+          <div className="prose max-w-none prose-sm sm:prose-base break-words">
+            <ReactMarkdown>
+              {comment.content}
+            </ReactMarkdown>
           </div>
         )}
 
-        <div className="flex items-center gap-4 mt-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-4">
           <Button
             variant="ghost"
             size="sm"
@@ -281,7 +285,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
               <Reply className="w-3 h-3 rotate-180" />
               Replying to <span className="font-semibold">{authorName}</span>
             </h4>
-            <div className="bg-gray-50 px-3 py-2 rounded border-l-2 border-gray-300 text-sm text-gray-600 mb-3 italic">
+            <div className="bg-gray-50 px-3 py-2 rounded border-l-2 border-gray-300 text-sm text-gray-600 mb-3 italic overflow-hidden">
               {comment.content.substring(0, 100)}
               {comment.content.length > 100 ? "..." : ""}
             </div>
