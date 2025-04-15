@@ -9,17 +9,44 @@ import CreateRisk from "@/components/CreateRisk";
 import { databases } from "@/models/client/config";
 import { riskCollection, db } from "@/models/name";
 import {
-  LucideUser,
   LucideAlertTriangle,
-  LucideHandHeart,
-  LucideCheckCircle,
-  LucideShare2,
-  LucideXCircle,
-  LucideRefreshCw,
+  LucideFileCheck,
   LucideSearch,
+  LucideBarChart3,
+  LucideCalendarClock,
+  LucideRefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { account } from "@/models/client/config";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Define the data type for the Progress component
+type ProgressProps = {
+  value: number;
+  className?: string;
+  indicatorClassName?: string;
+};
+
+// Custom Progress component with indicator class name prop
+const Progress = ({ value, className, indicatorClassName }: ProgressProps) => {
+  return (
+    <div className={`w-full bg-gray-200 rounded-full h-2.5 ${className || ""}`}>
+      <div
+        className={`h-full rounded-full ${indicatorClassName || "bg-blue-600"}`}
+        style={{ width: `${value}%` }}
+      ></div>
+    </div>
+  );
+};
 
 type ImpactCount = {
   low: number;
@@ -85,7 +112,7 @@ const SearchRisk = ({ risks }: { risks: Risk[] }) => {
   }, []);
 
   return (
-    <div className="relative" ref={searchRef}>
+    <div className="relative w-full" ref={searchRef}>
       <div className="relative">
         <input
           type="text"
@@ -159,18 +186,162 @@ const SearchRisk = ({ risks }: { risks: Risk[] }) => {
 };
 
 const DashboardSkeleton = () => (
-  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800">
-    <div className="animate-pulse space-y-4">
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 text-gray-800">
+    <div className="animate-pulse space-y-4 w-full max-w-7xl px-4">
       <div className="h-12 bg-gray-200 rounded w-64"></div>
       <div className="h-8 bg-gray-200 rounded w-48"></div>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((item) => (
-          <div key={item} className="h-24 bg-gray-200 rounded"></div>
+          <div key={item} className="h-32 bg-gray-200 rounded"></div>
         ))}
       </div>
+      <div className="h-64 bg-gray-200 rounded"></div>
     </div>
   </div>
 );
+
+const RiskActivityGraph = ({
+  data,
+}: {
+  data: { mitigate: number; accept: number; transfer: number; avoid: number };
+}) => {
+  // Calculate total for percentages
+  const total = Object.values(data).reduce((sum, value) => sum + value, 0);
+
+  // Calculate percentages and ensure we have values to show
+  const mitigatePercent = total > 0 ? (data.mitigate / total) * 100 : 0;
+  const acceptPercent = total > 0 ? (data.accept / total) * 100 : 0;
+  const transferPercent = total > 0 ? (data.transfer / total) * 100 : 0;
+  const avoidPercent = total > 0 ? (data.avoid / total) * 100 : 0;
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold">
+          Risk Response Actions
+        </CardTitle>
+        <CardDescription>
+          Distribution of risk response strategies
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="flex items-center">
+              <span className="w-3 h-3 inline-block mr-1 rounded-sm bg-green-500"></span>
+              Mitigate
+            </span>
+            <span>{data.mitigate}</span>
+          </div>
+          <Progress value={mitigatePercent} className="h-2 bg-gray-100" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="flex items-center">
+              <span className="w-3 h-3 inline-block mr-1 rounded-sm bg-yellow-500"></span>
+              Accept
+            </span>
+            <span>{data.accept}</span>
+          </div>
+          <Progress value={acceptPercent} className="h-2 bg-gray-100" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="flex items-center">
+              <span className="w-3 h-3 inline-block mr-1 rounded-sm bg-blue-500"></span>
+              Transfer
+            </span>
+            <span>{data.transfer}</span>
+          </div>
+          <Progress
+            value={transferPercent}
+            className="h-2 bg-gray-100 [&>div]:bg-blue-500"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="flex items-center">
+              <span className="w-3 h-3 inline-block mr-1 rounded-sm bg-red-500"></span>
+              Avoid
+            </span>
+            <span>{data.avoid}</span>
+          </div>
+          <Progress
+            value={avoidPercent}
+            className="h-2 bg-gray-100 [&>div]:bg-red-500"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const ImpactDistribution = ({ data }: { data: ImpactCount }) => {
+  const total = data.low + data.medium + data.high;
+
+  return (
+    <Card className="w-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-semibold">
+          Impact Distribution
+        </CardTitle>
+        <CardDescription>Distribution of risk impact levels</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between items-center mb-4">
+          <div className="space-y-2 w-full">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium flex items-center">
+                <span className="w-3 h-3 rounded-full bg-red-500 inline-block mr-2"></span>
+                High Impact
+              </span>
+              <span className="text-sm font-medium">{data.high}</span>
+            </div>
+            <Progress
+              value={total > 0 ? (data.high / total) * 100 : 0}
+              className="h-2.5 bg-gray-100"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mb-4">
+          <div className="space-y-2 w-full">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium flex items-center">
+                <span className="w-3 h-3 rounded-full bg-yellow-500 inline-block mr-2"></span>
+                Medium Impact
+              </span>
+              <span className="text-sm font-medium">{data.medium}</span>
+            </div>
+            <Progress
+              value={total > 0 ? (data.medium / total) * 100 : 0}
+              className="h-2.5 bg-gray-100 [&>div]:bg-yellow-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <div className="space-y-2 w-full">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium flex items-center">
+                <span className="w-3 h-3 rounded-full bg-green-500 inline-block mr-2"></span>
+                Low Impact
+              </span>
+              <span className="text-sm font-medium">{data.low}</span>
+            </div>
+            <Progress
+              value={total > 0 ? (data.low / total) * 100 : 0}
+              className="h-2.5 bg-gray-100 [&>div]:bg-green-500"
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const Dashboard = () => {
   const params = useParams();
@@ -181,9 +352,9 @@ const Dashboard = () => {
   const { user, loading, error, verifySession, session } = useAuthStore();
   const [sessionChecked, setSessionChecked] = useState(false);
   const [showCreateRisk, setShowCreateRisk] = useState(false);
+  // Removed unused activeTab state
   const [risks, setRisks] = useState<Risk[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [impactCount, setImpactCount] = useState<ImpactCount>({
     low: 0,
     medium: 0,
@@ -196,6 +367,9 @@ const Dashboard = () => {
     avoid: 0,
   });
   const [authorNames, setAuthorNames] = useState<Record<string, string>>({});
+  const [dueRisks, setDueRisks] = useState(0);
+  const [highPriorityRisks, setHighPriorityRisks] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -245,10 +419,11 @@ const Dashboard = () => {
           updated: doc.updated,
           isConfidential: doc.isConfidential ?? false,
           authorizedViewers: doc.authorizedViewers ?? [],
-          authorName: authorNames[doc.authorId] || "Unknown", // Add authorName
-          riskTitle: doc.title || "Untitled Risk", // Add riskTitle
-          mitigation: doc.mitigation || "No mitigation provided", // Add mitigation
-          status: doc.status || "Pending", // Add status
+          authorName: authorNames[doc.authorId] || "Unknown",
+          riskTitle: doc.title || "Untitled Risk",
+          mitigation: doc.mitigation || "No mitigation provided",
+          status: doc.status || "Pending",
+          dueDate: doc.dueDate,
         }));
 
         let risksToSet = fetchedRisks;
@@ -259,25 +434,48 @@ const Dashboard = () => {
         }
         setRisks(risksToSet);
 
-        const impactCounts = fetchedRisks.reduce(
+        // Calculate impact counts
+        const impactCounts = risksToSet.reduce(
           (acc: ImpactCount, risk) => {
-            acc[risk.impact as keyof ImpactCount] =
-              (acc[risk.impact as keyof ImpactCount] || 0) + 1;
+            acc[risk.impact as keyof ImpactCount] += 1;
             return acc;
           },
           { low: 0, medium: 0, high: 0 }
         );
         setImpactCount(impactCounts);
 
-        const actionCounts = fetchedRisks.reduce(
+        // Calculate action counts
+        const actionCounts = risksToSet.reduce(
           (acc: ActionCount, risk) => {
-            acc[risk.action as keyof ActionCount] =
-              (acc[risk.action as keyof ActionCount] || 0) + 1;
+            acc[risk.action as keyof ActionCount] += 1;
             return acc;
           },
           { mitigate: 0, accept: 0, transfer: 0, avoid: 0 }
         );
         setActionCount(actionCounts);
+
+        // Calculate due risks
+        const now = new Date();
+        const dueSoonCount = risksToSet.filter((risk) => {
+          if (!risk.dueDate) return false;
+          const dueDate = new Date(risk.dueDate);
+          const weekFromNow = new Date();
+          weekFromNow.setDate(now.getDate() + 7);
+          return (
+            dueDate <= weekFromNow && dueDate >= now && risk.status !== "closed"
+          );
+        }).length;
+        setDueRisks(dueSoonCount);
+
+        // Calculate high priority risks
+        const highPriorityCount = risksToSet.filter((risk) => {
+          return (
+            risk.impact === "high" &&
+            risk.probability >= 4 &&
+            risk.status !== "closed"
+          );
+        }).length;
+        setHighPriorityRisks(highPriorityCount);
 
         if (showRefreshIndicator) {
           toast.success("Data refreshed!");
@@ -342,17 +540,24 @@ const Dashboard = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800"
+        className="flex items-center justify-center min-h-screen bg-gray-50 text-gray-800"
       >
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto px-4">
           <LucideAlertTriangle className="mx-auto mb-4 text-red-500 w-16 h-16" />
-          <p className="text-red-500 text-xl">{error?.message || fetchError}</p>
-          <button
+          <p className="text-red-500 text-xl font-medium">
+            {error?.message || fetchError}
+          </p>
+          <p className="text-gray-500 mt-2 mb-4">
+            We encountered an error while loading your dashboard. Please try
+            again.
+          </p>
+          <Button
             onClick={() => verifySession()}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            variant="default"
+            className="mt-2 bg-red-600 hover:bg-red-700 text-white"
           >
             Try Again
-          </button>
+          </Button>
         </div>
       </motion.div>
     );
@@ -361,159 +566,366 @@ const Dashboard = () => {
   const totalRisks = risks.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-14 sm:pt-16">
-      {/* Main grid layout */}
-      <div className="grid lg:grid-cols-[260px_1fr] gap-0">
-        {/* Sidebar */}
-        <aside className="bg-white border-b lg:border-r border-gray-200 lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16 lg:overflow-y-auto">
-          {/* User profile section */}
-          <div className="p-3 sm:p-4 border-b border-gray-200 flex justify-between items-center">
-            <div className="overflow-hidden">
-              <div className="flex items-center mb-1">
-                <LucideUser className="mr-2 text-blue-500 w-4 h-4 flex-shrink-0" />
-                <p className="text-sm font-medium text-gray-800 truncate">
-                  {user?.name || "User"}
-                </p>
-              </div>
-              <p className="text-xs text-gray-500 truncate">ID: {userId}</p>
-              <p className="text-xs text-gray-500 truncate">
-                Department: {user?.prefs?.department}
-              </p>
-            </div>
-            <button
+    <div className="min-h-screen bg-gray-50 pb-10 pt-10">
+      {/* Main content */}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Welcome, {user?.name?.split(" ")[0] || "User"}
+            </h2>
+            <p className="text-gray-500 mt-1">
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => fetchRisks(true)}
               disabled={isRefreshing}
-              className={`text-gray-500 hover:text-gray-800 p-2 flex-shrink-0 ${
-                isRefreshing ? "animate-spin" : ""
-              }`}
-              aria-label="Refresh data"
+              className="flex items-center gap-1.5"
             >
-              <LucideRefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-          </div>
+              <LucideRefreshCw
+                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              {isRefreshing ? "Refreshing..." : "Refresh Data"}
+            </Button>
 
-          {/* Stats section */}
-          <div className="p-3 sm:p-4 space-y-3">
-            {/* Total risks card */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-white p-3 rounded-lg shadow border border-gray-200 w-full"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    Total Risks
-                  </p>
-                  <p className="text-xl font-semibold text-gray-800">
-                    {totalRisks}
-                  </p>
-                </div>
-                <LucideCheckCircle className="text-green-500 w-6 h-6" />
-              </div>
-            </motion.div>
-
-            {/* Impact distribution card */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="bg-white p-3 rounded-lg shadow border border-gray-200 w-full"
-            >
-              <h3 className="text-xs font-semibold text-gray-500 uppercase flex items-center mb-2">
-                <LucideAlertTriangle className="mr-1 text-yellow-500 w-3 h-3" />
-                Impact Distribution
-              </h3>
-              {["high", "medium", "low"].map((level) => (
-                <div
-                  className="flex justify-between items-center py-0.5"
-                  key={level}
-                >
-                  <span className="text-xs text-gray-600">
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
-                  </span>
-                  <span
-                    className={`text-xs font-medium ${
-                      level === "high"
-                        ? "text-red-500"
-                        : level === "medium"
-                        ? "text-yellow-500"
-                        : "text-green-500"
-                    }`}
-                  >
-                    {impactCount[level as keyof ImpactCount]}
-                  </span>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </aside>
-
-        {/* Main content */}
-        <main className="p-3 sm:p-4 pb-12">
-          {/* Header section */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 sm:gap-0">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
-              Risk Dashboard
-            </h2>
-            <button
+            <Button
               onClick={() => setShowCreateRisk((prev) => !prev)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 w-full sm:w-auto text-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
             >
-              {showCreateRisk ? "Cancel" : "Create Risk"}
-            </button>
+              {showCreateRisk ? "Cancel" : "Create New Risk"}
+            </Button>
           </div>
+        </div>
 
-          {/* Create risk form */}
-          {showCreateRisk && (
-            <div className="bg-white rounded-lg p-3 sm:p-4 mb-4 shadow border border-gray-200 overflow-x-auto">
-              <CreateRisk onRiskCreated={handleRiskCreated} />
+        {/* Create risk form */}
+        {showCreateRisk && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6"
+          >
+            <CreateRisk onRiskCreated={handleRiskCreated} />
+          </motion.div>
+        )}
+
+        {/* Search bar */}
+        <div className="mb-6">
+          <SearchRisk risks={risks} />
+        </div>
+
+        {/* Dashboard tabs */}
+        <Tabs defaultValue="overview" className="mb-6">
+          <TabsList className="mb-6 bg-white border border-gray-200 rounded-lg p-1">
+            <TabsTrigger
+              value="overview"
+              className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 rounded-md"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="risks"
+              className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 rounded-md"
+            >
+              Risk List
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700 rounded-md"
+            >
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-0">
+            {/* Metric cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <Card className="bg-white border-gray-200 hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">
+                        Total Risks
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {totalRisks}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-indigo-100 rounded-full text-indigo-600">
+                      <LucideFileCheck className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs font-medium text-gray-500">
+                    {risks.filter((r) => r.authorId === userId).length} created
+                    by you
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-gray-200 hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">
+                        High Impact Risks
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {impactCount.high}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-red-100 rounded-full text-red-600">
+                      <LucideAlertTriangle className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs font-medium">
+                    <span
+                      className={
+                        highPriorityRisks > 0 ? "text-red-500" : "text-gray-500"
+                      }
+                    >
+                      {highPriorityRisks} high priority risks need attention
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-gray-200 hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">
+                        Due Soon
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {dueRisks}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
+                      <LucideCalendarClock className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs font-medium text-gray-500">
+                    Risks due in the next 7 days
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-gray-200 hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 mb-1">
+                        Department
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {user?.prefs?.department || "General"}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-green-100 rounded-full text-green-600">
+                      <LucideBarChart3 className="w-5 h-5" />
+                    </div>
+                  </div>
+                  <div className="mt-4 text-xs font-medium text-gray-500">
+                    {user?.prefs?.role || "User"} access level
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          )}
 
-          {/* Search risk */}
-          <div className="mb-4">
-            <SearchRisk risks={risks} />
-          </div>
+            {/* Charts and graphs */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <ImpactDistribution data={impactCount} />
+              <RiskActivityGraph data={actionCount} />
+            </div>
 
-          {/* Action count cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-            {Object.entries(actionCount).map(([action, count]) => {
-              const iconMap = {
-                mitigate: (
-                  <LucideCheckCircle className="mr-2 text-green-500 w-4 h-4" />
-                ),
-                accept: (
-                  <LucideHandHeart className="mr-2 text-yellow-500 w-4 h-4" />
-                ),
-                transfer: (
-                  <LucideShare2 className="mr-2 text-blue-500 w-4 h-4" />
-                ),
-                avoid: <LucideXCircle className="mr-2 text-red-500 w-4 h-4" />,
-              };
-
-              return (
-                <motion.div
-                  key={action}
-                  whileHover={{ scale: 1.02 }}
-                  className="flex items-center bg-white p-2 sm:p-3 rounded-lg shadow border border-gray-200"
-                >
-                  {iconMap[action as keyof ActionCount]}
-                  <div>
-                    <p className="text-xs text-gray-600">
-                      {action.charAt(0).toUpperCase() + action.slice(1)}
-                    </p>
-                    <p className="text-base font-semibold text-gray-800">
-                      {count}
+            {/* Recent risks */}
+            <Card className="bg-white border-gray-200">
+              <CardHeader>
+                <CardTitle>Recent Risks</CardTitle>
+                <CardDescription>
+                  Your most recently added or updated risks
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {risks.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-gray-500">
+                      No risks found. Create your first risk to get started.
                     </p>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                ) : (
+                  <div className="space-y-4">
+                    {risks
+                      .sort(
+                        (a, b) =>
+                          new Date(b.updated).getTime() -
+                          new Date(a.updated).getTime()
+                      )
+                      .slice(0, 5)
+                      .map((risk) => (
+                        <div
+                          key={risk.$id}
+                          className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer"
+                          onClick={() => router.push(`/risk/${risk.$id}`)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`w-2 h-2 mt-2 rounded-full ${
+                                risk.impact === "high"
+                                  ? "bg-red-500"
+                                  : risk.impact === "medium"
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                              }`}
+                            />
+                            <div>
+                              <h3 className="font-medium text-gray-900">
+                                {risk.title}
+                              </h3>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {risk.content.substring(0, 60)}...
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                risk.status === "active"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : risk.status === "closed"
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {risk.status || "Pending"}
+                            </span>
+                            <span className="text-xs text-gray-500 mt-1">
+                              {new Date(risk.updated).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-center border-t border-gray-100 pt-4">
+                <Button
+                  variant="outline"
+                  className="text-indigo-600"
+                  onClick={() => {
+                    const element = document.querySelector('[value="risks"]');
+                    if (element instanceof HTMLElement) {
+                      element.click();
+                    }
+                  }}
+                >
+                  View All Risks
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
 
-          {/* Risk list */}
-          <RiskList userId={userId} />
-        </main>
-      </div>
+          <TabsContent value="risks" className="mt-0">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <RiskList userId={userId} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="col-span-1 lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Risk Analysis</CardTitle>
+                  <CardDescription>
+                    Comprehensive view of your risk portfolio
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">
+                        Impact Distribution
+                      </h3>
+                      <ImpactDistribution data={impactCount} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">
+                        Risk Response Strategies
+                      </h3>
+                      <RiskActivityGraph data={actionCount} />
+                    </div>
+                  </div>
+
+                  <div className="mt-8">
+                    <h3 className="text-lg font-medium mb-4">
+                      Risk Status Overview
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-gray-900">
+                              {
+                                risks.filter((r) => r.status === "active")
+                                  .length
+                              }
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              Active Risks
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-gray-900">
+                              {
+                                risks.filter((r) => r.status === "closed")
+                                  .length
+                              }
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              Closed Risks
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-6">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-gray-900">
+                              {dueRisks}
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              Due Soon
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };
+
 export default Dashboard;
