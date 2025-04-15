@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { databases } from "@/models/client/config";
 import {
   riskCollection,
@@ -91,6 +91,12 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
   const currentUserId = userId || user?.$id;
   const router = useRouter();
 
+  // Add refs for data caching
+  const dataFetchedRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
+  // Cache timeout in milliseconds (5 minutes)
+  const CACHE_TIMEOUT = 5 * 60 * 1000;
+
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -169,50 +175,68 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
     [currentUserId]
   );
 
-  const fetchRisks = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await databases.listDocuments(db, riskCollection);
-      const risksData: Risk[] = response.documents.map((doc) => ({
-        $id: doc.$id,
-        title: doc.title,
-        content: doc.content,
-        authorId: doc.authorId,
-        authorName: doc.authorName,
-        tags: doc.tags || [],
-        attachmentId: doc.attachmentId,
-        impact: doc.impact,
-        probability: doc.probability,
-        action: doc.action,
-        mitigation: doc.mitigation,
-        acceptance: doc.acceptance,
-        transfer: doc.transfer,
-        avoidance: doc.avoidance,
-        created: doc.created,
-        updated: doc.updated,
-        isConfidential: doc.isConfidential,
-        authorizedViewers: doc.authorizedViewers,
-        department: doc.department,
-        dueDate: doc.dueDate,
-        status: doc.status || "active",
-        resolution: doc.resolution,
-      }));
+  const fetchRisks = useCallback(
+    async (forceRefresh = false) => {
+      // Avoid redundant API calls with caching
+      const now = Date.now();
+      if (
+        !forceRefresh &&
+        dataFetchedRef.current &&
+        now - lastFetchTimeRef.current < CACHE_TIMEOUT
+      ) {
+        return; // Use cached data if it's recent enough
+      }
 
-      setRisks(risksData);
+      setLoading(true);
+      try {
+        const response = await databases.listDocuments(db, riskCollection);
+        const risksData: Risk[] = response.documents.map((doc) => ({
+          $id: doc.$id,
+          title: doc.title,
+          content: doc.content,
+          authorId: doc.authorId,
+          authorName: doc.authorName,
+          tags: doc.tags || [],
+          attachmentId: doc.attachmentId,
+          impact: doc.impact,
+          probability: doc.probability,
+          action: doc.action,
+          mitigation: doc.mitigation,
+          acceptance: doc.acceptance,
+          transfer: doc.transfer,
+          avoidance: doc.avoidance,
+          created: doc.created,
+          updated: doc.updated,
+          isConfidential: doc.isConfidential,
+          authorizedViewers: doc.authorizedViewers,
+          department: doc.department,
+          dueDate: doc.dueDate,
+          status: doc.status || "active",
+          resolution: doc.resolution,
+        }));
 
-      const riskIds = risksData.map((risk) => risk.$id);
-      fetchCommentCounts(riskIds);
-      fetchReminderCounts(riskIds);
-    } catch (err) {
-      setError("Failed to fetch risks");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchReminderCounts]);
+        setRisks(risksData);
+
+        // Update cache tracking
+        dataFetchedRef.current = true;
+        lastFetchTimeRef.current = now;
+
+        const riskIds = risksData.map((risk) => risk.$id);
+        fetchCommentCounts(riskIds);
+        fetchReminderCounts(riskIds);
+      } catch (err) {
+        setError("Failed to fetch risks");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [CACHE_TIMEOUT, fetchReminderCounts]
+  );
 
   useEffect(() => {
     fetchRisks();
+    // We use dataFetchedRef to ensure we only fetch once per component mount
   }, [fetchRisks]);
 
   const filteredAndSortedRisks = useMemo(() => {
@@ -444,7 +468,7 @@ const RiskList: React.FC<RiskListProps> = ({ userId }) => {
         <Button
           className="mt-2 bg-white text-red-600 border border-red-300 hover:bg-red-50"
           size="sm"
-          onClick={fetchRisks}
+          onClick={() => fetchRisks(true)} // Force refresh
         >
           Try Again
         </Button>

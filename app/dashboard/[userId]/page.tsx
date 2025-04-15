@@ -17,7 +17,6 @@ import {
   LucideRefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { account } from "@/models/client/config";
 import {
   Card,
   CardContent,
@@ -352,7 +351,6 @@ const Dashboard = () => {
   const { user, loading, error, verifySession, session } = useAuthStore();
   const [sessionChecked, setSessionChecked] = useState(false);
   const [showCreateRisk, setShowCreateRisk] = useState(false);
-  // Removed unused activeTab state
   const [risks, setRisks] = useState<Risk[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [impactCount, setImpactCount] = useState<ImpactCount>({
@@ -366,10 +364,16 @@ const Dashboard = () => {
     transfer: 0,
     avoid: 0,
   });
-  const [authorNames, setAuthorNames] = useState<Record<string, string>>({});
   const [dueRisks, setDueRisks] = useState(0);
   const [highPriorityRisks, setHighPriorityRisks] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Add a ref to track if data is already fetched to prevent duplicate calls
+  const dataFetchedRef = useRef(false);
+  // Add a cache timeout ref to control when we should refresh data
+  const lastFetchTimeRef = useRef(0);
+  // Cache timeout in milliseconds (5 minutes)
+  const CACHE_TIMEOUT = 5 * 60 * 1000;
 
   useEffect(() => {
     const checkSession = async () => {
@@ -399,9 +403,21 @@ const Dashboard = () => {
   }, [sessionChecked, loading, session, user, router, userId]);
 
   const fetchRisks = useCallback(
-    async (showRefreshIndicator = false) => {
+    async (showRefreshIndicator = false, forceRefresh = false) => {
+      // Check if data was recently fetched and we don't need to refresh
+      const now = Date.now();
+      if (
+        !forceRefresh &&
+        dataFetchedRef.current &&
+        now - lastFetchTimeRef.current < CACHE_TIMEOUT &&
+        !showRefreshIndicator
+      ) {
+        return; // Use cached data if it's recent enough
+      }
+
       if (showRefreshIndicator) setIsRefreshing(true);
       setFetchError(null);
+
       try {
         const response = await databases.listDocuments(db, riskCollection);
         const fetchedRisks: Risk[] = response.documents.map((doc) => ({
@@ -419,7 +435,8 @@ const Dashboard = () => {
           updated: doc.updated,
           isConfidential: doc.isConfidential ?? false,
           authorizedViewers: doc.authorizedViewers ?? [],
-          authorName: authorNames[doc.authorId] || "Unknown",
+          // The author name is already provided by the API, or we use a fallback value
+          authorName: doc.authorName || "Unknown",
           riskTitle: doc.title || "Untitled Risk",
           mitigation: doc.mitigation || "No mitigation provided",
           status: doc.status || "Pending",
@@ -455,14 +472,16 @@ const Dashboard = () => {
         setActionCount(actionCounts);
 
         // Calculate due risks
-        const now = new Date();
+        const nowDate = new Date();
         const dueSoonCount = risksToSet.filter((risk) => {
           if (!risk.dueDate) return false;
           const dueDate = new Date(risk.dueDate);
           const weekFromNow = new Date();
-          weekFromNow.setDate(now.getDate() + 7);
+          weekFromNow.setDate(nowDate.getDate() + 7);
           return (
-            dueDate <= weekFromNow && dueDate >= now && risk.status !== "closed"
+            dueDate <= weekFromNow &&
+            dueDate >= nowDate &&
+            risk.status !== "closed"
           );
         }).length;
         setDueRisks(dueSoonCount);
@@ -477,6 +496,10 @@ const Dashboard = () => {
         }).length;
         setHighPriorityRisks(highPriorityCount);
 
+        // After successfully fetching data, update our refs
+        dataFetchedRef.current = true;
+        lastFetchTimeRef.current = now;
+
         if (showRefreshIndicator) {
           toast.success("Data refreshed!");
         }
@@ -490,44 +513,18 @@ const Dashboard = () => {
         }
       }
     },
-    [authorNames, user]
-  );
-
-  const fetchAuthorName = useCallback(
-    async (authorId: string) => {
-      if (authorNames[authorId]) return authorNames[authorId];
-      try {
-        const authorUser = await account.get();
-        setAuthorNames((prev) => ({ ...prev, [authorId]: authorUser.name }));
-        return authorUser.name;
-      } catch (error) {
-        console.error("Error fetching author name:", error);
-        return authorId;
-      }
-    },
-    [authorNames]
+    [user, CACHE_TIMEOUT] // Removed authorNames and fetchAllAuthorNames dependencies
   );
 
   useEffect(() => {
-    if (session) {
-      fetchRisks();
+    if (session && !dataFetchedRef.current) {
+      fetchRisks(false, true); // Only fetch on initial load
     }
   }, [session, fetchRisks]);
 
-  useEffect(() => {
-    const fetchAllAuthorNames = async () => {
-      const uniqueAuthorIds = [...new Set(risks.map((risk) => risk.authorId))];
-      await Promise.all(uniqueAuthorIds.map(fetchAuthorName));
-    };
-
-    if (risks.length > 0) {
-      fetchAllAuthorNames();
-    }
-  }, [fetchAuthorName, risks]);
-
   const handleRiskCreated = () => {
     setShowCreateRisk(false);
-    fetchRisks();
+    fetchRisks(false, true); // Force refresh after creating a risk
     toast.success("Risk created successfully!");
   };
 
