@@ -37,6 +37,7 @@ import { useAuthStore } from "@/store/Auth";
 import { Reminder } from "@/types/Reminder";
 import { useViewedItemsStore } from "@/store/ViewedItems";
 import { Query } from "appwrite";
+import { validateString } from "@/lib/validation";
 
 interface ReminderDialogProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
   userId,
   editingReminder,
   onUpdate,
-  riskStatus = 'active'
+  riskStatus = "active",
 }) => {
   const { addReminder } = useReminderStore();
   const { user } = useAuthStore();
@@ -128,14 +129,15 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
     }
   }, [isOpen, riskId, userId, markRemindersViewed]);
 
-  if (riskStatus === 'closed') {
+  if (riskStatus === "closed") {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Risk Closed</DialogTitle>
             <DialogDescription>
-              This risk has been closed. You cannot set new reminders for closed risks.
+              This risk has been closed. You cannot set new reminders for closed
+              risks.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -149,9 +151,53 @@ export const ReminderDialog: React.FC<ReminderDialogProps> = ({
   const onSubmit = async (values: ReminderValues) => {
     setIsSubmitting(true);
     try {
+      // Perform additional validation with our validateString function
+      const titleValidation = validateString(values.title, "Title", {
+        required: true,
+        minLength: 3,
+        maxLength: 100,
+      });
+
+      if (!titleValidation.isValid) {
+        toast.error(titleValidation.error || "Invalid title");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const descriptionValidation = validateString(
+        values.description,
+        "Description",
+        {
+          required: true,
+          minLength: 5,
+          maxLength: 500,
+        }
+      );
+
+      if (!descriptionValidation.isValid) {
+        toast.error(descriptionValidation.error || "Invalid description");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate date
+      const selectedDate = new Date(values.datetime);
+      if (isNaN(selectedDate.getTime())) {
+        toast.error("Please select a valid date and time");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check that date is not in the past
+      if (selectedDate < new Date()) {
+        toast.error("Reminder date must be in the future");
+        setIsSubmitting(false);
+        return;
+      }
+
       const reminderData = {
-        title: values.title,
-        description: values.description,
+        title: values.title.trim(),
+        description: values.description.trim(),
         datetime: new Date(values.datetime).toISOString(),
         recurrence: values.recurrence,
         userId: userId,

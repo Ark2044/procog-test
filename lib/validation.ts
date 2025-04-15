@@ -1,7 +1,10 @@
 // Common validation constants and functions
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const STRICT_EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 export const NAME_REGEX = /^[a-zA-Z\s'-]{2,50}$/;
 export const DEPARTMENT_REGEX = /^[a-zA-Z0-9\s'-]{2,50}$/;
+export const TEXT_WITH_NO_SPECIAL_CHARS_REGEX = /^[a-zA-Z0-9\s'-]+$/;
 
 // Department and role constants
 export const DEFAULT_DEPARTMENTS = [
@@ -54,14 +57,24 @@ export type ValidationResult = {
 // Validation functions
 export const validateEmail = (email: string): ValidationResult => {
   if (!email) return { isValid: false, error: "Email is required" };
-  if (!EMAIL_REGEX.test(email))
+  const trimmedEmail = email.trim();
+  if (!trimmedEmail)
+    return {
+      isValid: false,
+      error: "Email cannot be empty or whitespace only",
+    };
+  if (!STRICT_EMAIL_REGEX.test(trimmedEmail)) {
     return { isValid: false, error: "Invalid email format" };
+  }
   return { isValid: true };
 };
 
 export const validateName = (name: string): ValidationResult => {
   if (!name) return { isValid: false, error: "Name is required" };
-  if (!NAME_REGEX.test(name))
+  const trimmedName = name.trim();
+  if (!trimmedName)
+    return { isValid: false, error: "Name cannot be empty or whitespace only" };
+  if (!NAME_REGEX.test(trimmedName))
     return {
       isValid: false,
       error:
@@ -70,11 +83,108 @@ export const validateName = (name: string): ValidationResult => {
   return { isValid: true };
 };
 
+// Generic string validation function
+export const validateString = (
+  value: string,
+  fieldName: string,
+  {
+    required = true,
+    minLength = 1,
+    maxLength = 500,
+    regex = null,
+    errorMessage = null,
+    minMeaningfulChars = 3,
+    blockSingleChar = true,
+  }: {
+    required?: boolean;
+    minLength?: number;
+    maxLength?: number;
+    regex?: RegExp | null;
+    errorMessage?: string | null;
+    minMeaningfulChars?: number;
+    blockSingleChar?: boolean;
+  } = {}
+): ValidationResult => {
+  // Check if value exists when required
+  if (required && !value) {
+    return { isValid: false, error: `${fieldName} is required` };
+  }
+
+  // If optional and empty, it's valid
+  if (!required && !value) {
+    return { isValid: true };
+  }
+
+  const trimmed = value.trim();
+
+  // Check for whitespace-only
+  if (required && !trimmed) {
+    return {
+      isValid: false,
+      error: `${fieldName} cannot be empty or whitespace only`,
+    };
+  }
+
+  // Block inputs that are just a single character like "." or "-"
+  if (blockSingleChar && trimmed.length === 1) {
+    return {
+      isValid: false,
+      error: `${fieldName} cannot be a single character`,
+    };
+  }
+
+  // Check minimum length
+  if (trimmed.length < minLength) {
+    return {
+      isValid: false,
+      error: `${fieldName} must be at least ${minLength} character${
+        minLength !== 1 ? "s" : ""
+      }`,
+    };
+  }
+
+  // Check maximum length
+  if (trimmed.length > maxLength) {
+    return {
+      isValid: false,
+      error: `${fieldName} must be ${maxLength} characters or less`,
+    };
+  }
+
+  // Ensure the input has enough meaningful characters (not just repeated chars or punctuation)
+  const meaningfulChars = trimmed.replace(
+    /\s+|[.,\/#!$%\^&\*;:{}=\-_`~()]/g,
+    ""
+  );
+  if (meaningfulChars.length < minMeaningfulChars) {
+    return {
+      isValid: false,
+      error: `${fieldName} must contain at least ${minMeaningfulChars} meaningful characters`,
+    };
+  }
+
+  // Check regex pattern if provided
+  if (regex && !regex.test(trimmed)) {
+    return {
+      isValid: false,
+      error: errorMessage || `${fieldName} contains invalid characters`,
+    };
+  }
+
+  return { isValid: true };
+};
+
 export const validateDepartment = (department: string): ValidationResult => {
   if (!department) return { isValid: false, error: "Department is required" };
+  const trimmedDepartment = department.trim();
+  if (!trimmedDepartment)
+    return {
+      isValid: false,
+      error: "Department cannot be empty or whitespace only",
+    };
 
   // Check if department is in the list of valid departments
-  if (!getAllDepartments().includes(department)) {
+  if (!getAllDepartments().includes(trimmedDepartment)) {
     return { isValid: false, error: "Invalid department" };
   }
 
@@ -85,14 +195,21 @@ export const validateNewDepartment = (department: string): ValidationResult => {
   if (!department)
     return { isValid: false, error: "Department name is required" };
 
-  if (!DEPARTMENT_REGEX.test(department))
+  const trimmedDepartment = department.trim();
+  if (!trimmedDepartment)
+    return {
+      isValid: false,
+      error: "Department name cannot be empty or whitespace only",
+    };
+
+  if (!DEPARTMENT_REGEX.test(trimmedDepartment))
     return {
       isValid: false,
       error:
         "Department name must be 2-50 characters and contain only letters, numbers, spaces, hyphens and apostrophes",
     };
 
-  if (getAllDepartments().includes(department)) {
+  if (getAllDepartments().includes(trimmedDepartment)) {
     return { isValid: false, error: "Department already exists" };
   }
 

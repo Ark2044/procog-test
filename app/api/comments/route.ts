@@ -7,8 +7,12 @@ import {
   createSuccessResponse,
   validateRequestBody,
 } from "@/lib/apiUtils";
-import { validateComment } from "@/lib/validation";
-import { checkCommentRateLimit, isSpam } from "@/lib/rateLimit";
+import { validateString } from "@/lib/validation";
+import {
+  checkCommentRateLimit,
+  isSpam,
+  isSuspiciousInput,
+} from "@/lib/rateLimit";
 import { sendCommentNotification } from "@/utils/emailService";
 import { Comment } from "@/types/Comment";
 
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return createSuccessResponse(response.documents);
+    return createSuccessResponse({ comments: response.documents });
   } catch (error) {
     return handleApiError(error);
   }
@@ -62,34 +66,65 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await validateRequestBody(request)) as {
-      content: string;
-      authorId: string;
-      riskId: string;
-      parentId?: string;
-      mentions?: string[];
+    const rawBody = await validateRequestBody(request, "/api/comments");
+
+    // Safely cast and validate the body
+    const body = {
+      content: rawBody.content as string,
+      authorId: rawBody.authorId as string,
+      riskId: rawBody.riskId as string,
+      parentId: rawBody.parentId as string | undefined,
+      type: rawBody.type as "answer" | "question",
+      typeId: rawBody.typeId as string,
     };
-    const { content, authorId, riskId, parentId } = body;
 
-    // Extract mentions from content (@username)
-    const mentionRegex = /@(\w+)/g;
-    const mentions = Array.from(content.matchAll(mentionRegex))
-      .map((match) => match[1])
-      .filter(Boolean);
-
-    // Validate input
-    const validation = validateComment({
-      content,
-      type: parentId ? "answer" : "question",
-      typeId: riskId,
+    // Enhanced input validation
+    const contentValidation = validateString(body.content, "Comment content", {
+      required: true,
+      minLength: 5, // Increased minimum length requirement
+      maxLength: 10000,
+      minMeaningfulChars: 5, // Must have at least 5 meaningful characters
+      blockSingleChar: true,
     });
 
-    if (!validation.isValid) {
-      return NextResponse.json({ error: validation.error }, { status: 400 });
+    if (!contentValidation.isValid) {
+      return NextResponse.json(
+        { error: contentValidation.error },
+        { status: 400 }
+      );
+    }
+
+    if (!body.typeId || body.typeId.trim() === "") {
+      return NextResponse.json(
+        { error: "Type ID is required and cannot be empty" },
+        { status: 400 }
+      );
+    }
+
+    if (!body.riskId || body.riskId.trim() === "") {
+      return NextResponse.json(
+        { error: "Risk ID is required and cannot be empty" },
+        { status: 400 }
+      );
+    }
+
+    if (!["answer", "question"].includes(body.type)) {
+      return NextResponse.json(
+        { error: "Type must be either 'answer' or 'question'" },
+        { status: 400 }
+      );
+    }
+
+    // Check for suspicious patterns that may indicate attacks
+    if (isSuspiciousInput(body.content)) {
+      return NextResponse.json(
+        { error: "Comment contains suspicious patterns" },
+        { status: 400 }
+      );
     }
 
     // Check rate limit
-    const underLimit = await checkCommentRateLimit(authorId);
+    const underLimit = await checkCommentRateLimit(body.authorId);
     if (!underLimit) {
       return NextResponse.json(
         { error: "Rate limit exceeded. Please wait before posting again." },
@@ -98,22 +133,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for spam
-    if (isSpam(content)) {
+    if (isSpam(body.content)) {
       return NextResponse.json(
         { error: "Comment detected as potential spam" },
         { status: 400 }
       );
     }
 
+    // Extract mentions from content (@username)
+    const mentionRegex = /@(\w+)/g;
+    const mentions = Array.from(body.content.matchAll(mentionRegex))
+      .map((match) => match[1])
+      .filter(Boolean);
+
     const comment = await databases.createDocument(
       db,
       commentCollection,
       ID.unique(),
       {
-        content,
-        authorId,
-        riskId,
-        parentId: parentId || null,
+        content: body.content.trim(),
+        authorId: body.authorId,
+        riskId: body.riskId.trim(),
+        parentId: body.parentId || null,
         upvotes: 0,
         downvotes: 0,
         voters: [],
@@ -124,18 +165,26 @@ export async function POST(request: NextRequest) {
     );
 
     // Send notifications
-    if (parentId) {
+    if (body.parentId) {
       // Get parent comment for reply notification
-      const parentComment = await databases.getDocument(db, commentCollection, parentId);
-      await sendCommentNotification(comment as Comment, "reply", parentComment as Comment);
+      const parentComment = await databases.getDocument(
+        db,
+        commentCollection,
+        body.parentId
+      );
+      await sendCommentNotification(
+        comment as unknown as Comment,
+        "reply",
+        parentComment as unknown as Comment
+      );
     }
 
     // Send mention notifications
     if (mentions.length > 0) {
-      await sendCommentNotification(comment as Comment, "mention");
+      await sendCommentNotification(comment as unknown as Comment, "mention");
     }
 
-    return createSuccessResponse(comment, 201);
+    return NextResponse.json(comment, { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

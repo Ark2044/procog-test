@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/Auth";
+import { validateEmail } from "@/lib/validation";
 
 export default function Login() {
   const { login, user } = useAuthStore();
@@ -24,24 +25,24 @@ export default function Login() {
     }
   }, [user, router]);
 
-  // Simple email regex for validation
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email")?.toString().trim();
-    const password = formData.get("password")?.toString();
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
 
+    // Check if fields are filled
     if (!email || !password) {
       toast.error("Please fill all fields");
       return;
     }
 
-    // Validate email format
-    if (!isValidEmail(email)) {
-      toast.error("Please enter a valid email address");
+    // Validate email format using our validation helper
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      toast.error(
+        emailValidation.error || "Please enter a valid email address"
+      );
       return;
     }
 

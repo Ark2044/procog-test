@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRiskStore } from "@/store/Risk";
+import { validateString } from "@/lib/validation";
 
 // State interface
 interface RiskState {
@@ -293,38 +294,100 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
 
   // Validate form fields before submission
   const validateFields = (): boolean => {
-    if (!state.title.trim() || !state.content.trim()) {
-      toast.error("Title and Description are required");
+    // Use validateString for title and content
+    const titleValidation = validateString(state.title, "Title", {
+      required: true,
+      minLength: 3,
+      maxLength: 100,
+    });
+
+    if (!titleValidation.isValid) {
+      toast.error(titleValidation.error || "Invalid title");
       return false;
     }
-    if (state.title.trim().length > 100) {
-      toast.error("Title must be 100 characters or less");
+
+    const contentValidation = validateString(state.content, "Description", {
+      required: true,
+      minLength: 10,
+      maxLength: 500,
+    });
+
+    if (!contentValidation.isValid) {
+      toast.error(contentValidation.error || "Invalid description");
       return false;
     }
-    if (state.content.trim().length > 500) {
-      toast.error("Description must be 500 characters or less");
-      return false;
+
+    // Validate action-specific fields
+    if (state.action === "mitigate") {
+      const mitigationValidation = validateString(
+        state.mitigation,
+        "Mitigation strategy",
+        {
+          required: true,
+          minLength: 10,
+        }
+      );
+
+      if (!mitigationValidation.isValid) {
+        toast.error(mitigationValidation.error || "An unknown error occurred");
+        return false;
+      }
     }
-    if (state.action === "mitigate" && !state.mitigation.trim()) {
-      toast.error("Please provide mitigation strategies");
-      return false;
+
+    if (state.action === "accept") {
+      const acceptanceValidation = validateString(
+        state.acceptance,
+        "Acceptance rationale",
+        {
+          required: true,
+          minLength: 10,
+        }
+      );
+
+      if (!acceptanceValidation.isValid) {
+        toast.error(acceptanceValidation.error || "An unknown error occurred");
+        return false;
+      }
     }
-    if (state.action === "accept" && !state.acceptance.trim()) {
-      toast.error("Please provide acceptance rationale");
-      return false;
+
+    if (state.action === "transfer") {
+      const transferValidation = validateString(
+        state.transfer,
+        "Transfer strategy",
+        {
+          required: true,
+          minLength: 10,
+        }
+      );
+
+      if (!transferValidation.isValid) {
+        toast.error(transferValidation.error || "An unknown error occurred");
+        return false;
+      }
     }
-    if (state.action === "transfer" && !state.transfer.trim()) {
-      toast.error("Please provide transfer strategy");
-      return false;
+
+    if (state.action === "avoid") {
+      const avoidanceValidation = validateString(
+        state.avoidance,
+        "Avoidance approach",
+        {
+          required: true,
+          minLength: 10,
+        }
+      );
+
+      if (!avoidanceValidation.isValid) {
+        toast.error(avoidanceValidation.error || "An unknown error occurred");
+        return false;
+      }
     }
-    if (state.action === "avoid" && !state.avoidance.trim()) {
-      toast.error("Please provide avoidance approach");
-      return false;
-    }
+
+    // Validate authorized viewers for confidential risks
     if (state.isConfidential && state.authorizedViewers.length === 0) {
       toast.error("Authorized viewers are required for confidential risks");
       return false;
     }
+
     return true;
   };
 

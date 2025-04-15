@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
-import { useAuthStore } from "@/store/Auth";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import Link from "next/link";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
+import { useAuthStore } from "@/store/Auth";
+import { validateEmail, validateName, validateAuth } from "@/lib/validation";
 
 export default function Register() {
   const { createAccount, login, user } = useAuthStore();
@@ -23,33 +24,37 @@ export default function Register() {
     }
   }, [user, router]);
 
-  // Simple email regex validation function
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const firstName = formData.get("firstname")?.toString().trim();
-    const lastName = formData.get("lastname")?.toString().trim();
-    const email = formData.get("email")?.toString().trim();
-    const password = formData.get("password")?.toString();
+    const firstName = formData.get("firstname")?.toString().trim() || "";
+    const lastName = formData.get("lastname")?.toString().trim() || "";
+    const email = formData.get("email")?.toString().trim() || "";
+    const password = formData.get("password")?.toString() || "";
 
-    // Check that all fields are filled
-    if (!firstName || !lastName || !email || !password) {
-      toast.error("Please fill out all the fields");
+    // First validate names
+    const nameValidation = validateName(`${firstName} ${lastName}`);
+    if (!nameValidation.isValid) {
+      toast.error(nameValidation.error || "Invalid name format");
       return;
     }
 
-    // Validate email format
-    if (!isValidEmail(email)) {
-      toast.error("Please enter a valid email address");
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      toast.error(emailValidation.error || "Invalid email format");
       return;
     }
 
-    // Validate password length (min 8 characters)
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters long");
+    // Complete auth validation
+    const authValidation = validateAuth({
+      name: `${firstName} ${lastName}`,
+      email,
+      password,
+    });
+
+    if (!authValidation.isValid) {
+      toast.error(authValidation.error || "Invalid authentication data");
       return;
     }
 
