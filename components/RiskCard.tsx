@@ -219,6 +219,16 @@ const RiskCard: React.FC<RiskCardProps> = ({
   };
 
   const handleCloseRisk = async () => {
+    const trimmedResolution = resolution.trim();
+    if (
+      !trimmedResolution ||
+      trimmedResolution === "." ||
+      /^\s*$/.test(trimmedResolution)
+    ) {
+      // Don't allow closing with empty resolution or just a period
+      return;
+    }
+
     await closeRisk(riskId, resolution);
     setIsCloseDialogOpen(false);
   };

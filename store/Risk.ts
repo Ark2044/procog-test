@@ -269,8 +269,21 @@ export const useRiskStore = create<RiskState>((set, get) => ({
   closeRisk: async (riskId: string, resolution: string) => {
     set({ loading: true, error: null });
     try {
-      if (!resolution?.trim()) {
-        throw new Error("Resolution is required when closing a risk");
+      // Validate resolution is not empty or just a period
+      const trimmedResolution = resolution?.trim() || "";
+      if (
+        !trimmedResolution ||
+        trimmedResolution === "." ||
+        /^\s*$/.test(trimmedResolution)
+      ) {
+        set({
+          error: "Please provide a meaningful resolution when closing a risk",
+        });
+        toast.error(
+          "Please provide a meaningful resolution when closing a risk"
+        );
+        set({ loading: false });
+        return;
       }
 
       const currentRisk = get().risk;
