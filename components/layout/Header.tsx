@@ -107,7 +107,7 @@ export default function Header() {
                 P
               </div>
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                ROCOG
+                PROCOG
               </span>
             </Link>
 
@@ -150,7 +150,7 @@ export default function Header() {
                 isOpen ? "block" : "hidden"
               } transition-all duration-300 ease-in-out fixed lg:static top-[calc(100%)] left-0 right-0 max-h-[calc(100vh-100%)] overflow-y-auto lg:overflow-visible w-full lg:w-auto lg:h-auto ${
                 isScrolled
-                  ? "bg-white shadow-md"
+                  ? "bg-white"
                   : "bg-white/95 lg:bg-transparent backdrop-blur-md"
               } rounded-b-lg z-30`}
             >
@@ -159,13 +159,16 @@ export default function Header() {
                   <Link
                     href="/guide"
                     onClick={handleLinkClick}
-                    className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
+                    className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
                       isScrolled
                         ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                         : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                     }`}
                   >
-                    <FaQuestionCircle className="mr-1.5 text-sm" />
+                    <FaQuestionCircle
+                      className="mr-2 text-sm"
+                      aria-hidden="true"
+                    />
                     User Guide
                   </Link>
                 </li>
@@ -176,13 +179,16 @@ export default function Header() {
                       <Link
                         href="/login"
                         onClick={handleLinkClick}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                         }`}
                       >
-                        <FaSignInAlt className="mr-1.5 text-sm" />
+                        <FaSignInAlt
+                          className="mr-2 text-sm"
+                          aria-hidden="true"
+                        />
                         Login
                       </Link>
                     </li>
@@ -190,9 +196,12 @@ export default function Header() {
                       <Link
                         href="/register"
                         onClick={handleLinkClick}
-                        className="flex items-center justify-center lg:justify-start bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto"
+                        className="flex items-center justify-center lg:justify-start bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto"
                       >
-                        <FaUserPlus className="mr-1.5 text-sm" />
+                        <FaUserPlus
+                          className="mr-2 text-sm"
+                          aria-hidden="true"
+                        />
                         Sign Up
                       </Link>
                     </li>
