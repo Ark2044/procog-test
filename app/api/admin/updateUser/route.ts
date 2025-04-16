@@ -12,8 +12,9 @@ export async function POST(request: Request) {
     // Update only the provided fields while preserving other preferences
     const updatedPrefs = {
       ...currentPrefs,
-      ...(role && { role }),
-      ...(department && { department })
+      ...(role !== undefined && { role }),
+      // Handle department explicitly to allow setting to null/empty
+      ...(department !== undefined && { department }),
     };
 
     // Update the user's preferences

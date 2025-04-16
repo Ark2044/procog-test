@@ -105,7 +105,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Firstname"
                     defaultValue={isLoading ? "John" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Lastname"
                     defaultValue={isLoading ? "Doe" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -142,7 +142,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Email address"
                     defaultValue={isLoading ? "user@example.com" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>
@@ -161,7 +161,7 @@ export default function Register() {
                     disabled={isLoading}
                     placeholder="Password"
                     defaultValue={isLoading ? "••••••••" : ""}
-                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors text-sm sm:text-base py-1"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none transition-colors text-sm sm:text-base py-1"
                   />
                 </div>
               </div>

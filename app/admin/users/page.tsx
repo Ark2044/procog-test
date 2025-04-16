@@ -359,16 +359,17 @@ const AdminUsersPage = () => {
                         <div className="relative">
                           <select
                             className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
-                            value={usr.prefs.department}
+                            value={usr.prefs.department || ""}
                             onChange={(e) =>
                               handleUpdate(
                                 usr.$id,
                                 "department",
-                                e.target.value
+                                e.target.value === "" ? "" : e.target.value
                               )
                             }
                             disabled={updatingUser === usr.$id}
                           >
+                            <option value="">None</option>
                             {departments.map((dept) => (
                               <option key={dept} value={dept}>
                                 {dept}

@@ -7,4 +7,5 @@ export interface User {
   prefs: Record<string, string | number | boolean>;
   department?: string;
   role?: string;
+  reputation?: number;
 }
