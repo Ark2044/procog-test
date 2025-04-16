@@ -16,17 +16,16 @@ export default function Footer() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send this to your backend or email service
     alert(`Thank you! ${email} has been subscribed to our newsletter.`);
     setEmail("");
   };
 
   return (
-    <footer className="bg-gradient-to-b from-gray-50 to-indigo-50 text-gray-700 pt-10 pb-6 border-t border-indigo-100 relative z-20">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <footer className="bg-gradient-to-b from-gray-50 to-indigo-50 text-gray-700 border-t border-indigo-100 relative">
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {/* Brand Section */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center">
               <div className="mr-1.5 rounded-lg w-6 h-6 flex items-center justify-center bg-indigo-600 text-white text-base font-bold">
                 P
@@ -73,10 +72,8 @@ export default function Footer() {
 
           {/* Product Links */}
           <div>
-            <h4 className="font-bold text-base mb-2.5 text-gray-800">
-              Product
-            </h4>
-            <ul className="space-y-1.5">
+            <h4 className="font-bold text-base mb-2 text-gray-800">Product</h4>
+            <ul className="space-y-1">
               <li>
                 <Link
                   href="/guide"
@@ -122,10 +119,8 @@ export default function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-bold text-base mb-2.5 text-gray-800">
-              Company
-            </h4>
-            <ul className="space-y-1.5">
+            <h4 className="font-bold text-base mb-2 text-gray-800">Company</h4>
+            <ul className="space-y-1">
               <li>
                 <a
                   href="#"
@@ -171,10 +166,10 @@ export default function Footer() {
 
           {/* Newsletter Section */}
           <div>
-            <h4 className="font-bold text-base mb-2.5 text-gray-800">
+            <h4 className="font-bold text-base mb-2 text-gray-800">
               Stay Updated
             </h4>
-            <p className="text-xs text-gray-500 mb-2.5">
+            <p className="text-xs text-gray-500 mb-2">
               Subscribe to our newsletter to get the latest updates on risk
               management.
             </p>
@@ -204,7 +199,7 @@ export default function Footer() {
         </div>
 
         {/* Trust indicators */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 border-t border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 py-3 border-t border-b border-gray-200">
           <div className="flex items-center justify-center md:justify-start">
             <FaShieldAlt className="text-indigo-600 mr-2 text-base" />
             <div>
@@ -237,8 +232,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-5 text-xs">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+        <div className="mt-4 text-xs">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
             <p className="text-gray-500">
               &copy; {new Date().getFullYear()} Procog. All rights reserved.
             </p>

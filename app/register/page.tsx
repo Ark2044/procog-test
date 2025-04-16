@@ -84,8 +84,8 @@ export default function Register() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md">
+      <div className="w-full bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="w-full max-w-md py-8">
           <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 sm:p-8 transition-transform hover:scale-[1.02]">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
               Create your account

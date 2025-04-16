@@ -1486,8 +1486,8 @@ const RiskDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pt-24 sm:pt-28 pb-12 px-4 sm:px-8 text-gray-800">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16 pb-12 px-4 sm:px-8">
+      <div className="max-w-4xl mx-auto space-y-8 mt-8">
         {/* Title section with improved mobile layout and visual hierarchy */}
         <div className="relative bg-white/70 backdrop-blur-sm rounded-xl shadow-sm border border-indigo-100 p-5 sm:p-8">
           <div className="flex flex-col space-y-4">

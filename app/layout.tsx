@@ -31,28 +31,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} antialiased`}>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <div className="flex-grow overflow-x-hidden">
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: "#ffffff",
-                  color: "#374151",
-                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                  borderRadius: "0.5rem",
-                  padding: "0.75rem 1rem",
-                },
-              }}
-            />
-            <main>{children}</main>
-            <UserGuide position="bottom-right" />
-          </div>
-          <Footer />
-        </div>
+      <body
+        className={`${poppins.className} antialiased`}
+        style={{ margin: 0, display: "flex", flexDirection: "column" }}
+      >
+        <Header />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: "#ffffff",
+              color: "#374151",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              borderRadius: "0.5rem",
+              padding: "0.75rem 1rem",
+            },
+          }}
+        />
+        {/* Removed min-height and nested flex containers that cause spacing issues */}
+        <div style={{ display: "contents" }}>{children}</div>
+        <UserGuide position="bottom-right" />
+        <Footer />
       </body>
     </html>
   );

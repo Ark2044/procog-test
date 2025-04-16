@@ -109,11 +109,11 @@ const HomePage = () => {
   );
 
   return (
-    // FIXED: Apply the blue gradient to the entire page
-    <div className="min-h-screen" style={pageBackgroundStyle}>
-      <div className="container mx-auto px-4 pt-16 pb-8">
-        {/* Hero Section - No background color/style needed since parent has blue background */}
-        <div className="max-w-4xl mx-auto text-center relative mb-16">
+    <div style={pageBackgroundStyle} className="w-full">
+      {/* Added pt-16 to create space below the header */}
+      <div className="container mx-auto px-4 py-8 pt-16">
+        {/* Hero Section */}
+        <div className="max-w-4xl mx-auto text-center mb-12 mt-8">
           <h1
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6"
             style={{ textShadow: "0 2px 8px rgba(59, 130, 246, 0.15)" }}
@@ -147,10 +147,10 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Features Section - Use card styling for visual separation without changing page background */}
-        <section className="mb-16">
+        {/* Features Section */}
+        <section className="mb-12">
           <h2
-            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 sm:mb-8 ${cardTitleColor}`}
+            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 ${cardTitleColor}`}
           >
             Key Features
           </h2>
@@ -177,9 +177,9 @@ const HomePage = () => {
         </section>
 
         {/* Benefits Section */}
-        <section className="mb-16">
+        <section className="mb-12">
           <h2
-            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 sm:mb-8 ${cardTitleColor}`}
+            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 ${cardTitleColor}`}
           >
             Key Benefits
           </h2>
@@ -205,9 +205,9 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Call to Action */}
-        <section className="pb-16 text-center">
-          <div className="py-6 sm:py-8 px-4 sm:px-6 rounded-xl mx-auto max-w-3xl shadow-md bg-white/80 backdrop-blur-sm border border-blue-200">
+        {/* Call to Action - Minimal bottom margin */}
+        <section className="mb-4">
+          <div className="py-6 px-4 sm:px-6 rounded-xl mx-auto max-w-3xl shadow-md bg-white/80 backdrop-blur-sm border border-blue-200">
             <h3
               className={`text-xl sm:text-2xl font-bold mb-2 sm:mb-3 ${cardTitleColor}`}
             >

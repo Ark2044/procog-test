@@ -563,10 +563,10 @@ const Dashboard = () => {
   const totalRisks = risks.length;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10 pt-10">
-      {/* Main content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16">
-        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+    <div className="bg-gray-50 w-full">
+      {/* Main content - added pt-16 for proper header spacing */}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mt-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
               Welcome, {user?.name?.split(" ")[0] || "User"}

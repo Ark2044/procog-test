@@ -2,10 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-body{
-  font-family: Arial, Helvetica, sans-serif;
+html, body {
+  height: auto;
+  min-height: auto;
   margin: 0;
   padding: 0;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar {
@@ -74,5 +82,29 @@ body{
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Remove any min-height to prevent unwanted spacing */
+#__next, main, body > div {
+  min-height: auto !important;
+  height: auto !important;
+}
+
+/* Common page styling */
+.page-container {
+  width: 100%;
+  padding-top: 6rem; /* Space for header */
+  padding-bottom: 2rem;
+}
+
+/* Fix for zoom level spacing issues */
+@media screen and (max-width: 100%) {
+  body > div {
+    min-height: unset;
+  }
+  
+  body {
+    overflow-x: hidden;
   }
 }
