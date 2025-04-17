@@ -15,9 +15,38 @@ import {
   FaUsers,
   FaSitemap,
   FaExclamationTriangle,
+  FaExclamationCircle,
+  FaEdit,
+  FaUserEdit,
+  FaEye,
+  FaFilter,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { validateAdminUpdate, validateNewDepartment } from "@/lib/validation";
+import Link from "next/link";
+import { Risk } from "@/types/Risk";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface User {
   $id: string;
@@ -30,7 +59,7 @@ interface User {
   };
 }
 
-type TabType = "users" | "departments";
+type TabType = "users" | "departments" | "risks";
 
 const AdminUsersPage = () => {
   const { user } = useAuthStore();
@@ -52,6 +81,20 @@ const AdminUsersPage = () => {
   const [deletingDepartment, setDeletingDepartment] = useState<string | null>(
     null
   );
+  // Add new state for risks tab
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [filteredRisks, setFilteredRisks] = useState<Risk[]>([]);
+  const [risksLoading, setRisksLoading] = useState(true);
+  const [risksError, setRisksError] = useState<string | null>(null);
+  const [riskSearchQuery, setRiskSearchQuery] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState<string>("all");
+  const [impactFilter, setImpactFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [editingUserRisks, setEditingUserRisks] = useState<boolean>(false);
+  const [userRisks, setUserRisks] = useState<Risk[]>([]);
+  const [userRisksLoading, setUserRisksLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -247,11 +290,139 @@ const AdminUsersPage = () => {
     }
   };
 
+  // Add the fetch risks functionality
+  const fetchRisks = async () => {
+    try {
+      setRisksLoading(true);
+      setRisksError(null);
+      const res = await fetch("/api/admin/risk/all");
+      if (!res.ok) throw new Error("Failed to fetch risks");
+      const data = await res.json();
+      setRisks(data.risks);
+      setFilteredRisks(data.risks);
+      toast.success("Risks refreshed");
+    } catch (err) {
+      setRisksError(
+        err instanceof Error ? err.message : "Failed to fetch risks"
+      );
+      toast.error(err instanceof Error ? err.message : "Failed to fetch risks");
+    } finally {
+      setRisksLoading(false);
+    }
+  };
+
+  // Fetch user's risks
+  const fetchUserRisks = async (userId: string) => {
+    try {
+      setUserRisksLoading(true);
+      const res = await fetch(`/api/admin/risk/user/${userId}`);
+      if (!res.ok) throw new Error("Failed to fetch user risks");
+      const data = await res.json();
+      setUserRisks(data.risks);
+      return data.risks;
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to fetch user risks"
+      );
+      return [];
+    } finally {
+      setUserRisksLoading(false);
+    }
+  };
+
+  // Update risk details
+  const handleUpdateRisk = async (
+    riskId: string,
+    field: string,
+    value: string
+  ) => {
+    try {
+      const response = await fetch("/api/risk/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          riskId,
+          [field]: value,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update risk");
+      }
+
+      // Update the risks state to reflect the change
+      setRisks((prevRisks) =>
+        prevRisks.map((r) => (r.$id === riskId ? { ...r, [field]: value } : r))
+      );
+      setFilteredRisks((prevRisks) =>
+        prevRisks.map((r) => (r.$id === riskId ? { ...r, [field]: value } : r))
+      );
+
+      toast.success("Risk updated successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update risk");
+    }
+  };
+
+  // View user profile and risks
+  const handleViewUserProfile = async (usr: User) => {
+    setSelectedUser(usr);
+    setUserDialogOpen(true);
+    const userRisks = await fetchUserRisks(usr.$id);
+    setUserRisks(userRisks);
+  };
+
+  // Apply risk filters based on selected criteria
+  useEffect(() => {
+    if (risks.length > 0) {
+      let filtered = [...risks];
+
+      // Apply search filter
+      if (riskSearchQuery) {
+        const query = riskSearchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (risk) =>
+            risk.title.toLowerCase().includes(query) ||
+            risk.content.toLowerCase().includes(query) ||
+            risk.authorName.toLowerCase().includes(query)
+        );
+      }
+
+      // Apply department filter
+      if (departmentFilter !== "all") {
+        filtered = filtered.filter(
+          (risk) => risk.department === departmentFilter
+        );
+      }
+
+      // Apply impact filter
+      if (impactFilter !== "all") {
+        filtered = filtered.filter((risk) => risk.impact === impactFilter);
+      }
+
+      // Apply status filter
+      if (statusFilter !== "all") {
+        filtered = filtered.filter((risk) => risk.status === statusFilter);
+      }
+
+      setFilteredRisks(filtered);
+    }
+  }, [risks, riskSearchQuery, departmentFilter, impactFilter, statusFilter]);
+
+  // Fetch risks when tab changes to risks
+  useEffect(() => {
+    if (activeTab === "risks" && risks.length === 0) {
+      fetchRisks();
+    }
+  }, [activeTab, risks.length]);
+
   const renderTabContent = () => {
     if (activeTab === "users") {
       return renderUsersTab();
-    } else {
+    } else if (activeTab === "departments") {
       return renderDepartmentsTab();
+    } else {
+      return renderRisksTab();
     }
   };
 
@@ -303,6 +474,9 @@ const AdminUsersPage = () => {
                     </th>
                     <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Department
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -380,6 +554,16 @@ const AdminUsersPage = () => {
                             <FaBuilding className="text-xs sm:text-sm" />
                           </div>
                         </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                          onClick={() => handleViewUserProfile(usr)}
+                        >
+                          <FaUserEdit className="mr-1" /> Profile & Risks
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -575,6 +759,315 @@ const AdminUsersPage = () => {
     );
   };
 
+  const renderRisksTab = () => {
+    if (risksLoading) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      );
+    }
+
+    if (risksError) {
+      return (
+        <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
+          <div className="flex flex-col items-center text-red-500 mb-4">
+            <FaExclamationTriangle className="text-4xl mb-2" />
+            <p>{risksError}</p>
+          </div>
+          <button
+            onClick={fetchRisks}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {/* Filter controls */}
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            <div className="relative flex-grow">
+              <input
+                type="text"
+                placeholder="Search risks..."
+                value={riskSearchQuery}
+                onChange={(e) => setRiskSearchQuery(e.target.value)}
+                className="bg-white text-gray-800 rounded-lg px-4 py-2.5 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full border border-gray-200"
+              />
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            <div className="flex flex-wrap gap-2 sm:gap-4">
+              <div className="w-40">
+                <Select
+                  value={departmentFilter}
+                  onValueChange={(value) => setDepartmentFilter(value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <div className="flex items-center">
+                      <FaBuilding className="mr-2 text-gray-500" />
+                      <SelectValue placeholder="Department" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Departments</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-40">
+                <Select
+                  value={impactFilter}
+                  onValueChange={(value) => setImpactFilter(value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <div className="flex items-center">
+                      <FaExclamationCircle className="mr-2 text-gray-500" />
+                      <SelectValue placeholder="Impact" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Impacts</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-40">
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => setStatusFilter(value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <div className="flex items-center">
+                      <FaFilter className="mr-2 text-gray-500" />
+                      <SelectValue placeholder="Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                onClick={fetchRisks}
+                disabled={risksLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              >
+                <FaSync
+                  className={`mr-2 ${risksLoading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Risks List */}
+        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+          {filteredRisks.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-600">
+                No risks found matching your criteria
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Risk Details
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Author
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Impact
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Department
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredRisks.map((risk) => (
+                    <tr
+                      key={risk.$id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 sm:px-6 py-3 sm:py-4">
+                        <div className="flex flex-col">
+                          <div className="text-sm font-medium text-gray-800">
+                            {risk.title}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                            {risk.content}
+                          </div>
+                          {risk.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {risk.tags.slice(0, 3).map((tag, idx) => (
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {risk.tags.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{risk.tags.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div
+                          className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer flex items-center"
+                          onClick={() => {
+                            const author = users.find(
+                              (u) => u.$id === risk.authorId
+                            );
+                            if (author) {
+                              handleViewUserProfile(author);
+                            }
+                          }}
+                        >
+                          <FaUserEdit className="mr-1" />
+                          {risk.authorName}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div className="relative">
+                          <select
+                            className={`rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer 
+                              ${
+                                risk.impact === "high"
+                                  ? "bg-red-50 text-red-700"
+                                  : risk.impact === "medium"
+                                  ? "bg-yellow-50 text-yellow-700"
+                                  : "bg-green-50 text-green-700"
+                              }`}
+                            value={risk.impact}
+                            onChange={(e) =>
+                              handleUpdateRisk(
+                                risk.$id,
+                                "impact",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                            <FaExclamationCircle className="text-xs sm:text-sm" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div className="relative">
+                          <select
+                            className={`rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer
+                              ${
+                                risk.status === "active"
+                                  ? "bg-blue-50 text-blue-700"
+                                  : risk.status === "closed"
+                                  ? "bg-gray-50 text-gray-700"
+                                  : "bg-green-50 text-green-700"
+                              }`}
+                            value={risk.status}
+                            onChange={(e) =>
+                              handleUpdateRisk(
+                                risk.$id,
+                                "status",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option value="active">Active</option>
+                            <option value="closed">Closed</option>
+                            <option value="resolved">Resolved</option>
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                            <FaEdit className="text-xs sm:text-sm" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div className="relative">
+                          <select
+                            className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
+                            value={risk.department || ""}
+                            onChange={(e) =>
+                              handleUpdateRisk(
+                                risk.$id,
+                                "department",
+                                e.target.value === "" ? "" : e.target.value
+                              )
+                            }
+                          >
+                            <option value="">None</option>
+                            {departments.map((dept) => (
+                              <option key={dept} value={dept}>
+                                {dept}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                            <FaBuilding className="text-xs sm:text-sm" />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            asChild
+                          >
+                            <Link href={`/risk/${risk.$id}`}>
+                              <FaEye className="mr-1" /> View
+                            </Link>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
+
   // Since we're using constants from within the component to check if a department is default,
   // define DEFAULT_DEPARTMENTS here as well
   const DEFAULT_DEPARTMENTS = [
@@ -587,6 +1080,295 @@ const AdminUsersPage = () => {
     "finance",
     "operations",
   ];
+
+  // User Profile Dialog
+  const renderUserProfile = () => {
+    if (!selectedUser) return null;
+
+    return (
+      <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <div className="h-10 w-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center mr-3">
+                <span className="text-white font-medium text-lg">
+                  {selectedUser.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span>{selectedUser.name}&apos;s Profile</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mt-4">
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">User Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Name</h4>
+                    <p className="text-gray-800">{selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Email</h4>
+                    <p className="text-gray-800">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Role</h4>
+                    <select
+                      className="bg-white text-gray-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 mt-1"
+                      value={selectedUser.prefs.role}
+                      onChange={(e) => {
+                        handleUpdate(selectedUser.$id, "role", e.target.value);
+                        setSelectedUser({
+                          ...selectedUser,
+                          prefs: {
+                            ...selectedUser.prefs,
+                            role: e.target.value,
+                          },
+                        });
+                      }}
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">
+                      Department
+                    </h4>
+                    <select
+                      className="bg-white text-gray-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 mt-1"
+                      value={selectedUser.prefs.department || ""}
+                      onChange={(e) => {
+                        const value =
+                          e.target.value === "" ? "" : e.target.value;
+                        handleUpdate(selectedUser.$id, "department", value);
+                        setSelectedUser({
+                          ...selectedUser,
+                          prefs: {
+                            ...selectedUser.prefs,
+                            department: value,
+                          },
+                        });
+                      }}
+                    >
+                      <option value="">None</option>
+                      {departments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">
+                      Reputation
+                    </h4>
+                    <p className="text-gray-800">
+                      {selectedUser.prefs.reputation || 0}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2 pt-2">
+                    <Button
+                      className="w-full"
+                      onClick={() => {
+                        router.push(`/profile/${selectedUser.$id}`);
+                      }}
+                    >
+                      View Full Profile
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setEditingUserRisks(!editingUserRisks);
+                      }}
+                    >
+                      {editingUserRisks ? "Done Editing" : "Edit Risks"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="md:col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">User Risks</CardTitle>
+                  <CardDescription>
+                    {userRisks.length} risks created by this user
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="px-0">
+                  {userRisksLoading ? (
+                    <div className="flex justify-center py-6">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : userRisks.length === 0 ? (
+                    <div className="text-center py-6 px-4">
+                      <p className="text-gray-500">
+                        No risks found for this user
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Title
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Impact
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {userRisks.map((risk) => (
+                            <tr key={risk.$id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="text-sm font-medium text-gray-800">
+                                  {risk.title}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                {editingUserRisks ? (
+                                  <select
+                                    className={`rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 border appearance-none cursor-pointer 
+                                      ${
+                                        risk.impact === "high"
+                                          ? "bg-red-50 text-red-700"
+                                          : risk.impact === "medium"
+                                          ? "bg-yellow-50 text-yellow-700"
+                                          : "bg-green-50 text-green-700"
+                                      }`}
+                                    value={risk.impact}
+                                    onChange={(e) => {
+                                      handleUpdateRisk(
+                                        risk.$id,
+                                        "impact",
+                                        e.target.value
+                                      );
+                                      setUserRisks(
+                                        userRisks.map((r) =>
+                                          r.$id === risk.$id
+                                            ? {
+                                                ...r,
+                                                impact: e.target.value as
+                                                  | "low"
+                                                  | "medium"
+                                                  | "high",
+                                              }
+                                            : r
+                                        )
+                                      );
+                                    }}
+                                  >
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                  </select>
+                                ) : (
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                      ${
+                                        risk.impact === "high"
+                                          ? "bg-red-100 text-red-800"
+                                          : risk.impact === "medium"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-green-100 text-green-800"
+                                      }`}
+                                  >
+                                    {risk.impact}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                {editingUserRisks ? (
+                                  <select
+                                    className={`rounded px-2 py-1 text-xs w-full focus:outline-none focus:ring-1 focus:ring-blue-500 border appearance-none cursor-pointer
+                                      ${
+                                        risk.status === "active"
+                                          ? "bg-blue-50 text-blue-700"
+                                          : risk.status === "closed"
+                                          ? "bg-gray-50 text-gray-700"
+                                          : "bg-green-50 text-green-700"
+                                      }`}
+                                    value={risk.status}
+                                    onChange={(e) => {
+                                      handleUpdateRisk(
+                                        risk.$id,
+                                        "status",
+                                        e.target.value
+                                      );
+                                      setUserRisks(
+                                        userRisks.map((r) =>
+                                          r.$id === risk.$id
+                                            ? {
+                                                ...r,
+                                                status: e.target.value as
+                                                  | "active"
+                                                  | "closed"
+                                                  | "resolved",
+                                              }
+                                            : r
+                                        )
+                                      );
+                                    }}
+                                  >
+                                    <option value="active">Active</option>
+                                    <option value="closed">Closed</option>
+                                    <option value="resolved">Resolved</option>
+                                  </select>
+                                ) : (
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                      ${
+                                        risk.status === "active"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : risk.status === "closed"
+                                          ? "bg-gray-100 text-gray-800"
+                                          : "bg-green-100 text-green-800"
+                                      }`}
+                                  >
+                                    {risk.status}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  asChild
+                                >
+                                  <Link href={`/risk/${risk.$id}`}>
+                                    <FaEye className="mr-1" /> View
+                                  </Link>
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16 pb-12 px-4 sm:px-6 lg:px-8">
@@ -659,12 +1441,29 @@ const AdminUsersPage = () => {
                   Departments
                 </div>
               </button>
+              <button
+                onClick={() => setActiveTab("risks")}
+                className={`
+                  py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  ${
+                    activeTab === "risks"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }
+                `}
+              >
+                <div className="flex items-center">
+                  <FaExclamationCircle className="mr-2" />
+                  User Risks
+                </div>
+              </button>
             </nav>
           </div>
         </div>
 
         {/* Tab Content */}
         {renderTabContent()}
+        {renderUserProfile()}
       </div>
     </div>
   );

@@ -1146,9 +1146,7 @@ const RiskDetail = () => {
       if (!session) {
         router.push("/login");
       } else if (user) {
-        if (user.prefs?.role === "admin") {
-          router.push("/admin/users");
-        } else if (`${user.$id}` !== user.$id) {
+        if (`${user.$id}` !== user.$id) {
           router.push(`/dashboard/${user.$id}`);
         }
       }
