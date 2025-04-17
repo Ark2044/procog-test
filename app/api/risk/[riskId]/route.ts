@@ -9,9 +9,9 @@ import { Risk } from "@/types/Risk";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
-  const { riskId } = params;
+  const { riskId } = await params;
 
   if (!riskId) {
     return NextResponse.json({ error: "Risk ID is required" }, { status: 400 });
@@ -27,9 +27,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
-  const { riskId } = params;
+  const { riskId } = await params;
 
   if (!riskId) {
     return NextResponse.json({ error: "Risk ID is required" }, { status: 400 });
@@ -239,9 +239,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { riskId: string } }
+  { params }: { params: Promise<{ riskId: string }> }
 ) {
-  const { riskId } = params;
+  const { riskId } = await params;
 
   if (!riskId) {
     return NextResponse.json({ error: "Risk ID is required" }, { status: 400 });
