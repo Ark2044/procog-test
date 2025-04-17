@@ -1351,14 +1351,6 @@ const AdminDashboardPage = () => {
                   />
                   <div className="flex space-x-2 pt-2">
                     <Button
-                      className="w-full"
-                      onClick={() => {
-                        router.push(`/profile/${selectedUser.$id}`);
-                      }}
-                    >
-                      View Full Profile
-                    </Button>
-                    <Button
                       variant="outline"
                       className="w-full"
                       onClick={() => {
@@ -1800,7 +1792,7 @@ const AdminDashboardPage = () => {
                       <SelectValue placeholder="Select a department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {departments.map((dept) => (
                         <SelectItem key={dept} value={dept}>
                           {dept}

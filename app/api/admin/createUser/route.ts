@@ -6,7 +6,7 @@ import {
   validateDepartment,
   validateRole,
 } from "@/lib/validation";
-import { v4 as uuidv4 } from "uuid"; // Use uuid instead of ID
+import { v4 as uuidv4 } from "uuid"; // Use uuid for generating IDs
 
 export async function POST(request: Request) {
   try {
@@ -49,16 +49,19 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create temporary password (in a real app, you'd send an email with this or a reset link)
-    const tempPassword = uuidv4();
+    // Create temporary password
+    const tempPassword = uuidv4().substring(0, 8);
 
-    // Create a new user
-    const newUser = await users.create(email, tempPassword, name);
+    // Generate a valid user ID (must be <= 36 chars with valid characters)
+    const userId = uuidv4();
+
+    // Create a new user with the generated userId
+    const newUser = await users.create(userId, email, undefined, tempPassword, name);
 
     // Set the user's preferences
     const prefs = {
       role: role || "user",
-      department: department || "",
+      department: department === "none" ? "" : department || "",
       reputation: 0,
       receiveNotifications: true,
     };
@@ -85,7 +88,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: "Failed to create user" },
+      {
+        error: `Failed to create user: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      },
       { status: 500 }
     );
   }
