@@ -109,13 +109,13 @@ const HomePage = () => {
   );
 
   return (
-    <div style={pageBackgroundStyle} className="w-full">
+    <div style={pageBackgroundStyle} className="w-full min-h-screen">
       {/* Added pt-16 to create space below the header */}
-      <div className="container mx-auto px-4 py-8 pt-16">
+      <div className="container mx-auto px-4 py-8 pt-12 sm:pt-16">
         {/* Hero Section */}
-        <div className="max-w-4xl mx-auto text-center mb-12 mt-8">
+        <div className="max-w-4xl mx-auto text-center mb-8 sm:mb-12 mt-4 sm:mt-8">
           <h1
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-3 sm:mb-4 md:mb-6 px-2"
             style={{ textShadow: "0 2px 8px rgba(59, 130, 246, 0.15)" }}
           >
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-sky-600">
@@ -123,52 +123,52 @@ const HomePage = () => {
             </span>
           </h1>
 
-          <p className="text-lg sm:text-xl mb-6 sm:mb-8 text-gray-700 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-gray-700 max-w-3xl mx-auto px-2">
             Our platform empowers you to identify, assess, and mitigate risks
             with ease. Get started today and take control of your
             organization&apos;s future.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 justify-center px-4 sm:px-0">
             <motion.button
-              className="group relative px-6 sm:px-8 py-3 rounded-xl overflow-hidden shadow-lg w-full sm:w-auto"
+              className="group relative px-5 sm:px-6 md:px-8 py-2 sm:py-3 rounded-xl overflow-hidden shadow-lg w-full sm:w-auto"
               style={{ ...buttonBackgroundStyle, ...buttonShadowStyle }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
-              <span className="relative flex items-center justify-center font-bold text-white text-lg">
+              <span className="relative flex items-center justify-center font-bold text-white text-base md:text-lg">
                 <Link href="/register" className="block w-full text-center">
                   Get Started
                 </Link>
-                <ArrowRight className="ml-2 h-5 w-5 flex-shrink-0" />
+                <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
               </span>
             </motion.button>
           </div>
         </div>
 
         {/* Features Section */}
-        <section className="mb-12">
+        <section className="mb-8 sm:mb-12">
           <h2
-            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 ${cardTitleColor}`}
+            className={`text-xl sm:text-2xl md:text-3xl font-extrabold text-center mb-4 sm:mb-6 ${cardTitleColor}`}
           >
             Key Features
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
                 whileHover={{ y: -4, scale: 1.02 }}
-                className={`p-4 sm:p-5 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col ${feature.bgColor} ${feature.borderColor}`}
+                className={`p-3 sm:p-4 md:p-5 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col ${feature.bgColor} ${feature.borderColor}`}
               >
                 <feature.icon
-                  className="w-7 h-7 sm:w-8 sm:h-8 mb-3 flex-shrink-0"
+                  className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-2 sm:mb-3 flex-shrink-0"
                   style={{ color: feature.iconColor }}
                 />
-                <h3 className={`text-lg font-bold mb-2 ${cardTitleColor}`}>
+                <h3 className={`text-base sm:text-lg font-bold mb-1 sm:mb-2 ${cardTitleColor}`}>
                   {feature.title}
                 </h3>
-                <p className={`${feature.textColor} text-sm leading-relaxed`}>
+                <p className={`${feature.textColor} text-xs sm:text-sm leading-relaxed`}>
                   {feature.description}
                 </p>
               </motion.div>
@@ -177,27 +177,27 @@ const HomePage = () => {
         </section>
 
         {/* Benefits Section */}
-        <section className="mb-12">
+        <section className="mb-8 sm:mb-12">
           <h2
-            className={`text-2xl sm:text-3xl font-extrabold text-center mb-6 ${cardTitleColor}`}
+            className={`text-xl sm:text-2xl md:text-3xl font-extrabold text-center mb-4 sm:mb-6 ${cardTitleColor}`}
           >
             Key Benefits
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {benefits.map((benefit, index) => (
               <motion.div
                 key={index}
                 whileHover={{ y: -4, scale: 1.02 }}
-                className={`p-4 sm:p-5 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col ${benefit.bgColor} ${benefit.borderColor}`}
+                className={`p-3 sm:p-4 md:p-5 rounded-xl border shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col ${benefit.bgColor} ${benefit.borderColor}`}
               >
                 <benefit.icon
-                  className="w-7 h-7 sm:w-8 sm:h-8 mb-3 flex-shrink-0"
+                  className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-2 sm:mb-3 flex-shrink-0"
                   style={{ color: benefit.iconColor }}
                 />
-                <h3 className={`text-lg font-bold mb-2 ${cardTitleColor}`}>
+                <h3 className={`text-base sm:text-lg font-bold mb-1 sm:mb-2 ${cardTitleColor}`}>
                   {benefit.title}
                 </h3>
-                <p className={`${benefit.textColor} text-sm leading-relaxed`}>
+                <p className={`${benefit.textColor} text-xs sm:text-sm leading-relaxed`}>
                   {benefit.description}
                 </p>
               </motion.div>
@@ -207,24 +207,26 @@ const HomePage = () => {
 
         {/* Call to Action - Minimal bottom margin */}
         <section className="mb-4">
-          <div className="py-6 px-4 sm:px-6 rounded-xl mx-auto max-w-3xl shadow-md bg-white/80 backdrop-blur-sm border border-blue-200">
+          <div className="py-4 sm:py-6 px-3 sm:px-6 rounded-xl mx-auto max-w-3xl shadow-md bg-white/80 backdrop-blur-sm border border-blue-200">
             <h3
-              className={`text-xl sm:text-2xl font-bold mb-2 sm:mb-3 ${cardTitleColor}`}
+              className={`text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 ${cardTitleColor} text-center`}
             >
               Ready to Elevate Your Experience?
             </h3>
-            <p className="text-base mb-4 sm:mb-6 text-gray-600 max-w-xl mx-auto">
+            <p className="text-sm sm:text-base mb-3 sm:mb-4 md:mb-6 text-gray-600 max-w-xl mx-auto text-center">
               Join us today and unlock the full potential of our platform.
             </p>
-            <motion.button
-              onClick={() => router.push("/register")}
-              className="px-6 py-3 rounded-xl font-bold text-base text-white shadow-md focus:outline-none focus-visible:ring focus-visible:ring-blue-500 w-full sm:w-auto inline-block"
-              style={buttonBackgroundStyle}
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Sign Up Now
-            </motion.button>
+            <div className="flex justify-center">
+              <motion.button
+                onClick={() => router.push("/register")}
+                className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base text-white shadow-md focus:outline-none focus-visible:ring focus-visible:ring-blue-500 w-full sm:w-auto max-w-xs mx-auto"
+                style={buttonBackgroundStyle}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Sign Up Now
+              </motion.button>
+            </div>
           </div>
         </section>
       </div>
