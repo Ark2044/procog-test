@@ -144,6 +144,21 @@ const AdminDashboardPage = () => {
   const [editingUserRisks, setEditingUserRisks] = useState<boolean>(false);
   const [userRisks, setUserRisks] = useState<Risk[]>([]);
   const [userRisksLoading, setUserRisksLoading] = useState(false);
+  const [editingUserInfo, setEditingUserInfo] = useState<boolean>(false);
+  const [editedUserInfo, setEditedUserInfo] = useState<{
+    name: string;
+    email: string;
+  }>({ name: "", email: "" });
+  const [updatingUserInfo, setUpdatingUserInfo] = useState<boolean>(false);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] =
+    useState<boolean>(false);
+  const [resetPasswordLoading, setResetPasswordLoading] =
+    useState<boolean>(false);
+  const [resetPasswordSuccess, setResetPasswordSuccess] =
+    useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [passwordCopiedReset, setPasswordCopiedReset] =
+    useState<boolean>(false);
 
   // Add state for Create User dialog
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
@@ -441,6 +456,7 @@ const AdminDashboardPage = () => {
     setUserDialogOpen(true);
     const userRisks = await fetchUserRisks(usr.$id);
     setUserRisks(userRisks);
+    setEditedUserInfo({ name: usr.name, email: usr.email });
   };
 
   // Apply risk filters based on selected criteria
@@ -601,6 +617,88 @@ const AdminDashboardPage = () => {
       toast.error(err instanceof Error ? err.message : "Failed to delete user");
     } finally {
       setIsDeletingUser(false);
+    }
+  };
+
+  const handleUpdateUserInfo = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setUpdatingUserInfo(true);
+      const response = await fetch("/api/admin/updateUserInfo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: selectedUser.$id,
+          name: editedUserInfo.name,
+          email: editedUserInfo.email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update user info");
+      }
+
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.$id === selectedUser.$id
+            ? { ...u, name: editedUserInfo.name, email: editedUserInfo.email }
+            : u
+        )
+      );
+      setFilteredUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.$id === selectedUser.$id
+            ? { ...u, name: editedUserInfo.name, email: editedUserInfo.email }
+            : u
+        )
+      );
+      setSelectedUser((prevUser) =>
+        prevUser
+          ? {
+              ...prevUser,
+              name: editedUserInfo.name,
+              email: editedUserInfo.email,
+            }
+          : null
+      );
+      setEditingUserInfo(false);
+      toast.success("User info updated successfully");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update user info"
+      );
+    } finally {
+      setUpdatingUserInfo(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+
+    try {
+      setResetPasswordLoading(true);
+      const response = await fetch("/api/admin/resetPassword", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: selectedUser.$id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to reset password");
+      }
+
+      setNewPassword(data.newPassword);
+      setResetPasswordSuccess(true);
+      toast.success("Password reset successfully");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to reset password"
+      );
+    } finally {
+      setResetPasswordLoading(false);
     }
   };
 
@@ -1294,8 +1392,77 @@ const AdminDashboardPage = () => {
                   <CardTitle className="text-lg">User Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <ProfileField label="Name" value={selectedUser.name} />
-                  <ProfileField label="Email" value={selectedUser.email} />
+                  {editingUserInfo ? (
+                    <>
+                      <div>
+                        <Label htmlFor="edit-name">Name</Label>
+                        <Input
+                          id="edit-name"
+                          value={editedUserInfo.name}
+                          onChange={(e) =>
+                            setEditedUserInfo((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-email">Email</Label>
+                        <Input
+                          id="edit-email"
+                          value={editedUserInfo.email}
+                          onChange={(e) =>
+                            setEditedUserInfo((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="flex space-x-2 pt-2">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setEditingUserInfo(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className="w-full"
+                          onClick={handleUpdateUserInfo}
+                          disabled={updatingUserInfo}
+                        >
+                          {updatingUserInfo ? (
+                            <FaSync className="animate-spin mr-2" />
+                          ) : (
+                            "Save"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <ProfileField label="Name" value={selectedUser.name} />
+                      <ProfileField label="Email" value={selectedUser.email} />
+                      <div className="flex space-x-2 pt-2">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setEditingUserInfo(true)}
+                        >
+                          Edit Info
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => setResetPasswordDialogOpen(true)}
+                        >
+                          Reset Password
+                        </Button>
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Role</h4>
@@ -1990,6 +2157,106 @@ const AdminDashboardPage = () => {
                     </>
                   ) : (
                     "Delete User"
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog
+        open={resetPasswordDialogOpen}
+        onOpenChange={(open) => {
+          setResetPasswordDialogOpen(open);
+          if (!open) {
+            setResetPasswordSuccess(false);
+            setNewPassword("");
+            setPasswordCopiedReset(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Generate a new temporary password for this user.
+            </DialogDescription>
+          </DialogHeader>
+
+          {resetPasswordSuccess ? (
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="text-green-800 font-medium mb-2">
+                  Password Reset Successfully!
+                </h3>
+                <p className="text-green-700 text-sm mb-3">
+                  A new temporary password has been generated. Make sure to save
+                  it or share it with the user.
+                </p>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={newPassword}
+                    readOnly
+                    className="w-full bg-white border border-green-300 rounded px-3 py-2 text-gray-700"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(newPassword);
+                      setPasswordCopiedReset(true);
+                      setTimeout(() => setPasswordCopiedReset(false), 2000);
+                    }}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-600 hover:text-green-800"
+                    title="Copy to clipboard"
+                  >
+                    {passwordCopiedReset ? <FaCheck /> : <FaClipboard />}
+                  </button>
+                </div>
+
+                {passwordCopiedReset && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Copied to clipboard!
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <Button onClick={() => setResetPasswordDialogOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to reset the password for{" "}
+                <span className="font-medium text-gray-800">
+                  {selectedUser?.name}
+                </span>
+                ? This will generate a new temporary password.
+              </p>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setResetPasswordDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleResetPassword}
+                  disabled={resetPasswordLoading}
+                >
+                  {resetPasswordLoading ? (
+                    <>
+                      <FaSync className="animate-spin mr-2" />
+                      Resetting...
+                    </>
+                  ) : (
+                    "Reset Password"
                   )}
                 </Button>
               </DialogFooter>
