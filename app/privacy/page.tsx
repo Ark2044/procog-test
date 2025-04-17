@@ -26,7 +26,7 @@ const PrivacyPage = () => {
               At Procog, we take your privacy seriously. This Privacy Policy
               explains how we collect, use, disclose, and safeguard your
               information when you use our risk management platform, website,
-              and related services (collectively, the "Service"). Please read
+              and related services (collectively, the &quot;Service&quot;). Please read
               this privacy policy carefully. If you do not agree with the terms
               of this privacy policy, please do not access the Service.
             </p>
@@ -206,7 +206,7 @@ const PrivacyPage = () => {
               about our use of cookies, please see our Cookie Policy.
             </p>
 
-            <h2>11. Children's Privacy</h2>
+            <h2>11. Children&apos;s Privacy</h2>
             <p>
               Our Service is not directed to individuals under the age of 16. We
               do not knowingly collect personal information from children under
@@ -219,7 +219,7 @@ const PrivacyPage = () => {
             <p>
               We may update our Privacy Policy from time to time. We will notify
               you of any changes by posting the new Privacy Policy on this page
-              and updating the "Last Updated" date at the top of this page. You
+              and updating the &quot;Last Updated&quot; date at the top of this page. You
               are advised to review this Privacy Policy periodically for any
               changes.
             </p>
