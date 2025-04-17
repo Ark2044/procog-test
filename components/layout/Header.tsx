@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/Auth";
+import { usePathname } from "next/navigation";
 import {
   FaSignInAlt,
   FaUserPlus,
@@ -17,6 +18,25 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+  const pathname = usePathname();
+
+  // Helper function to check if a path is active
+  const isActivePath = (path: string) => {
+    // For dashboard path, check if the path starts with '/dashboard'
+    if (path === "/dashboard" && pathname?.startsWith("/dashboard/")) {
+      return true;
+    }
+    // For admin path check if it's exactly '/admin'
+    if (path === "/admin" && pathname === "/admin") {
+      return true;
+    }
+    // For profile path, check if the path starts with '/profile'
+    if (path === "/profile" && pathname?.startsWith("/profile/")) {
+      return true;
+    }
+    // For other paths, do an exact match
+    return pathname === path;
+  };
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -155,18 +175,21 @@ export default function Header() {
               } rounded-b-lg z-30`}
             >
               <ul className="flex flex-col lg:flex-row items-center lg:space-x-3 lg:space-y-0 space-y-2 py-3 lg:py-0 px-3 lg:px-0">
+                {/* User Guide Button */}
                 <li className="w-full lg:w-auto">
                   <Link
                     href="/guide"
                     onClick={handleLinkClick}
                     className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
-                      isScrolled
+                      isActivePath("/guide")
+                        ? "bg-indigo-100 border-indigo-400 text-indigo-800"
+                        : isScrolled
                         ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                         : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                     }`}
                   >
                     <FaQuestionCircle
-                      className="mr-2 text-sm"
+                      className="mr-1.5 text-sm"
                       aria-hidden="true"
                     />
                     User Guide
@@ -175,31 +198,39 @@ export default function Header() {
 
                 {!session ? (
                   <>
+                    {/* Login Button */}
                     <li className="w-full lg:w-auto">
                       <Link
                         href="/login"
                         onClick={handleLinkClick}
                         className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
-                          isScrolled
+                          isActivePath("/login")
+                            ? "bg-indigo-100 border-indigo-400 text-indigo-800"
+                            : isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                         }`}
                       >
                         <FaSignInAlt
-                          className="mr-2 text-sm"
+                          className="mr-1.5 text-sm"
                           aria-hidden="true"
                         />
                         Login
                       </Link>
                     </li>
+                    {/* Sign Up Button - Keep special styling to draw attention */}
                     <li className="w-full lg:w-auto">
                       <Link
                         href="/register"
                         onClick={handleLinkClick}
-                        className="flex items-center justify-center lg:justify-start bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto"
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto ${
+                          isActivePath("/register")
+                            ? "bg-indigo-700 from-indigo-700 to-purple-700"
+                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                        }`}
                       >
                         <FaUserPlus
-                          className="mr-2 text-sm"
+                          className="mr-1.5 text-sm"
                           aria-hidden="true"
                         />
                         Sign Up
@@ -208,31 +239,31 @@ export default function Header() {
                   </>
                 ) : (
                   <>
+                    {/* Admin Dashboard or Dashboard Button */}
                     <li className="w-full lg:w-auto">
                       {user?.prefs?.role === "admin" ? (
                         <Link
-                          className={`flex items-center px-4 py-2 text-sm ${
-                            user?.prefs?.role === "admin"
-                              ? "bg-indigo-100 text-indigo-700 font-medium"
-                              : "text-gray-700 hover:bg-gray-100"
-                          } rounded-md transition-colors`}
                           href="/admin"
+                          onClick={handleLinkClick}
+                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
+                            isActivePath("/admin")
+                              ? "bg-indigo-100 border-indigo-400 text-indigo-800"
+                              : isScrolled
+                              ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                              : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                          }`}
                         >
-                          <FaUsersCog
-                            className={`mr-2 ${
-                              user?.prefs?.role === "admin"
-                                ? "text-indigo-700"
-                                : "text-gray-700 group-hover:text-indigo-600"
-                            }`}
-                          />
+                          <FaUsersCog className="mr-1.5 text-sm" />
                           Admin Dashboard
                         </Link>
                       ) : (
                         <Link
                           href={user ? `/dashboard/${user.$id}` : "#"}
                           onClick={handleLinkClick}
-                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
-                            isScrolled
+                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
+                            isActivePath("/dashboard")
+                              ? "bg-indigo-100 border-indigo-400 text-indigo-800"
+                              : isScrolled
                               ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                               : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
                           }`}
@@ -243,27 +274,34 @@ export default function Header() {
                       )}
                     </li>
 
-                    <li className="w-full lg:w-auto">
-                      <Link
-                        href={`/profile/${session.userId}`}
-                        onClick={handleLinkClick}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
-                          isScrolled
-                            ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                            : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
-                        }`}
-                      >
-                        <FaUser className="mr-1.5 text-sm" />
-                        Profile
-                      </Link>
-                    </li>
+                    {/* Only show Profile link for regular users (not admins) */}
+                    {user?.prefs?.role !== "admin" && (
+                      <li className="w-full lg:w-auto">
+                        <Link
+                          href={`/profile/${session.userId}`}
+                          onClick={handleLinkClick}
+                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
+                            isActivePath("/profile")
+                              ? "bg-indigo-100 border-indigo-400 text-indigo-800"
+                              : isScrolled
+                              ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                              : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                          }`}
+                        >
+                          <FaUser className="mr-1.5 text-sm" />
+                          Profile
+                        </Link>
+                      </li>
+                    )}
+
+                    {/* Logout Button */}
                     <li className="w-full lg:w-auto">
                       <button
                         onClick={() => {
                           logout();
                           handleLinkClick();
                         }}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
                           isScrolled
                             ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
                             : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
