@@ -41,7 +41,7 @@ const UserGuidePage = () => {
 
   return (
     <motion.div
-      className="container mx-auto py-8 px-4 max-w-6xl"
+      className="container mx-auto py-8 px-4 max-w-6xl pt-20"
       initial="hidden"
       animate="visible"
       variants={{

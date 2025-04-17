@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { FaLock, FaEnvelope } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -13,8 +12,16 @@ export default function Login() {
   const { login, user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  // Removed unused 'message' state
 
   useEffect(() => {
+    // Check for message parameter in URL
+    const queryParams = new URLSearchParams(window.location.search);
+    const messageParam = queryParams.get("message");
+    if (messageParam) {
+      toast(messageParam);
+    }
+
     // Redirect based on user role if already logged in
     if (user) {
       if (user.prefs?.role === "admin") {
@@ -124,12 +131,12 @@ export default function Login() {
             </button>
           </form>
           <div className="text-center mt-5 sm:mt-6">
-            <Link
-              href="/register"
-              className="text-blue-600 hover:text-blue-500 transition text-sm sm:text-base"
-            >
-              Don&apos;t have an account? Sign up
-            </Link>
+            <p className="text-gray-600 text-sm mb-2">
+              Don&apos;t have an account? Please contact your system administrator.
+            </p>
+            <p className="text-gray-500 text-xs">
+              Self-registration has been disabled for security reasons.
+            </p>
           </div>
           {isLoading && (
             <div className="absolute inset-0 bg-white/50 rounded-2xl pointer-events-none" />

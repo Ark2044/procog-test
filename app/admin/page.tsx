@@ -159,6 +159,8 @@ const AdminDashboardPage = () => {
   const [newPassword, setNewPassword] = useState<string>("");
   const [passwordCopiedReset, setPasswordCopiedReset] =
     useState<boolean>(false);
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [passwordError, setPasswordError] = useState<string>("");
 
   // Add state for Create User dialog
   const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
@@ -676,12 +678,29 @@ const AdminDashboardPage = () => {
   const handleResetPassword = async () => {
     if (!selectedUser) return;
 
+    // Validate password
+    if (newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
     try {
       setResetPasswordLoading(true);
+      setPasswordError("");
+
       const response = await fetch("/api/admin/resetPassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: selectedUser.$id }),
+        body: JSON.stringify({
+          userId: selectedUser.$id,
+          newPassword,
+          confirmPassword,
+        }),
       });
 
       const data = await response.json();
@@ -690,10 +709,12 @@ const AdminDashboardPage = () => {
         throw new Error(data.error || "Failed to reset password");
       }
 
-      setNewPassword(data.newPassword);
       setResetPasswordSuccess(true);
       toast.success("Password reset successfully");
     } catch (err) {
+      setPasswordError(
+        err instanceof Error ? err.message : "Failed to reset password"
+      );
       toast.error(
         err instanceof Error ? err.message : "Failed to reset password"
       );
@@ -2238,6 +2259,32 @@ const AdminDashboardPage = () => {
                 </span>
                 ? This will generate a new temporary password.
               </p>
+
+              <div>
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                />
+              </div>
+
+              {passwordError && (
+                <p className="text-sm text-red-600">{passwordError}</p>
+              )}
 
               <DialogFooter>
                 <Button

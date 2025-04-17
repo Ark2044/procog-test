@@ -5,7 +5,6 @@ import { useAuthStore } from "@/store/Auth";
 import { usePathname } from "next/navigation";
 import {
   FaSignInAlt,
-  FaUserPlus,
   FaUser,
   FaSignOutAlt,
   FaTable,
@@ -203,12 +202,10 @@ export default function Header() {
                       <Link
                         href="/login"
                         onClick={handleLinkClick}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium border shadow-sm w-full lg:w-auto ${
+                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium ${
                           isActivePath("/login")
                             ? "bg-indigo-100 border-indigo-400 text-indigo-800"
-                            : isScrolled
-                            ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                            : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
+                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
                         }`}
                       >
                         <FaSignInAlt
@@ -218,24 +215,7 @@ export default function Header() {
                         Login
                       </Link>
                     </li>
-                    {/* Sign Up Button - Keep special styling to draw attention */}
-                    <li className="w-full lg:w-auto">
-                      <Link
-                        href="/register"
-                        onClick={handleLinkClick}
-                        className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-sm font-medium shadow-sm hover:shadow-md text-white w-full lg:w-auto ${
-                          isActivePath("/register")
-                            ? "bg-indigo-700 from-indigo-700 to-purple-700"
-                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                        }`}
-                      >
-                        <FaUserPlus
-                          className="mr-1.5 text-sm"
-                          aria-hidden="true"
-                        />
-                        Sign Up
-                      </Link>
-                    </li>
+                    {/* Sign Up button removed as self-registration is disabled */}
                   </>
                 ) : (
                   <>
