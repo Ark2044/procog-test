@@ -393,8 +393,9 @@ const Dashboard = () => {
       if (!session) {
         router.push("/login");
       } else if (user) {
+        // Admin should be redirected to admin dashboard
         if (user.prefs?.role === "admin") {
-          router.push("/admin/users");
+          router.push("/admin");
         } else if (userId !== user.$id) {
           router.push(`/dashboard/${user.$id}`);
         }

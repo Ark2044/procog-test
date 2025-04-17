@@ -17,7 +17,7 @@ export default function Register() {
   useEffect(() => {
     if (user) {
       if (user.prefs?.role === "admin") {
-        router.push("/admin/users");
+        router.push("/admin");
       } else {
         router.push(`/dashboard/${user.$id}`);
       }

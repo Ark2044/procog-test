@@ -19,6 +19,6 @@ export interface Risk {
   dueDate?: string;
   created: string;
   updated: string;
-  status: "active" | "closed" | "resolved";
+  status: "active" | "closed";
   resolution?: string;
 }

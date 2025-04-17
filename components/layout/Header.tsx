@@ -6,10 +6,10 @@ import {
   FaSignInAlt,
   FaUserPlus,
   FaUser,
-  FaUserCog,
   FaSignOutAlt,
   FaTable,
   FaQuestionCircle,
+  FaUsersCog,
 } from "react-icons/fa";
 
 export default function Header() {
@@ -211,16 +211,21 @@ export default function Header() {
                     <li className="w-full lg:w-auto">
                       {user?.prefs?.role === "admin" ? (
                         <Link
-                          href="/admin/users"
-                          onClick={handleLinkClick}
-                          className={`flex items-center justify-center lg:justify-start transition-all duration-200 px-3 py-1.5 rounded-md text-xs font-medium border w-full lg:w-auto ${
-                            isScrolled
-                              ? "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                              : "border-indigo-400 text-indigo-700 hover:bg-indigo-100"
-                          }`}
+                          className={`flex items-center px-4 py-2 text-sm ${
+                            user?.prefs?.role === "admin"
+                              ? "bg-indigo-100 text-indigo-700 font-medium"
+                              : "text-gray-700 hover:bg-gray-100"
+                          } rounded-md transition-colors`}
+                          href="/admin"
                         >
-                          <FaUserCog className="mr-1.5 text-sm" />
-                          Admin
+                          <FaUsersCog
+                            className={`mr-2 ${
+                              user?.prefs?.role === "admin"
+                                ? "text-indigo-700"
+                                : "text-gray-700 group-hover:text-indigo-600"
+                            }`}
+                          />
+                          Admin Dashboard
                         </Link>
                       ) : (
                         <Link

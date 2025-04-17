@@ -61,7 +61,44 @@ interface User {
 
 type TabType = "users" | "departments" | "risks";
 
-const AdminUsersPage = () => {
+const LoadingSpinner = ({ size = "large" }: { size?: "small" | "large" }) => (
+  <div className="flex justify-center items-center py-6">
+    <div
+      className={`animate-spin rounded-full border-t-2 border-b-2 border-blue-500 ${
+        size === "large" ? "h-12 w-12" : "h-8 w-8"
+      }`}
+    ></div>
+  </div>
+);
+
+const ErrorMessage = ({
+  message,
+  retryFn,
+}: {
+  message: string | null;
+  retryFn: () => void;
+}) => (
+  <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
+    <div className="flex flex-col items-center text-red-500 mb-4">
+      <FaExclamationTriangle className="text-4xl mb-2" />
+      <p>{message}</p>
+    </div>
+    <button
+      onClick={retryFn}
+      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+    >
+      Try Again
+    </button>
+  </div>
+);
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="p-8 text-center">
+    <p className="text-gray-600">{message}</p>
+  </div>
+);
+
+const AdminDashboardPage = () => {
   const { user } = useAuthStore();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("users");
@@ -427,180 +464,133 @@ const AdminUsersPage = () => {
   };
 
   const renderUsersTab = () => {
-    if (loading) {
-      return (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
-          <div className="flex flex-col items-center text-red-500 mb-4">
-            <FaExclamationTriangle className="text-4xl mb-2" />
-            <p>{error}</p>
-          </div>
-          <button
-            onClick={fetchUsers}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
+    if (loading) return <LoadingSpinner />;
+    if (error) return <ErrorMessage message={error} retryFn={fetchUsers} />;
 
     return (
-      <>
-        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-          {filteredUsers.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-600">
-                No users found matching your search
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Department
-                    </th>
-                    <th className="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map((usr) => (
-                    <tr
-                      key={usr.$id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium text-sm sm:text-lg">
-                              {usr.name.charAt(0).toUpperCase()}
+      <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+        {filteredUsers.length === 0 ? (
+          <EmptyState message="No users found matching your search" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-4 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredUsers.map((usr) => (
+                  <tr
+                    key={usr.$id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-medium text-sm sm:text-lg">
+                            {usr.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="ml-3 sm:ml-4">
+                          <div className="text-xs sm:text-sm font-medium text-gray-800">
+                            {usr.name}
+                          </div>
+                          <div className="text-xs sm:text-sm text-gray-600 flex items-center">
+                            <FaEnvelope className="mr-1 text-xs hidden sm:inline" />
+                            <span className="truncate max-w-[120px] sm:max-w-none">
+                              {usr.email}
                             </span>
                           </div>
-                          <div className="ml-3 sm:ml-4">
-                            <div className="text-xs sm:text-sm font-medium text-gray-800">
-                              {usr.name}
-                            </div>
-                            <div className="text-xs sm:text-sm text-gray-600 flex items-center">
-                              <FaEnvelope className="mr-1 text-xs hidden sm:inline" />
-                              <span className="truncate max-w-[120px] sm:max-w-none">
-                                {usr.email}
-                              </span>
-                            </div>
-                          </div>
                         </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                        <div className="relative">
-                          <select
-                            className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
-                            value={usr.prefs.role}
-                            onChange={(e) =>
-                              handleUpdate(usr.$id, "role", e.target.value)
-                            }
-                            disabled={updatingUser === usr.$id}
-                          >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                            <FaUserCog className="text-xs sm:text-sm" />
-                          </div>
-                          {updatingUser === usr.$id && (
-                            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                              <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                        <div className="relative">
-                          <select
-                            className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
-                            value={usr.prefs.department || ""}
-                            onChange={(e) =>
-                              handleUpdate(
-                                usr.$id,
-                                "department",
-                                e.target.value === "" ? "" : e.target.value
-                              )
-                            }
-                            disabled={updatingUser === usr.$id}
-                          >
-                            <option value="">None</option>
-                            {departments.map((dept) => (
-                              <option key={dept} value={dept}>
-                                {dept}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                            <FaBuilding className="text-xs sm:text-sm" />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                          onClick={() => handleViewUserProfile(usr)}
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="relative">
+                        <select
+                          className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
+                          value={usr.prefs.role}
+                          onChange={(e) =>
+                            handleUpdate(usr.$id, "role", e.target.value)
+                          }
+                          disabled={updatingUser === usr.$id}
                         >
-                          <FaUserEdit className="mr-1" /> Profile & Risks
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </>
+                          <option value="user">User</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                          <FaUserCog className="text-xs sm:text-sm" />
+                        </div>
+                        {updatingUser === usr.$id && (
+                          <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="relative">
+                        <select
+                          className="bg-white text-gray-800 rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer"
+                          value={usr.prefs.department || ""}
+                          onChange={(e) =>
+                            handleUpdate(
+                              usr.$id,
+                              "department",
+                              e.target.value === "" ? "" : e.target.value
+                            )
+                          }
+                          disabled={updatingUser === usr.$id}
+                        >
+                          <option value="">None</option>
+                          {departments.map((dept) => (
+                            <option key={dept} value={dept}>
+                              {dept}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                          <FaBuilding className="text-xs sm:text-sm" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        onClick={() => handleViewUserProfile(usr)}
+                      >
+                        <FaUserEdit className="mr-1" /> Profile & Risks
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     );
   };
 
   const renderDepartmentsTab = () => {
-    if (departmentsLoading) {
+    if (departmentsLoading) return <LoadingSpinner />;
+    if (departmentError)
       return (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
+        <ErrorMessage message={departmentError} retryFn={fetchDepartments} />
       );
-    }
-
-    if (departmentError) {
-      return (
-        <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
-          <div className="flex flex-col items-center text-red-500 mb-4">
-            <FaExclamationTriangle className="text-4xl mb-2" />
-            <p>{departmentError}</p>
-          </div>
-          <button
-            onClick={fetchDepartments}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
 
     // Calculate which departments are in use
     const departmentsInUse = new Set(
@@ -760,30 +750,9 @@ const AdminUsersPage = () => {
   };
 
   const renderRisksTab = () => {
-    if (risksLoading) {
-      return (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      );
-    }
-
-    if (risksError) {
-      return (
-        <div className="bg-white rounded-lg shadow p-8 text-center border border-gray-200">
-          <div className="flex flex-col items-center text-red-500 mb-4">
-            <FaExclamationTriangle className="text-4xl mb-2" />
-            <p>{risksError}</p>
-          </div>
-          <button
-            onClick={fetchRisks}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            Try Again
-          </button>
-        </div>
-      );
-    }
+    if (risksLoading) return <LoadingSpinner />;
+    if (risksError)
+      return <ErrorMessage message={risksError} retryFn={fetchRisks} />;
 
     return (
       <>
@@ -858,7 +827,6 @@ const AdminUsersPage = () => {
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="closed">Closed</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -880,11 +848,7 @@ const AdminUsersPage = () => {
         {/* Risks List */}
         <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
           {filteredRisks.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-gray-600">
-                No risks found matching your criteria
-              </p>
-            </div>
+            <EmptyState message="No risks found matching your criteria" />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -961,62 +925,47 @@ const AdminUsersPage = () => {
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                        <div className="relative">
-                          <select
-                            className={`rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer 
-                              ${
-                                risk.impact === "high"
-                                  ? "bg-red-50 text-red-700"
-                                  : risk.impact === "medium"
-                                  ? "bg-yellow-50 text-yellow-700"
-                                  : "bg-green-50 text-green-700"
-                              }`}
-                            value={risk.impact}
-                            onChange={(e) =>
-                              handleUpdateRisk(
-                                risk.$id,
-                                "impact",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                        <StatusSelect
+                          value={risk.impact}
+                          options={[
+                            { value: "low", label: "Low" },
+                            { value: "medium", label: "Medium" },
+                            { value: "high", label: "High" },
+                          ]}
+                          onChange={(value) =>
+                            handleUpdateRisk(risk.$id, "impact", value)
+                          }
+                          colorClasses={(value) =>
+                            value === "high"
+                              ? "bg-red-50 text-red-700"
+                              : value === "medium"
+                              ? "bg-yellow-50 text-yellow-700"
+                              : "bg-green-50 text-green-700"
+                          }
+                          icon={
                             <FaExclamationCircle className="text-xs sm:text-sm" />
-                          </div>
-                        </div>
+                          }
+                        />
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                        <div className="relative">
-                          <select
-                            className={`rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer
-                              ${
-                                risk.status === "active"
-                                  ? "bg-blue-50 text-blue-700"
-                                  : risk.status === "closed"
-                                  ? "bg-gray-50 text-gray-700"
-                                  : "bg-green-50 text-green-700"
-                              }`}
-                            value={risk.status}
-                            onChange={(e) =>
-                              handleUpdateRisk(
-                                risk.$id,
-                                "status",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <option value="active">Active</option>
-                            <option value="closed">Closed</option>
-                            <option value="resolved">Resolved</option>
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                            <FaEdit className="text-xs sm:text-sm" />
-                          </div>
-                        </div>
+                        <StatusSelect
+                          value={risk.status}
+                          options={[
+                            { value: "active", label: "Active" },
+                            { value: "closed", label: "Closed" },
+                          ]}
+                          onChange={(value) =>
+                            handleUpdateRisk(risk.$id, "status", value)
+                          }
+                          colorClasses={(value) =>
+                            value === "active"
+                              ? "bg-blue-50 text-blue-700"
+                              : value === "closed"
+                              ? "bg-gray-50 text-gray-700"
+                              : "bg-green-50 text-green-700"
+                          }
+                          icon={<FaEdit className="text-xs sm:text-sm" />}
+                        />
                       </td>
                       <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                         <div className="relative">
@@ -1068,20 +1017,41 @@ const AdminUsersPage = () => {
     );
   };
 
-  // Since we're using constants from within the component to check if a department is default,
-  // define DEFAULT_DEPARTMENTS here as well
-  const DEFAULT_DEPARTMENTS = [
-    "general",
-    "engineering",
-    "sales",
-    "marketing",
-    "hr",
-    "it",
-    "finance",
-    "operations",
-  ];
+  // Extract the status select component to avoid duplication
+  const StatusSelect = ({
+    value,
+    options,
+    onChange,
+    colorClasses,
+    icon,
+  }: {
+    value: string;
+    options: { value: string; label: string }[];
+    onChange: (value: string) => void;
+    colorClasses: (value: string) => string;
+    icon: React.ReactNode;
+  }) => (
+    <div className="relative">
+      <select
+        className={`rounded px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm w-full focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 appearance-none cursor-pointer ${colorClasses(
+          value
+        )}`}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+        {icon}
+      </div>
+    </div>
+  );
 
-  // User Profile Dialog
+  // Simplify user profile dialog component
   const renderUserProfile = () => {
     if (!selectedUser) return null;
 
@@ -1106,14 +1076,9 @@ const AdminUsersPage = () => {
                   <CardTitle className="text-lg">User Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Name</h4>
-                    <p className="text-gray-800">{selectedUser.name}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Email</h4>
-                    <p className="text-gray-800">{selectedUser.email}</p>
-                  </div>
+                  <ProfileField label="Name" value={selectedUser.name} />
+                  <ProfileField label="Email" value={selectedUser.email} />
+
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Role</h4>
                     <select
@@ -1162,14 +1127,10 @@ const AdminUsersPage = () => {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">
-                      Reputation
-                    </h4>
-                    <p className="text-gray-800">
-                      {selectedUser.prefs.reputation || 0}
-                    </p>
-                  </div>
+                  <ProfileField
+                    label="Reputation"
+                    value={String(selectedUser.prefs.reputation || 0)}
+                  />
                   <div className="flex space-x-2 pt-2">
                     <Button
                       className="w-full"
@@ -1203,15 +1164,9 @@ const AdminUsersPage = () => {
                 </CardHeader>
                 <CardContent className="px-0">
                   {userRisksLoading ? (
-                    <div className="flex justify-center py-6">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                    </div>
+                    <LoadingSpinner size="small" />
                   ) : userRisks.length === 0 ? (
-                    <div className="text-center py-6 px-4">
-                      <p className="text-gray-500">
-                        No risks found for this user
-                      </p>
-                    </div>
+                    <EmptyState message="No risks found for this user" />
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full">
@@ -1277,18 +1232,10 @@ const AdminUsersPage = () => {
                                     <option value="high">High</option>
                                   </select>
                                 ) : (
-                                  <span
-                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                      ${
-                                        risk.impact === "high"
-                                          ? "bg-red-100 text-red-800"
-                                          : risk.impact === "medium"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : "bg-green-100 text-green-800"
-                                      }`}
-                                  >
-                                    {risk.impact}
-                                  </span>
+                                  <RiskStatusBadge
+                                    status={risk.impact}
+                                    type="impact"
+                                  />
                                 )}
                               </td>
                               <td className="px-4 py-3">
@@ -1316,8 +1263,7 @@ const AdminUsersPage = () => {
                                                 ...r,
                                                 status: e.target.value as
                                                   | "active"
-                                                  | "closed"
-                                                  | "resolved",
+                                                  | "closed",
                                               }
                                             : r
                                         )
@@ -1326,21 +1272,12 @@ const AdminUsersPage = () => {
                                   >
                                     <option value="active">Active</option>
                                     <option value="closed">Closed</option>
-                                    <option value="resolved">Resolved</option>
                                   </select>
                                 ) : (
-                                  <span
-                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                      ${
-                                        risk.status === "active"
-                                          ? "bg-blue-100 text-blue-800"
-                                          : risk.status === "closed"
-                                          ? "bg-gray-100 text-gray-800"
-                                          : "bg-green-100 text-green-800"
-                                      }`}
-                                  >
-                                    {risk.status}
-                                  </span>
+                                  <RiskStatusBadge
+                                    status={risk.status}
+                                    type="status"
+                                  />
                                 )}
                               </td>
                               <td className="px-4 py-3">
@@ -1369,6 +1306,71 @@ const AdminUsersPage = () => {
       </Dialog>
     );
   };
+
+  // Helper component for profile fields
+  const ProfileField = ({ label, value }: { label: string; value: string }) => (
+    <div>
+      <h4 className="text-sm font-medium text-gray-500">{label}</h4>
+      <p className="text-gray-800">{value}</p>
+    </div>
+  );
+
+  // Helper component for displaying risk status badges
+  const RiskStatusBadge = ({
+    status,
+    type,
+  }: {
+    status: string;
+    type: "impact" | "status";
+  }) => {
+    let bgColor = "";
+    let textColor = "";
+
+    if (type === "impact") {
+      if (status === "high") {
+        bgColor = "bg-red-100";
+        textColor = "text-red-800";
+      } else if (status === "medium") {
+        bgColor = "bg-yellow-100";
+        textColor = "text-yellow-800";
+      } else {
+        bgColor = "bg-green-100";
+        textColor = "text-green-800";
+      }
+    } else {
+      if (status === "active") {
+        bgColor = "bg-blue-100";
+        textColor = "text-blue-800";
+      } else if (status === "closed") {
+        bgColor = "bg-gray-100";
+        textColor = "text-gray-800";
+      } else {
+        bgColor = "bg-green-100";
+        textColor = "text-green-800";
+      }
+    }
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+      >
+        {status}
+      </span>
+    );
+  };
+
+  // Since we're using constants from within the component to check if a department is default,
+  // define DEFAULT_DEPARTMENTS here as well
+  const DEFAULT_DEPARTMENTS = [
+    "general",
+    "engineering",
+    "sales",
+    "marketing",
+    "hr",
+    "it",
+    "finance",
+    "operations",
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-800 pt-16 pb-12 px-4 sm:px-6 lg:px-8">
@@ -1469,4 +1471,4 @@ const AdminUsersPage = () => {
   );
 };
 
-export default AdminUsersPage;
+export default AdminDashboardPage;
