@@ -396,14 +396,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
     // Always prevent default form submission behavior
     e.preventDefault();
 
-    // Only proceed with form submission if this was triggered by the submit button
-    const submitter = (e.nativeEvent as SubmitEvent).submitter as
-      | HTMLButtonElement
-      | HTMLInputElement;
-    if (submitter?.type !== "submit") {
-      return;
-    }
-
     // Validate form before submission
     dispatch({ type: "SET_ERROR", payload: null });
     if (!validateFields()) {
