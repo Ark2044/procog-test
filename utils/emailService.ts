@@ -5,12 +5,13 @@ import { Query } from "appwrite";
 import { Risk } from "@/types/Risk";
 import { Comment } from "@/types/Comment";
 import { Reminder } from "@/types/Reminder";
+import env from "@/app/env";
 
 const MAX_USERS_PER_PAGE = 100;
 
 // Initialize SendGrid
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+if (env.sendgrid.apiKey) {
+  sgMail.setApiKey(env.sendgrid.apiKey);
 }
 
 // Optimized: Fetch all users and filter based on prefs.department
@@ -71,7 +72,7 @@ export const sendRiskNotification = async (
 ): Promise<void> => {
   const recipients = await getUsersByDepartment(risk.department);
 
-  if (!process.env.SENDGRID_FROM_EMAIL || recipients.length === 0) {
+  if (!env.sendgrid.from_email || recipients.length === 0) {
     console.log("No recipients or sender email configured");
     return;
   }
@@ -103,7 +104,7 @@ Please review this risk in the risk management system.
 <p><strong>Probability:</strong> ${risk.probability}</p>
 <p><strong>Action:</strong> ${risk.action}</p>
 <p><strong>Description:</strong> ${risk.content}</p>
-<p>Please <a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${risk.$id}">review this risk</a> in the risk management system.</p>
+<p>Please <a href="${env.sendgrid.public_url}/risk/${risk.$id}">review this risk</a> in the risk management system.</p>
         `;
         break;
 
@@ -128,7 +129,7 @@ Please review the updated risk in the risk management system.
 <p><strong>Probability:</strong> ${risk.probability}</p>
 <p><strong>Action:</strong> ${risk.action}</p>
 <p><strong>Description:</strong> ${risk.content}</p>
-<p>Please <a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${risk.$id}">review the updated risk</a> in the risk management system.</p>
+<p>Please <a href="${env.sendgrid.public_url}/risk/${risk.$id}">review the updated risk</a> in the risk management system.</p>
         `;
         break;
 
@@ -148,7 +149,7 @@ The risk has been successfully addressed and closed in the risk management syste
 <p><strong>Title:</strong> ${risk.title}</p>
 <p><strong>Resolution:</strong> ${risk.resolution}</p>
 <p>The risk has been successfully addressed and closed in the risk management system.</p>
-<p>You can <a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${risk.$id}">view the details here</a>.</p>
+<p>You can <a href="${env.sendgrid.public_url}/risk/${risk.$id}">view the details here</a>.</p>
         `;
         break;
     }
@@ -156,7 +157,7 @@ The risk has been successfully addressed and closed in the risk management syste
     for (const recipient of recipients) {
       const msg = {
         to: recipient.email,
-        from: process.env.SENDGRID_FROM_EMAIL || "default@example.com",
+        from: env.sendgrid.from_email,
         subject,
         text: textContent,
         html: htmlContent,
@@ -187,7 +188,7 @@ export const sendCommentNotification = async (
   action: "reply" | "mention",
   parentComment?: Comment
 ): Promise<void> => {
-  if (!process.env.SENDGRID_FROM_EMAIL) {
+  if (!env.sendgrid.from_email) {
     console.log("No sender email configured");
     return;
   }
@@ -201,11 +202,11 @@ export const sendCommentNotification = async (
     switch (action) {
       case "reply":
         if (!parentComment?.authorId) return;
-        
+
         // Get parent comment author's email
         const parentAuthor = await users.get(parentComment.authorId);
         recipientEmail = parentAuthor.email;
-        
+
         subject = `New reply to your comment`;
         textContent = `
 ${comment.authorName} replied to your comment:
@@ -216,7 +217,7 @@ ${parentComment.content}
 Reply:
 ${comment.content}
 
-View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.riskId}
+View the discussion here: ${env.sendgrid.public_url}/risk/${comment.riskId}
         `;
         htmlContent = `
 <h2>New Reply to Your Comment</h2>
@@ -229,7 +230,7 @@ View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.risk
   <p><em>Their reply:</em></p>
   <p>${comment.content}</p>
 </div>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.riskId}">View the discussion</a></p>
+<p><a href="${env.sendgrid.public_url}/risk/${comment.riskId}">View the discussion</a></p>
         `;
         break;
 
@@ -239,11 +240,13 @@ View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.risk
         const mentions = comment.mentions || [];
         for (const username of mentions) {
           try {
-            const mentionedUser = await users.list([Query.equal("name", username)]);
+            const mentionedUser = await users.list([
+              Query.equal("name", username),
+            ]);
             if (mentionedUser.users[0]?.email) {
               const msg = {
                 to: mentionedUser.users[0].email,
-                from: process.env.SENDGRID_FROM_EMAIL,
+                from: env.sendgrid.from_email,
                 subject: `You were mentioned in a comment`,
                 text: `${comment.authorName} mentioned you in a comment:\n\n${comment.content}`,
                 html: `
@@ -252,13 +255,16 @@ View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.risk
 <div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
   <p>${comment.content}</p>
 </div>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.riskId}">View the discussion</a></p>
+<p><a href="${env.sendgrid.public_url}/risk/${comment.riskId}">View the discussion</a></p>
                 `,
               };
               await sgMail.send(msg);
             }
           } catch (err) {
-            console.error(`Failed to send mention notification to ${username}:`, err);
+            console.error(
+              `Failed to send mention notification to ${username}:`,
+              err
+            );
           }
         }
         return;
@@ -267,7 +273,7 @@ View the discussion here: ${process.env.NEXT_PUBLIC_APP_URL}/risk/${comment.risk
     if (recipientEmail) {
       const msg = {
         to: recipientEmail,
-        from: process.env.SENDGRID_FROM_EMAIL,
+        from: env.sendgrid.from_email,
         subject,
         text: textContent,
         html: htmlContent,
@@ -286,7 +292,7 @@ export const sendReminderNotification = async (
   reminder: Reminder,
   action: "due" | "created" | "updated"
 ): Promise<void> => {
-  if (!process.env.SENDGRID_FROM_EMAIL) {
+  if (!env.sendgrid.from_email) {
     console.log("No sender email configured");
     return;
   }
@@ -312,17 +318,25 @@ Description: ${reminder.description || "No description provided"}
 Due: ${new Date(reminder.datetime).toLocaleString()}
 ${reminder.recurrence !== "none" ? `\nRecurrence: ${reminder.recurrence}` : ""}
 
-View your reminder: ${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}
+View your reminder: ${env.sendgrid.public_url}/risk/${reminder.riskId}
         `;
         htmlContent = `
 <h2>Reminder Due Soon</h2>
 <p>Your reminder "<strong>${reminder.title}</strong>" is due soon.</p>
 <div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
-  <p><strong>Description:</strong> ${reminder.description || "No description provided"}</p>
+  <p><strong>Description:</strong> ${
+    reminder.description || "No description provided"
+  }</p>
   <p><strong>Due:</strong> ${new Date(reminder.datetime).toLocaleString()}</p>
-  ${reminder.recurrence !== "none" ? `<p><strong>Recurrence:</strong> ${reminder.recurrence}</p>` : ""}
+  ${
+    reminder.recurrence !== "none"
+      ? `<p><strong>Recurrence:</strong> ${reminder.recurrence}</p>`
+      : ""
+  }
 </div>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}">View your reminder</a></p>
+<p><a href="${env.sendgrid.public_url}/risk/${
+          reminder.riskId
+        }">View your reminder</a></p>
         `;
         break;
 
@@ -336,27 +350,39 @@ Your reminder has been ${action_text}:
 Title: ${reminder.title}
 Description: ${reminder.description || "No description provided"}
 Due: ${new Date(reminder.datetime).toLocaleString()}
-${reminder.recurrence !== "none" ? `Recurrence: ${reminder.recurrence}` : "One-time reminder"}
+${
+  reminder.recurrence !== "none"
+    ? `Recurrence: ${reminder.recurrence}`
+    : "One-time reminder"
+}
 
-View your reminder: ${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}
+View your reminder: ${env.sendgrid.public_url}/risk/${reminder.riskId}
         `;
         htmlContent = `
 <h2>Reminder ${action_text.charAt(0).toUpperCase() + action_text.slice(1)}</h2>
 <p>Your reminder has been ${action_text}:</p>
 <div style="background-color: #f0f7ff; padding: 15px; margin: 10px 0; border-left: 4px solid #0066cc;">
   <p><strong>Title:</strong> ${reminder.title}</p>
-  <p><strong>Description:</strong> ${reminder.description || "No description provided"}</p>
+  <p><strong>Description:</strong> ${
+    reminder.description || "No description provided"
+  }</p>
   <p><strong>Due:</strong> ${new Date(reminder.datetime).toLocaleString()}</p>
-  ${reminder.recurrence !== "none" ? `<p><strong>Recurrence:</strong> ${reminder.recurrence}</p>` : "<p><em>One-time reminder</em></p>"}
+  ${
+    reminder.recurrence !== "none"
+      ? `<p><strong>Recurrence:</strong> ${reminder.recurrence}</p>`
+      : "<p><em>One-time reminder</em></p>"
+  }
 </div>
-<p><a href="${process.env.NEXT_PUBLIC_APP_URL}/reminders/${reminder.$id}">View your reminder</a></p>
+<p><a href="${env.sendgrid.public_url}/risk/${
+          reminder.riskId
+        }">View your reminder</a></p>
         `;
         break;
     }
 
     const msg = {
       to: user.email,
-      from: process.env.SENDGRID_FROM_EMAIL,
+      from: env.sendgrid.from_email,
       subject,
       text: textContent,
       html: htmlContent,
