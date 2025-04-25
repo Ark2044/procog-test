@@ -1,10 +1,32 @@
 import { NextResponse } from "next/server";
 import { users } from "@/models/server/config";
+import { validateDepartment, validateRole } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
     const { userId, role, department, receiveNotifications } =
       await request.json();
+
+    // Validate inputs if provided
+    if (role !== undefined) {
+      const roleValidation = validateRole(role);
+      if (!roleValidation.isValid) {
+        return NextResponse.json(
+          { error: roleValidation.error },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (department !== undefined && department !== "") {
+      const departmentValidation = await validateDepartment(department);
+      if (!departmentValidation.isValid) {
+        return NextResponse.json(
+          { error: departmentValidation.error },
+          { status: 400 }
+        );
+      }
+    }
 
     // Get the current user's preferences
     const user = await users.get(userId);

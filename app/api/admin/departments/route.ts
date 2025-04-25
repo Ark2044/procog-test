@@ -1,18 +1,50 @@
 import { NextResponse } from "next/server";
-import {
-  getAllDepartments,
-  addCustomDepartment,
-  removeCustomDepartment,
-  validateNewDepartment,
-} from "@/lib/validation";
+import { ID, Query } from "node-appwrite";
+import { databases } from "@/models/server/config";
+import { db, departmentCollection } from "@/models/name";
+import { validateNewDepartment, DEFAULT_DEPARTMENTS } from "@/lib/validation";
 
-// Store departments in a simple file-based approach
-// In a production environment, this would be a database
-let customDepartments: string[] = [];
+// Initialize default departments if needed
+async function ensureDefaultDepartments() {
+  try {
+    for (const dept of DEFAULT_DEPARTMENTS) {
+      // Check if default department exists
+      const existing = await databases.listDocuments(db, departmentCollection, [
+        Query.equal("name", dept),
+      ]);
+
+      // If not found, create it
+      if (existing.total === 0) {
+        await databases.createDocument(db, departmentCollection, ID.unique(), {
+          name: dept,
+          isDefault: true,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error ensuring default departments:", error);
+  }
+}
+
+// Get all departments from the database
+async function getAllDepartments() {
+  try {
+    await ensureDefaultDepartments();
+    const response = await databases.listDocuments(
+      db,
+      departmentCollection,
+      []
+    );
+    return response.documents.map((doc) => doc.name);
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+    return [...DEFAULT_DEPARTMENTS];
+  }
+}
 
 export async function GET() {
   try {
-    const departments = getAllDepartments();
+    const departments = await getAllDepartments();
     return NextResponse.json({ success: true, departments });
   } catch (error) {
     console.error("Error fetching departments:", error);
@@ -28,19 +60,35 @@ export async function POST(request: Request) {
     const { department } = await request.json();
 
     // Validate the department name
-    const validation = validateNewDepartment(department);
+    const validation = await validateNewDepartment(department);
     if (!validation.isValid) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    // Add the department
-    addCustomDepartment(department);
-    customDepartments.push(department);
+    // Check if department already exists
+    const existing = await databases.listDocuments(db, departmentCollection, [
+      Query.equal("name", department),
+    ]);
+
+    if (existing.total > 0) {
+      return NextResponse.json(
+        { error: "Department already exists" },
+        { status: 400 }
+      );
+    }
+
+    // Add the department to the database
+    await databases.createDocument(db, departmentCollection, ID.unique(), {
+      name: department,
+      isDefault: false,
+    });
+
+    const departments = await getAllDepartments();
 
     return NextResponse.json({
       success: true,
       department,
-      departments: getAllDepartments(),
+      departments,
     });
   } catch (error) {
     console.error("Error adding department:", error);
@@ -63,21 +111,36 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Check if department is in the defaults list
-    if (department.startsWith("DEFAULT:")) {
+    // Find the department document
+    const existing = await databases.listDocuments(db, departmentCollection, [
+      Query.equal("name", department),
+    ]);
+
+    if (existing.total === 0) {
+      return NextResponse.json(
+        { error: "Department not found" },
+        { status: 404 }
+      );
+    }
+
+    const departmentDoc = existing.documents[0];
+
+    // Check if this is a default department
+    if (departmentDoc.isDefault) {
       return NextResponse.json(
         { error: "Cannot delete default departments" },
         { status: 400 }
       );
     }
 
-    // Remove the department
-    removeCustomDepartment(department);
-    customDepartments = customDepartments.filter((d) => d !== department);
+    // Delete the department
+    await databases.deleteDocument(db, departmentCollection, departmentDoc.$id);
+
+    const departments = await getAllDepartments();
 
     return NextResponse.json({
       success: true,
-      departments: getAllDepartments(),
+      departments,
     });
   } catch (error) {
     console.error("Error deleting department:", error);

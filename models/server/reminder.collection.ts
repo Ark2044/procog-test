@@ -1,9 +1,16 @@
 import { IndexType, Permission } from "node-appwrite";
 import { db, reminderCollection } from "../name"; // Assuming this is the database ID
 import { databases } from "./config";
+import { collectionExists } from "./dbSetup";
 
 export default async function createRemindersCollection() {
   try {
+    // Check if collection already exists
+    const exists = await collectionExists(reminderCollection);
+    if (exists) {
+      return; // Skip creation if collection already exists
+    }
+
     // Create the reminders collection with permissions
     await databases.createCollection(
       db,

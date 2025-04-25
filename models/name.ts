@@ -6,3 +6,4 @@ export const voteCollection = "votes";
 export const riskAttachmentBucket = "risk-attachment";
 export const reminderCollection = "reminders";
 export const riskAnalysisCollection = "risk-analysis";
+export const departmentCollection = "departments";

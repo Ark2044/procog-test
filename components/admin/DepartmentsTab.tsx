@@ -1,6 +1,4 @@
-import React from "react";
 import { FaBuilding, FaCheck, FaPlus, FaSync, FaTimes } from "react-icons/fa";
-import { Button } from "../ui/button";
 import LoadingSpinner from "../ui/LoadingSpinner";
 import ErrorMessage from "../ui/ErrorMessage";
 import { User } from "@/types/User";
@@ -156,6 +154,11 @@ const DepartmentsTab: React.FC<DepartmentsTabProps> = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {usersCount} user{usersCount !== 1 ? "s" : ""}
+                      {isInUse && (
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          In Use
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {!isDefault && (

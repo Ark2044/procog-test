@@ -60,7 +60,7 @@ const Profile = () => {
     setIsSubmitting(true);
 
     try {
-      const validation = validateProfile({
+      const validation = await validateProfile({
         name,
         email,
         department,

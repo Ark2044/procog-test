@@ -1,9 +1,16 @@
 import { IndexType, Permission } from "node-appwrite";
 import { db, riskAnalysisCollection } from "../name";
 import { databases } from "./config";
+import { collectionExists } from "./dbSetup";
 
 export default async function createRiskAnalysisCollection() {
   try {
+    // Check if collection already exists
+    const exists = await collectionExists(riskAnalysisCollection);
+    if (exists) {
+      return; // Skip creation if collection already exists
+    }
+
     // Create the risk analysis collection with permissions
     await databases.createCollection(
       db,

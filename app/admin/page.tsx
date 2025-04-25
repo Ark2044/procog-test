@@ -156,7 +156,8 @@ const AdminDashboardPage = () => {
             typeof usr.prefs.department === "string" &&
             usr.prefs.department.toLowerCase().includes(lowercasedQuery)) ||
           (usr.prefs?.role &&
-            typeof usr.prefs.role === "string" && usr.prefs.role.toLowerCase().includes(lowercasedQuery))
+            typeof usr.prefs.role === "string" &&
+            usr.prefs.role.toLowerCase().includes(lowercasedQuery))
         );
       });
       setFilteredUsers(filtered);
@@ -171,7 +172,7 @@ const AdminDashboardPage = () => {
     value: string | boolean
   ) => {
     try {
-      const validation = validateAdminUpdate({
+      const validation = await validateAdminUpdate({
         userId,
         [field]: value,
       });
@@ -231,7 +232,7 @@ const AdminDashboardPage = () => {
   const handleAddDepartment = async () => {
     try {
       // Validate department name
-      const validation = validateNewDepartment(newDepartment);
+      const validation = await validateNewDepartment(newDepartment);
       if (!validation.isValid) {
         toast.error(validation.error || "Invalid department name");
         return;

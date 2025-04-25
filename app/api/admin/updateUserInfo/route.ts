@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate using general admin update validator
-    const validation = validateAdminUpdate({
+    const validation = await validateAdminUpdate({
       userId,
       ...(name && { name }),
       ...(email && { email }),

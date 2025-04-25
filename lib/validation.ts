@@ -18,24 +18,93 @@ export const DEFAULT_DEPARTMENTS = [
   "operations",
 ] as const;
 
-// Instead of VALID_DEPARTMENTS, we'll use getDepartments() function that can be updated dynamically
-export let CUSTOM_DEPARTMENTS: string[] = [];
+// Cache mechanism for departments to avoid excessive database calls
+let departmentCache: string[] | null = null;
+let departmentCacheTimestamp: number = 0;
+const CACHE_TTL = 60000; // 1 minute cache TTL
 
-// Function to add a custom department
-export const addCustomDepartment = (department: string): void => {
-  if (!CUSTOM_DEPARTMENTS.includes(department)) {
-    CUSTOM_DEPARTMENTS.push(department);
+// Function to get all departments, potentially from cache
+export const getAllDepartments = async (): Promise<string[]> => {
+  // Use memory cache if it's fresh enough
+  if (departmentCache && Date.now() - departmentCacheTimestamp < CACHE_TTL) {
+    return departmentCache;
+  }
+
+  try {
+    // Check if window is defined (client-side) or not (server-side)
+    const isServer = typeof window === "undefined";
+
+    if (isServer) {
+      // Server-side: Import necessary modules and fetch from database directly
+      try {
+        const { databases } = await import("@/models/server/config");
+        const { db, departmentCollection } = await import("@/models/name");
+
+        // Ensure default departments exist first
+        const allDepartments = [...DEFAULT_DEPARTMENTS];
+
+        // Get custom departments from database
+        const response = await databases.listDocuments(
+          db,
+          departmentCollection,
+          []
+        );
+
+        // Add all department names to the list (avoiding duplicates)
+        response.documents.forEach((doc) => {
+          if (doc.name && !allDepartments.includes(doc.name)) {
+            allDepartments.push(doc.name);
+          }
+        });
+
+        // Update cache
+        departmentCache = allDepartments;
+        departmentCacheTimestamp = Date.now();
+
+        return allDepartments;
+      } catch (error) {
+        console.error("Error accessing database directly:", error);
+        return [...DEFAULT_DEPARTMENTS]; // Fallback to defaults if database access fails
+      }
+    } else {
+      // Client-side: use relative URL
+      const url = "/api/admin/departments";
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch departments");
+      }
+
+      const data = await response.json();
+
+      if (data.departments && Array.isArray(data.departments)) {
+        // Update cache
+        departmentCache = data.departments;
+        departmentCacheTimestamp = Date.now();
+        return data.departments;
+      }
+
+      throw new Error("Invalid response format");
+    }
+  } catch (error) {
+    console.error("Error fetching departments:", error);
+    // Fallback to default departments if fetch fails
+    return [...DEFAULT_DEPARTMENTS];
   }
 };
 
-// Function to remove a custom department
-export const removeCustomDepartment = (department: string): void => {
-  CUSTOM_DEPARTMENTS = CUSTOM_DEPARTMENTS.filter((dept) => dept !== department);
+// Synchronous version that returns cached departments or defaults
+export const getAllDepartmentsSync = (): string[] => {
+  if (departmentCache && Date.now() - departmentCacheTimestamp < CACHE_TTL) {
+    return departmentCache;
+  }
+  return [...DEFAULT_DEPARTMENTS];
 };
 
-// Function to get all valid departments
-export const getAllDepartments = (): string[] => {
-  return [...DEFAULT_DEPARTMENTS, ...CUSTOM_DEPARTMENTS];
+// Function to validate if a department name is already in use
+export const isDepartmentNameTaken = async (name: string): Promise<boolean> => {
+  const departments = await getAllDepartments();
+  return departments.includes(name);
 };
 
 export const VALID_ROLES = ["user", "admin"] as const;
@@ -174,7 +243,9 @@ export const validateString = (
   return { isValid: true };
 };
 
-export const validateDepartment = (department: string): ValidationResult => {
+export const validateDepartment = async (
+  department: string
+): Promise<ValidationResult> => {
   if (!department) return { isValid: false, error: "Department is required" };
   const trimmedDepartment = department.trim();
   if (!trimmedDepartment)
@@ -184,14 +255,38 @@ export const validateDepartment = (department: string): ValidationResult => {
     };
 
   // Check if department is in the list of valid departments
-  if (!getAllDepartments().includes(trimmedDepartment)) {
+  const departments = await getAllDepartments();
+  if (!departments.includes(trimmedDepartment)) {
     return { isValid: false, error: "Invalid department" };
   }
 
   return { isValid: true };
 };
 
-export const validateNewDepartment = (department: string): ValidationResult => {
+// Synchronous version for cases where async is impossible
+export const validateDepartmentSync = (
+  department: string
+): ValidationResult => {
+  if (!department) return { isValid: false, error: "Department is required" };
+  const trimmedDepartment = department.trim();
+  if (!trimmedDepartment)
+    return {
+      isValid: false,
+      error: "Department cannot be empty or whitespace only",
+    };
+
+  // Check if department is in the list of valid departments
+  const departments = getAllDepartmentsSync();
+  if (!departments.includes(trimmedDepartment)) {
+    return { isValid: false, error: "Invalid department" };
+  }
+
+  return { isValid: true };
+};
+
+export const validateNewDepartment = async (
+  department: string
+): Promise<ValidationResult> => {
   if (!department)
     return { isValid: false, error: "Department name is required" };
 
@@ -209,7 +304,8 @@ export const validateNewDepartment = (department: string): ValidationResult => {
         "Department name must be 2-50 characters and contain only letters, numbers, spaces, hyphens and apostrophes",
     };
 
-  if (getAllDepartments().includes(trimmedDepartment)) {
+  const departments = await getAllDepartments();
+  if (departments.includes(trimmedDepartment)) {
     return { isValid: false, error: "Department already exists" };
   }
 
@@ -547,9 +643,9 @@ export interface ProfileValidationInput {
   role?: string;
 }
 
-export const validateProfile = (
+export const validateProfile = async (
   profile: ProfileValidationInput
-): ValidationResult => {
+): Promise<ValidationResult> => {
   const nameValidation = validateName(profile.name);
   if (!nameValidation.isValid) return nameValidation;
 
@@ -557,7 +653,7 @@ export const validateProfile = (
   if (!emailValidation.isValid) return emailValidation;
 
   if (profile.department) {
-    const deptValidation = validateDepartment(profile.department);
+    const deptValidation = await validateDepartment(profile.department);
     if (!deptValidation.isValid) return deptValidation;
   }
 
@@ -576,9 +672,9 @@ export interface AdminUpdateValidationInput {
   department?: string;
 }
 
-export const validateAdminUpdate = (
+export const validateAdminUpdate = async (
   update: AdminUpdateValidationInput
-): ValidationResult => {
+): Promise<ValidationResult> => {
   if (!update.userId) {
     return { isValid: false, error: "User ID is required" };
   }
@@ -589,7 +685,7 @@ export const validateAdminUpdate = (
   }
 
   if (update.department) {
-    const deptValidation = validateDepartment(update.department);
+    const deptValidation = await validateDepartment(update.department);
     if (!deptValidation.isValid) return deptValidation;
   }
 

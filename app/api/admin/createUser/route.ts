@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     if (department) {
-      const departmentValidation = validateDepartment(department);
+      const departmentValidation = await validateDepartment(department);
       if (!departmentValidation.isValid) {
         return NextResponse.json(
           { error: departmentValidation.error },
@@ -56,7 +56,13 @@ export async function POST(request: Request) {
     const userId = uuidv4();
 
     // Create a new user with the generated userId
-    const newUser = await users.create(userId, email, undefined, tempPassword, name);
+    const newUser = await users.create(
+      userId,
+      email,
+      undefined,
+      tempPassword,
+      name
+    );
 
     // Set the user's preferences
     const prefs = {
