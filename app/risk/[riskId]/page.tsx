@@ -7,6 +7,7 @@ import {
   commentCollection,
   db,
   reminderCollection,
+  riskAttachmentBucket,
   riskCollection,
 } from "@/models/name";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1200,11 +1201,11 @@ const RiskDetail = () => {
           if (response.attachmentId) {
             try {
               const attachmentResponse = await storage.getFile(
-                db,
+                riskAttachmentBucket,
                 response.attachmentId
               );
               const attachmentUrl = storage.getFileView(
-                db,
+                riskAttachmentBucket,
                 attachmentResponse.$id
               );
 
