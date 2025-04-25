@@ -12,6 +12,7 @@ import { Risk } from "@/types/Risk";
 import UsersTab from "@/components/admin/UsersTab";
 import DepartmentsTab from "@/components/admin/DepartmentsTab";
 import RisksTab from "@/components/admin/RisksTab";
+import RateLimitSettings from "@/components/admin/RateLimitSettings";
 import CreateUserDialog from "@/components/admin/dialogs/CreateUserDialog";
 import DeleteUserDialog from "@/components/admin/dialogs/DeleteUserDialog";
 import UserProfileDialog from "@/components/admin/dialogs/UserProfileDialog";
@@ -678,6 +679,9 @@ const AdminDashboardPage = () => {
             Admin Dashboard
           </h1>
         </div>
+
+        {/* Rate Limit Settings */}
+        <RateLimitSettings />
 
         {/* Navigation Tabs */}
         <div className="mb-6">

@@ -215,6 +215,9 @@ class RedisClient {
 // Initialize Redis client singleton
 const redis = RedisClient.getInstance();
 
+// Global keys for system settings
+const RATE_LIMIT_ENABLED_KEY = "system:rate_limit_enabled";
+
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
 const MAX_REQUESTS_PER_WINDOW = 30; // Max 30 requests per minute
@@ -222,11 +225,41 @@ const MAX_FAILED_ATTEMPTS = 5; // Max 5 failed attempts before temporary lockout
 const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minute lockout after too many failed attempts
 const MAX_ANALYSIS_PER_WINDOW = 10; // Max 10 risk analyses per minute
 
+// Get the current rate limit enabled status
+export async function isRateLimitEnabled(): Promise<boolean> {
+  try {
+    const value = await redis.get(RATE_LIMIT_ENABLED_KEY);
+    // Default to true if the setting doesn't exist
+    return value === null || value === "1";
+  } catch (error) {
+    console.error("Error checking rate limit enabled status:", error);
+    // Default to true if there's an error checking
+    return true;
+  }
+}
+
+// Set the rate limit enabled status
+export async function setRateLimitEnabled(enabled: boolean): Promise<boolean> {
+  try {
+    await redis.set(RATE_LIMIT_ENABLED_KEY, enabled ? "1" : "0");
+    return true;
+  } catch (error) {
+    console.error("Error setting rate limit enabled status:", error);
+    return false;
+  }
+}
+
 // Check if a request should be rate limited
 export async function checkRateLimit(
   requestIp: string,
   routePath: string
 ): Promise<boolean> {
+  // First check if rate limiting is enabled
+  const enabled = await isRateLimitEnabled();
+  if (!enabled) {
+    return true; // Skip rate limiting if disabled
+  }
+
   const key = `ratelimit:${requestIp}:${routePath}`;
 
   try {
@@ -266,6 +299,12 @@ export async function recordFailedAttempt(
   requestIp: string,
   routePath: string
 ): Promise<boolean> {
+  // Check if rate limiting is enabled
+  const enabled = await isRateLimitEnabled();
+  if (!enabled) {
+    return false; // Skip rate limiting if disabled
+  }
+
   const key = `failed:${requestIp}:${routePath}`;
 
   try {
@@ -365,6 +404,12 @@ export function isSpam(text: string): boolean {
 
 // Check comment rate limiting specifically
 export async function checkCommentRateLimit(userId: string): Promise<boolean> {
+  // Check if rate limiting is enabled
+  const enabled = await isRateLimitEnabled();
+  if (!enabled) {
+    return true; // Skip rate limiting if disabled
+  }
+
   const key = `comment-limit:${userId}`;
 
   try {
@@ -393,6 +438,12 @@ export async function checkCommentRateLimit(userId: string): Promise<boolean> {
 }
 
 export async function checkAnalysisRateLimit(userId: string): Promise<boolean> {
+  // Check if rate limiting is enabled
+  const enabled = await isRateLimitEnabled();
+  if (!enabled) {
+    return true; // Skip rate limiting if disabled
+  }
+
   try {
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW).toISOString();
 
