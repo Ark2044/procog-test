@@ -3,7 +3,8 @@ import { users } from "@/models/server/config";
 
 export async function POST(request: Request) {
   try {
-    const { userId, role, department } = await request.json();
+    const { userId, role, department, receiveNotifications } =
+      await request.json();
 
     // Get the current user's preferences
     const user = await users.get(userId);
@@ -15,6 +16,13 @@ export async function POST(request: Request) {
       ...(role !== undefined && { role }),
       // Handle department explicitly to allow setting to null/empty
       ...(department !== undefined && { department }),
+      // Handle receiveNotifications toggle (convert to boolean if it's a string)
+      ...(receiveNotifications !== undefined && {
+        receiveNotifications:
+          typeof receiveNotifications === "string"
+            ? receiveNotifications === "true"
+            : Boolean(receiveNotifications),
+      }),
     };
 
     // Update the user's preferences

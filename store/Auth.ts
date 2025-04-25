@@ -8,6 +8,7 @@ export interface UserPrefs {
   reputation: number;
   role: string; // e.g., "user", "admin"
   department: string; // e.g., "sales", "engineering"
+  receiveNotifications?: boolean; // Controls whether the user receives email notifications
 }
 
 interface IAuthStore {
