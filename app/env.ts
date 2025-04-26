@@ -10,6 +10,15 @@ const env = {
     from_email: process.env.SENDGRID_FROM_EMAIL!,
     public_url: process.env.NEXT_PUBLIC_APP_URL!,
   },
+  upstash: {
+    redis: {
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    },
+  },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY!,
+  },
 };
 
 export default env;

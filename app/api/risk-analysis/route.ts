@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import env from "@/app/env";
 
 // Initialize the API client
 const genAI = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY || "",
+  apiKey: env.gemini.apiKey,
 });
 
 interface RiskAnalysisInput {

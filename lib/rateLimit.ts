@@ -2,6 +2,7 @@ import { databases } from "@/models/client/config";
 import { db, riskAnalysisCollection } from "@/models/name";
 import { Query } from "node-appwrite";
 import { NextRequest } from "next/server";
+import env from "@/app/env";
 
 // Setup Redis client for rate limiting
 // Use a configurable Redis client that works with or without Upstash
@@ -16,10 +17,10 @@ class RedisClient {
   private constructor() {
     // Check if Upstash Redis environment variables are configured
     this.isUpstashConfigured =
-      typeof process.env.UPSTASH_REDIS_REST_URL === "string" &&
-      process.env.UPSTASH_REDIS_REST_URL.length > 0 &&
-      typeof process.env.UPSTASH_REDIS_REST_TOKEN === "string" &&
-      process.env.UPSTASH_REDIS_REST_TOKEN.length > 0;
+      typeof env.upstash.redis.url === "string" &&
+      env.upstash.redis.url.length > 0 &&
+      typeof env.upstash.redis.token === "string" &&
+      env.upstash.redis.token.length > 0;
 
     console.log(
       `Redis client initialized. Using ${
@@ -40,14 +41,11 @@ class RedisClient {
     if (this.isUpstashConfigured) {
       // If Upstash is configured, use the REST API
       try {
-        const response = await fetch(
-          `${process.env.UPSTASH_REDIS_REST_URL}/get/${key}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-            },
-          }
-        );
+        const response = await fetch(`${env.upstash.redis.url}/get/${key}`, {
+          headers: {
+            Authorization: `Bearer ${env.upstash.redis.token}`,
+          },
+        });
 
         if (!response.ok) {
           console.error(
@@ -87,7 +85,7 @@ class RedisClient {
     if (this.isUpstashConfigured) {
       // If Upstash is configured, use the REST API
       try {
-        let url = `${process.env.UPSTASH_REDIS_REST_URL}/set/${key}/${value}`;
+        let url = `${env.upstash.redis.url}/set/${key}/${value}`;
 
         // Add expiration if provided
         if (options?.ex) {
@@ -96,7 +94,7 @@ class RedisClient {
 
         const response = await fetch(url, {
           headers: {
-            Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+            Authorization: `Bearer ${env.upstash.redis.token}`,
           },
         });
 
@@ -131,14 +129,11 @@ class RedisClient {
     if (this.isUpstashConfigured) {
       // If Upstash is configured, use the REST API
       try {
-        const response = await fetch(
-          `${process.env.UPSTASH_REDIS_REST_URL}/incr/${key}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-            },
-          }
-        );
+        const response = await fetch(`${env.upstash.redis.url}/incr/${key}`, {
+          headers: {
+            Authorization: `Bearer ${env.upstash.redis.token}`,
+          },
+        });
 
         if (!response.ok) {
           console.error(
@@ -180,14 +175,11 @@ class RedisClient {
     if (this.isUpstashConfigured) {
       // If Upstash is configured, use the REST API
       try {
-        const response = await fetch(
-          `${process.env.UPSTASH_REDIS_REST_URL}/del/${key}`,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-            },
-          }
-        );
+        const response = await fetch(`${env.upstash.redis.url}/del/${key}`, {
+          headers: {
+            Authorization: `Bearer ${env.upstash.redis.token}`,
+          },
+        });
 
         if (!response.ok) {
           console.error(
