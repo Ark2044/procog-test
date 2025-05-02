@@ -163,7 +163,7 @@ export const validateString = (
     regex = null,
     errorMessage = null,
     minMeaningfulChars = 3,
-    blockSingleChar = true,
+    blockSingleChar = false, // Change the default to false to allow single characters
   }: {
     required?: boolean;
     minLength?: number;
@@ -195,6 +195,7 @@ export const validateString = (
   }
 
   // Block inputs that are just a single character like "." or "-"
+  // Only apply this validation on form submission, not during typing
   if (blockSingleChar && trimmed.length === 1) {
     return {
       isValid: false,

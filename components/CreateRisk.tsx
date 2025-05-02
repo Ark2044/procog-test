@@ -1,11 +1,5 @@
 "use client";
-import React, {
-  useReducer,
-  useRef,
-  useEffect,
-  ChangeEvent,
-  FormEvent,
-} from "react";
+import React, { useReducer, useEffect, ChangeEvent, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
@@ -22,11 +16,6 @@ import {
   Repeat,
   Shield,
   FileDigit,
-  BoldIcon,
-  ItalicIcon,
-  Link2Icon,
-  ListIcon,
-  QuoteIcon,
   Activity,
 } from "lucide-react";
 import { useAuthStore } from "@/store/Auth";
@@ -34,9 +23,7 @@ import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useReminderStore } from "@/store/Reminder";
-import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -77,6 +64,7 @@ interface RiskState {
   titleCharCount: number;
   reminderTitle: string;
   reminderDescription: string;
+  tagsInput: string; // Raw string for tag input
 }
 
 // Initial state
@@ -110,6 +98,7 @@ const initialState: RiskState = {
   titleCharCount: 0,
   reminderTitle: "",
   reminderDescription: "",
+  tagsInput: "", // Initialize tagsInput
 };
 
 // Action types
@@ -151,6 +140,7 @@ type Action =
   | { type: "SET_TITLE_CHAR_COUNT"; payload: number }
   | { type: "SET_REMINDER_TITLE"; payload: string }
   | { type: "SET_REMINDER_DESCRIPTION"; payload: string }
+  | { type: "SET_TAGS_INPUT"; payload: string } // Add action type for tagsInput
   | { type: "RESET" };
 
 // Reducer function
@@ -220,6 +210,8 @@ const riskReducer = (state: RiskState, action: Action): RiskState => {
       return { ...state, reminderTitle: action.payload };
     case "SET_REMINDER_DESCRIPTION":
       return { ...state, reminderDescription: action.payload };
+    case "SET_TAGS_INPUT":
+      return { ...state, tagsInput: action.payload }; // Handle tagsInput action
     case "RESET":
       return initialState;
     default:
@@ -235,10 +227,6 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   const { user } = useAuthStore();
   const { addReminder } = useReminderStore();
   const { createRisk, loading: isCreating } = useRiskStore();
-  const mitigationTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const acceptanceTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const transferTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const avoidanceTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Define the steps array
   const steps = ["basic", "assessment", "settings"] as const;
@@ -457,267 +445,8 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
   };
 
   // Utility function to insert markdown
-  const insertMarkdown = (
-    markdownSyntax: string,
-    content: string,
-    setContent: (value: string) => void,
-    textareaRef: React.RefObject<HTMLTextAreaElement>,
-    selectionReplacement: string | null = null
-  ) => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-    let newContent = "";
-    let newCursorPos = 0;
-    if (selectedText) {
-      const replacement = selectionReplacement || selectedText;
-      newContent =
-        content.substring(0, start) +
-        markdownSyntax.replace("$1", replacement) +
-        content.substring(end);
-      newCursorPos = start + markdownSyntax.replace("$1", replacement).length;
-    } else {
-      const placeholder = selectionReplacement || "text";
-      newContent =
-        content.substring(0, start) +
-        markdownSyntax.replace("$1", placeholder) +
-        content.substring(end);
-      newCursorPos =
-        start +
-        (markdownSyntax.includes("$1")
-          ? markdownSyntax.indexOf("$1") + placeholder.length
-          : markdownSyntax.length);
-    }
-    setContent(newContent);
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-      }
-    }, 0);
-  };
 
   // Markdown insertion functions for each strategy
-  const insertMitigationMarkdown = (
-    markdownSyntax: string,
-    selectionReplacement: string | null = null
-  ) => {
-    insertMarkdown(
-      markdownSyntax,
-      state.mitigation,
-      (value) => dispatch({ type: "SET_MITIGATION", payload: value }),
-      mitigationTextareaRef,
-      selectionReplacement
-    );
-  };
-
-  const insertAcceptanceMarkdown = (
-    markdownSyntax: string,
-    selectionReplacement: string | null = null
-  ) => {
-    insertMarkdown(
-      markdownSyntax,
-      state.acceptance,
-      (value) => dispatch({ type: "SET_ACCEPTANCE", payload: value }),
-      acceptanceTextareaRef,
-      selectionReplacement
-    );
-  };
-
-  const insertTransferMarkdown = (
-    markdownSyntax: string,
-    selectionReplacement: string | null = null
-  ) => {
-    insertMarkdown(
-      markdownSyntax,
-      state.transfer,
-      (value) => dispatch({ type: "SET_TRANSFER", payload: value }),
-      transferTextareaRef,
-      selectionReplacement
-    );
-  };
-
-  const insertAvoidanceMarkdown = (
-    markdownSyntax: string,
-    selectionReplacement: string | null = null
-  ) => {
-    insertMarkdown(
-      markdownSyntax,
-      state.avoidance,
-      (value) => dispatch({ type: "SET_AVOIDANCE", payload: value }),
-      avoidanceTextareaRef,
-      selectionReplacement
-    );
-  };
-
-  // Risk Strategy Editor component
-  const RiskStrategyEditor = ({
-    strategy,
-    setStrategy,
-    isPreviewingStrategy,
-    setIsPreviewingStrategy,
-    textareaRef,
-    insertStrategyMarkdown,
-    label,
-    placeholder,
-  }: {
-    strategy: string;
-    setStrategy: (value: string) => void;
-    isPreviewingStrategy: boolean;
-    setIsPreviewingStrategy: (value: boolean) => void;
-    textareaRef: React.RefObject<HTMLTextAreaElement>;
-    insertStrategyMarkdown: (
-      markdownSyntax: string,
-      selectionReplacement?: string | null
-    ) => void;
-    label: string;
-    placeholder: string;
-  }) => (
-    <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-      <label
-        htmlFor={label.toLowerCase().replace(/\s+/g, "-")}
-        className="text-gray-800 font-semibold mb-2 flex items-center"
-      >
-        {label}{" "}
-        <span className="text-red-500 ml-1" aria-hidden="true">
-          *
-        </span>
-        <span className="sr-only"> (required)</span>
-      </label>
-      <div className="bg-white border border-gray-300 rounded-md overflow-hidden shadow-sm">
-        <div className="flex justify-between items-center border-b border-gray-200 p-2 bg-gray-50">
-          <div className="flex gap-2">
-            <Button
-              variant={isPreviewingStrategy ? "outline" : "default"}
-              size="sm"
-              onClick={() => setIsPreviewingStrategy(false)}
-              aria-label="Write mode"
-            >
-              Write
-            </Button>
-            <Button
-              variant={isPreviewingStrategy ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsPreviewingStrategy(true)}
-              aria-label="Preview mode"
-            >
-              Preview
-            </Button>
-          </div>
-          {!isPreviewingStrategy && (
-            <div className="flex gap-1 p-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertStrategyMarkdown("**$1**")}
-                      className="h-8 w-8 p-0"
-                      aria-label="Bold text"
-                    >
-                      <BoldIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Bold</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertStrategyMarkdown("*$1*")}
-                      className="h-8 w-8 p-0"
-                      aria-label="Italic text"
-                    >
-                      <ItalicIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Italic</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertStrategyMarkdown("[$1](url)")}
-                      className="h-8 w-8 p-0"
-                      aria-label="Insert link"
-                    >
-                      <Link2Icon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Link</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertStrategyMarkdown("- $1")}
-                      className="h-8 w-8 p-0"
-                      aria-label="Insert list"
-                    >
-                      <ListIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>List</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertStrategyMarkdown("> $1")}
-                      className="h-8 w-8 p-0"
-                      aria-label="Insert quote"
-                    >
-                      <QuoteIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Quote</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          )}
-        </div>
-        {isPreviewingStrategy ? (
-          <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50">
-            {strategy ? (
-              <ReactMarkdown>{strategy}</ReactMarkdown>
-            ) : (
-              <p className="text-gray-400">Nothing to preview</p>
-            )}
-          </div>
-        ) : (
-          <Textarea
-            ref={textareaRef}
-            id={label.toLowerCase().replace(/\s+/g, "-")}
-            value={strategy}
-            onChange={(e) => setStrategy(e.target.value)}
-            placeholder={placeholder}
-            rows={4}
-            className="border-0 focus:ring-0 resize-none text-gray-800"
-            required
-            aria-required="true"
-          />
-        )}
-      </div>
-      <p className="text-xs text-gray-600 mt-1">
-        Supports Markdown formatting for rich text
-      </p>
-    </div>
-  );
 
   // Render Basic Form
   const renderBasicForm = () => (
@@ -799,14 +528,14 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         <input
           type="text"
           id="tags"
-          value={state.tags.join(", ")}
+          value={state.tagsInput}
           onChange={(e) =>
+            dispatch({ type: "SET_TAGS_INPUT", payload: e.target.value })
+          }
+          onBlur={() =>
             dispatch({
               type: "SET_TAGS",
-              payload: e.target.value
-                .split(",")
-                .map((tag) => tag.trim())
-                .filter(Boolean),
+              payload: state.tagsInput.split(",").map((tag) => tag.trim()),
             })
           }
           className="border border-gray-300 p-3 w-full rounded-md bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
@@ -1057,68 +786,111 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         </div>
       </div>
       {state.action === "mitigate" && (
-        <RiskStrategyEditor
-          strategy={state.mitigation}
-          setStrategy={(value) =>
-            dispatch({ type: "SET_MITIGATION", payload: value })
-          }
-          isPreviewingStrategy={state.isPreviewingMitigation}
-          setIsPreviewingStrategy={(value) =>
-            dispatch({ type: "SET_IS_PREVIEWING_MITIGATION", payload: value })
-          }
-          textareaRef={mitigationTextareaRef}
-          insertStrategyMarkdown={insertMitigationMarkdown}
-          label="Mitigation Strategy"
-          placeholder="Describe how you plan to reduce this risk"
-        />
+        <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+          <label
+            htmlFor="mitigation"
+            className="text-gray-800 font-semibold mb-2 flex items-center"
+          >
+            Mitigation Strategy{" "}
+            <span className="text-red-500 ml-1" aria-hidden="true">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </label>
+          <textarea
+            id="mitigation"
+            value={state.mitigation}
+            onChange={(e) =>
+              dispatch({ type: "SET_MITIGATION", payload: e.target.value })
+            }
+            placeholder="Describe how you plan to reduce this risk"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            required
+            aria-required="true"
+          />
+        </div>
       )}
+
       {state.action === "accept" && (
-        <RiskStrategyEditor
-          strategy={state.acceptance}
-          setStrategy={(value) =>
-            dispatch({ type: "SET_ACCEPTANCE", payload: value })
-          }
-          isPreviewingStrategy={state.isPreviewingAcceptance}
-          setIsPreviewingStrategy={(value) =>
-            dispatch({ type: "SET_IS_PREVIEWING_ACCEPTANCE", payload: value })
-          }
-          textareaRef={acceptanceTextareaRef}
-          insertStrategyMarkdown={insertAcceptanceMarkdown}
-          label="Acceptance Rationale"
-          placeholder="Explain why accepting this risk is appropriate"
-        />
+        <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+          <label
+            htmlFor="acceptance"
+            className="text-gray-800 font-semibold mb-2 flex items-center"
+          >
+            Acceptance Rationale{" "}
+            <span className="text-red-500 ml-1" aria-hidden="true">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </label>
+          <textarea
+            id="acceptance"
+            value={state.acceptance}
+            onChange={(e) =>
+              dispatch({ type: "SET_ACCEPTANCE", payload: e.target.value })
+            }
+            placeholder="Explain why accepting this risk is appropriate"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            required
+            aria-required="true"
+          />
+        </div>
       )}
+
       {state.action === "transfer" && (
-        <RiskStrategyEditor
-          strategy={state.transfer}
-          setStrategy={(value) =>
-            dispatch({ type: "SET_TRANSFER", payload: value })
-          }
-          isPreviewingStrategy={state.isPreviewingTransfer}
-          setIsPreviewingStrategy={(value) =>
-            dispatch({ type: "SET_IS_PREVIEWING_TRANSFER", payload: value })
-          }
-          textareaRef={transferTextareaRef}
-          insertStrategyMarkdown={insertTransferMarkdown}
-          label="Transfer Mechanism"
-          placeholder="Detail how the risk will be transferred"
-        />
+        <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+          <label
+            htmlFor="transfer"
+            className="text-gray-800 font-semibold mb-2 flex items-center"
+          >
+            Transfer Mechanism{" "}
+            <span className="text-red-500 ml-1" aria-hidden="true">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </label>
+          <textarea
+            id="transfer"
+            value={state.transfer}
+            onChange={(e) =>
+              dispatch({ type: "SET_TRANSFER", payload: e.target.value })
+            }
+            placeholder="Detail how the risk will be transferred"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            required
+            aria-required="true"
+          />
+        </div>
       )}
+
       {state.action === "avoid" && (
-        <RiskStrategyEditor
-          strategy={state.avoidance}
-          setStrategy={(value) =>
-            dispatch({ type: "SET_AVOIDANCE", payload: value })
-          }
-          isPreviewingStrategy={state.isPreviewingAvoidance}
-          setIsPreviewingStrategy={(value) =>
-            dispatch({ type: "SET_IS_PREVIEWING_AVOIDANCE", payload: value })
-          }
-          textareaRef={avoidanceTextareaRef}
-          insertStrategyMarkdown={insertAvoidanceMarkdown}
-          label="Avoidance Approach"
-          placeholder="Describe how you will eliminate this risk"
-        />
+        <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+          <label
+            htmlFor="avoidance"
+            className="text-gray-800 font-semibold mb-2 flex items-center"
+          >
+            Avoidance Approach{" "}
+            <span className="text-red-500 ml-1" aria-hidden="true">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </label>
+          <textarea
+            id="avoidance"
+            value={state.avoidance}
+            onChange={(e) =>
+              dispatch({ type: "SET_AVOIDANCE", payload: e.target.value })
+            }
+            placeholder="Describe how you will eliminate this risk"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            required
+            aria-required="true"
+          />
+        </div>
       )}
     </div>
   );

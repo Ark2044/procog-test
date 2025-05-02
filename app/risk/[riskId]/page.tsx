@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { databases, storage } from "@/models/client/config";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -31,12 +31,6 @@ import {
   CheckCircle,
   XCircle,
   Pencil,
-  BoldIcon,
-  ItalicIcon,
-  HelpCircleIcon,
-  Link2Icon,
-  ListIcon,
-  QuoteIcon,
   Sparkles,
   Reply,
   Download,
@@ -60,17 +54,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import ReactMarkdown from "react-markdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewedItemsStore } from "@/store/ViewedItems";
 import { Query } from "appwrite";
 import RiskAnalysisPanel from "@/components/RiskAnalysisPanel";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   generateRiskReportHTML,
   downloadRiskReportAsPDF,
@@ -132,17 +119,10 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
   const [acceptance, setAcceptance] = useState(risk.acceptance || "");
   const [transfer, setTransfer] = useState(risk.transfer || "");
   const [avoidance, setAvoidance] = useState(risk.avoidance || "");
-  const [isPreviewingMitigation, setIsPreviewingMitigation] = useState(false);
-  const [isPreviewingAcceptance, setIsPreviewingAcceptance] = useState(false);
-  const [isPreviewingTransfer, setIsPreviewingTransfer] = useState(false);
-  const [isPreviewingAvoidance, setIsPreviewingAvoidance] = useState(false);
+  const [] = useState(false);
   const [activeTab, setActiveTab] = useState<"basic" | "assessment">("basic");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const mitigationTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const acceptanceTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const transferTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const avoidanceTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { updateRisk } = useRiskStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,60 +200,6 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const insertMarkdown = (
-    markdownSyntax: string,
-    selectionReplacement: string | null = null
-  ) => {
-    if (!mitigationTextareaRef.current) return;
-
-    const textarea = mitigationTextareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = mitigation.substring(start, end);
-
-    let newContent = "";
-    let newCursorPos = 0;
-
-    if (selectedText) {
-      // Text is selected
-      const replacement = selectionReplacement || selectedText;
-      newContent =
-        mitigation.substring(0, start) +
-        markdownSyntax.replace("$1", replacement) +
-        mitigation.substring(end);
-
-      newCursorPos = start + markdownSyntax.replace("$1", replacement).length;
-    } else {
-      // No text selected, just insert syntax at cursor
-      const placeholder = selectionReplacement || "text";
-      newContent =
-        mitigation.substring(0, start) +
-        markdownSyntax.replace("$1", placeholder) +
-        mitigation.substring(end);
-
-      // Position cursor in middle of inserted text if it has a placeholder
-      if (markdownSyntax.includes("$1")) {
-        newCursorPos =
-          start + markdownSyntax.indexOf("$1") + placeholder.length;
-      } else {
-        newCursorPos = start + markdownSyntax.length;
-      }
-    }
-
-    setMitigation(newContent);
-
-    // Focus back on textarea and set cursor position after state update
-    setTimeout(() => {
-      if (mitigationTextareaRef.current) {
-        mitigationTextareaRef.current.focus();
-        mitigationTextareaRef.current.setSelectionRange(
-          newCursorPos,
-          newCursorPos
-        );
-      }
-    }, 0);
   };
 
   const renderBasicForm = () => (
@@ -385,158 +311,14 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
           >
             Mitigation Strategy <span className="text-red-500">*</span>
           </label>
-
-          <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-            <div className="flex justify-between items-center border-b p-2">
-              <div className="flex gap-2">
-                <Button
-                  variant={isPreviewingMitigation ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => setIsPreviewingMitigation(false)}
-                >
-                  Write
-                </Button>
-                <Button
-                  variant={isPreviewingMitigation ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsPreviewingMitigation(true)}
-                >
-                  Preview
-                </Button>
-              </div>
-
-              {!isPreviewingMitigation && (
-                <div className="flex gap-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("**$1**")}
-                        >
-                          <BoldIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Bold</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("*$1*")}
-                        >
-                          <ItalicIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Italic</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("[$1](url)")}
-                        >
-                          <Link2Icon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Link</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("- $1")}
-                        >
-                          <ListIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>List</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("> $1")}
-                        >
-                          <QuoteIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Quote</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <HelpCircleIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="w-80 p-2">
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">Markdown Supported</h4>
-                          <ul className="text-xs space-y-1">
-                            <li>
-                              <code>**bold**</code> for <strong>bold</strong>
-                            </li>
-                            <li>
-                              <code>*italic*</code> for <em>italic</em>
-                            </li>
-                            <li>
-                              <code>[link](url)</code> for <a href="#">link</a>
-                            </li>
-                            <li>
-                              <code>- item</code> for lists
-                            </li>
-                            <li>
-                              <code>{">"} quote</code> for quotes
-                            </li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
-            </div>
-
-            {isPreviewingMitigation ? (
-              <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50 rounded-md">
-                {mitigation ? (
-                  <ReactMarkdown>{mitigation}</ReactMarkdown>
-                ) : (
-                  <p className="text-gray-400">Nothing to preview</p>
-                )}
-              </div>
-            ) : (
-              <Textarea
-                ref={mitigationTextareaRef}
-                id="mitigation"
-                value={mitigation}
-                onChange={(e) => setMitigation(e.target.value)}
-                placeholder="Describe how you plan to mitigate this risk"
-                rows={3}
-                className="border-0 focus:ring-0"
-              />
-            )}
-          </div>
+          <textarea
+            id="mitigation"
+            value={mitigation}
+            onChange={(e) => setMitigation(e.target.value)}
+            placeholder="Describe how you plan to mitigate this risk"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       )}
 
@@ -548,158 +330,14 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
           >
             Acceptance Rationale <span className="text-red-500">*</span>
           </label>
-
-          <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-            <div className="flex justify-between items-center border-b p-2">
-              <div className="flex gap-2">
-                <Button
-                  variant={isPreviewingAcceptance ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => setIsPreviewingAcceptance(false)}
-                >
-                  Write
-                </Button>
-                <Button
-                  variant={isPreviewingAcceptance ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsPreviewingAcceptance(true)}
-                >
-                  Preview
-                </Button>
-              </div>
-
-              {!isPreviewingAcceptance && (
-                <div className="flex gap-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("**$1**")}
-                        >
-                          <BoldIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Bold</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("*$1*")}
-                        >
-                          <ItalicIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Italic</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("[$1](url)")}
-                        >
-                          <Link2Icon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Link</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("- $1")}
-                        >
-                          <ListIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>List</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("> $1")}
-                        >
-                          <QuoteIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Quote</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <HelpCircleIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="w-80 p-2">
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">Markdown Supported</h4>
-                          <ul className="text-xs space-y-1">
-                            <li>
-                              <code>**bold**</code> for <strong>bold</strong>
-                            </li>
-                            <li>
-                              <code>*italic*</code> for <em>italic</em>
-                            </li>
-                            <li>
-                              <code>[link](url)</code> for <a href="#">link</a>
-                            </li>
-                            <li>
-                              <code>- item</code> for lists
-                            </li>
-                            <li>
-                              <code>{">"} quote</code> for quotes
-                            </li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
-            </div>
-
-            {isPreviewingAcceptance ? (
-              <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50 rounded-md">
-                {acceptance ? (
-                  <ReactMarkdown>{acceptance}</ReactMarkdown>
-                ) : (
-                  <p className="text-gray-400">Nothing to preview</p>
-                )}
-              </div>
-            ) : (
-              <Textarea
-                ref={acceptanceTextareaRef}
-                id="acceptance"
-                value={acceptance}
-                onChange={(e) => setAcceptance(e.target.value)}
-                placeholder="Document the rationale for accepting this risk, including thresholds and monitoring approach"
-                rows={3}
-                className="border-0 focus:ring-0"
-              />
-            )}
-          </div>
+          <textarea
+            id="acceptance"
+            value={acceptance}
+            onChange={(e) => setAcceptance(e.target.value)}
+            placeholder="Document the rationale for accepting this risk, including thresholds and monitoring approach"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       )}
 
@@ -711,158 +349,14 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
           >
             Transfer Mechanism <span className="text-red-500">*</span>
           </label>
-
-          <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-            <div className="flex justify-between items-center border-b p-2">
-              <div className="flex gap-2">
-                <Button
-                  variant={isPreviewingTransfer ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => setIsPreviewingTransfer(false)}
-                >
-                  Write
-                </Button>
-                <Button
-                  variant={isPreviewingTransfer ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsPreviewingTransfer(true)}
-                >
-                  Preview
-                </Button>
-              </div>
-
-              {!isPreviewingTransfer && (
-                <div className="flex gap-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("**$1**")}
-                        >
-                          <BoldIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Bold</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("*$1*")}
-                        >
-                          <ItalicIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Italic</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("[$1](url)")}
-                        >
-                          <Link2Icon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Link</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("- $1")}
-                        >
-                          <ListIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>List</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("> $1")}
-                        >
-                          <QuoteIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Quote</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <HelpCircleIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="w-80 p-2">
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">Markdown Supported</h4>
-                          <ul className="text-xs space-y-1">
-                            <li>
-                              <code>**bold**</code> for <strong>bold</strong>
-                            </li>
-                            <li>
-                              <code>*italic*</code> for <em>italic</em>
-                            </li>
-                            <li>
-                              <code>[link](url)</code> for <a href="#">link</a>
-                            </li>
-                            <li>
-                              <code>- item</code> for lists
-                            </li>
-                            <li>
-                              <code>{">"} quote</code> for quotes
-                            </li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
-            </div>
-
-            {isPreviewingTransfer ? (
-              <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50 rounded-md">
-                {transfer ? (
-                  <ReactMarkdown>{transfer}</ReactMarkdown>
-                ) : (
-                  <p className="text-gray-400">Nothing to preview</p>
-                )}
-              </div>
-            ) : (
-              <Textarea
-                ref={transferTextareaRef}
-                id="transfer"
-                value={transfer}
-                onChange={(e) => setTransfer(e.target.value)}
-                placeholder="Detail how the risk will be transferred (insurance, contracts, third parties)"
-                rows={3}
-                className="border-0 focus:ring-0"
-              />
-            )}
-          </div>
+          <textarea
+            id="transfer"
+            value={transfer}
+            onChange={(e) => setTransfer(e.target.value)}
+            placeholder="Detail how the risk will be transferred (insurance, contracts, third parties)"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       )}
 
@@ -874,158 +368,14 @@ const EditRiskDialog: React.FC<EditRiskDialogProps> = ({
           >
             Avoidance Approach <span className="text-red-500">*</span>
           </label>
-
-          <div className="bg-white border border-gray-300 rounded-md overflow-hidden">
-            <div className="flex justify-between items-center border-b p-2">
-              <div className="flex gap-2">
-                <Button
-                  variant={isPreviewingAvoidance ? "outline" : "default"}
-                  size="sm"
-                  onClick={() => setIsPreviewingAvoidance(false)}
-                >
-                  Write
-                </Button>
-                <Button
-                  variant={isPreviewingAvoidance ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setIsPreviewingAvoidance(true)}
-                >
-                  Preview
-                </Button>
-              </div>
-
-              {!isPreviewingAvoidance && (
-                <div className="flex gap-1">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("**$1**")}
-                        >
-                          <BoldIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Bold</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("*$1*")}
-                        >
-                          <ItalicIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Italic</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("[$1](url)")}
-                        >
-                          <Link2Icon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Link</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("- $1")}
-                        >
-                          <ListIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>List</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => insertMarkdown("> $1")}
-                        >
-                          <QuoteIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Quote</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <HelpCircleIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="w-80 p-2">
-                        <div className="space-y-2">
-                          <h4 className="font-semibold">Markdown Supported</h4>
-                          <ul className="text-xs space-y-1">
-                            <li>
-                              <code>**bold**</code> for <strong>bold</strong>
-                            </li>
-                            <li>
-                              <code>*italic*</code> for <em>italic</em>
-                            </li>
-                            <li>
-                              <code>[link](url)</code> for <a href="#">link</a>
-                            </li>
-                            <li>
-                              <code>- item</code> for lists
-                            </li>
-                            <li>
-                              <code>{">"} quote</code> for quotes
-                            </li>
-                          </ul>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
-            </div>
-
-            {isPreviewingAvoidance ? (
-              <div className="prose max-w-none min-h-[100px] p-3 bg-gray-50 rounded-md">
-                {avoidance ? (
-                  <ReactMarkdown>{avoidance}</ReactMarkdown>
-                ) : (
-                  <p className="text-gray-400">Nothing to preview</p>
-                )}
-              </div>
-            ) : (
-              <Textarea
-                ref={avoidanceTextareaRef}
-                id="avoidance"
-                value={avoidance}
-                onChange={(e) => setAvoidance(e.target.value)}
-                placeholder="Describe how you will eliminate this risk (process changes, activity termination)"
-                rows={3}
-                className="border-0 focus:ring-0"
-              />
-            )}
-          </div>
+          <textarea
+            id="avoidance"
+            value={avoidance}
+            onChange={(e) => setAvoidance(e.target.value)}
+            placeholder="Describe how you will eliminate this risk (process changes, activity termination)"
+            rows={5}
+            className="w-full p-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       )}
     </div>
