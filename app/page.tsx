@@ -138,7 +138,7 @@ const HomePage = () => {
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform" />
               <span className="relative flex items-center justify-center font-bold text-white text-base md:text-lg">
-                <Link href="/register" className="block w-full text-center">
+                <Link href="/login" className="block w-full text-center">
                   Get Started
                 </Link>
                 <ArrowRight className="ml-2 h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
