@@ -57,7 +57,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
     unsubscribe,
   } = useCommentStore();
   const { user } = useAuthStore();
-  const observer = useRef<IntersectionObserver>();
+  const observer = useRef<IntersectionObserver | null>(null);
   const prevCommentCountRef = useRef<number>(0);
   const [sortBy, setSortBy] = useState<"popular" | "recent">("popular");
   const { markCommentsViewed } = useViewedItemsStore();

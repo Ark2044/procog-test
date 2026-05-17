@@ -1,4 +1,4 @@
-@config "../tailwind.config.ts";
+@config "../tailwind.config.mjs";
 @import "tailwindcss";
 
 html, body {
@@ -98,7 +98,7 @@ body {
 }
 
 /* Fix for zoom level spacing issues */
-@media screen and (max-width: 100%) {
+@media screen and (max-width: 768px) {
   body > div {
     min-height: unset;
   }

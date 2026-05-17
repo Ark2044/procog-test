@@ -595,7 +595,9 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
         </label>
         <DatePicker
           selected={state.dueDate}
-          onChange={(date) => dispatch({ type: "SET_DUE_DATE", payload: date })}
+          onChange={(date: Date | null) =>
+            dispatch({ type: "SET_DUE_DATE", payload: date })
+          }
           showTimeSelect
           timeFormat="HH:mm"
           timeIntervals={15}
@@ -1123,7 +1125,7 @@ const CreateRisk: React.FC<{ onRiskCreated: () => void }> = ({
               <DatePicker
                 id="reminderDate"
                 selected={state.reminderDate}
-                onChange={(date) =>
+                onChange={(date: Date | null) =>
                   dispatch({
                     type: "SET_REMINDER_DATE",
                     payload: date || new Date(),
